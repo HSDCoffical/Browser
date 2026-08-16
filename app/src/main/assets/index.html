@@ -310,7 +310,7 @@
             flex-shrink: 0;
         }
 
-        /* 面板系统 - 使用 display:none 彻底隐藏 */
+        /* 面板系统 - 使用 transform+opacity 控制 */
         .panel-overlay {
             position: fixed;
             top: 0;
@@ -340,21 +340,21 @@
             background: rgba(255, 255, 255, 0.92);
             border-radius: 28px 28px 0 0;
             z-index: 101;
-            display: none;
+            display: flex;
             flex-direction: column;
             max-height: calc(100% - 76px);
             box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.10);
             border-top: 1px solid rgba(255,255,255,0.2);
             overflow: hidden;
-            transition: none; /* 不使用transform，直接显示/隐藏 */
+            transform: translateY(100%);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.35s ease;
         }
         .panel-sheet.show {
-            display: flex;
-            animation: slideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-        }
-        @keyframes slideUp {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .panel-header {
@@ -1323,7 +1323,7 @@
         }
 
         // ============================================================
-        // 面板控制（使用 display 控制）
+        // 面板控制
         // ============================================================
 
         let activePanel = null;
@@ -1470,4 +1470,4 @@
             });
 
             reset.addEventListener('click', function() {
-  
+                b
