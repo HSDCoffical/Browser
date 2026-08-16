@@ -1,5 +1,5 @@
 // ============================================================
-// 引擎管理模块
+// 引擎管理模块（优化：点击后立即更新勾选标记）
 // ============================================================
 (function() {
     'use strict';
@@ -28,17 +28,24 @@
                 '</div>';
         container.innerHTML = html;
 
+        // 绑定引擎切换事件
         container.querySelectorAll('.ed-item[data-engine]').forEach(function(el) {
             el.addEventListener('click', function() {
                 var eng = JSON.parse(this.dataset.engine);
+                // 更新当前引擎
                 window.currentEngine = eng;
                 window.saveCurrentEngine();
+                // 更新按钮文字
                 window.updateEngineBtn();
+                // 重新渲染下拉列表（使勾选标记立即更新）
+                window.renderEngineDropdown();
+                // 关闭下拉（可选）
                 window.closeEngineDropdown();
                 window.showToast('已切换到：' + eng.name);
             });
         });
 
+        // 绑定自定义引擎添加按钮
         var addBtn = document.getElementById('addCustomEngineBtn');
         if (addBtn) {
             addBtn.addEventListener('click', function(e) {
@@ -70,8 +77,11 @@
     window.toggleEngineDropdown = function() {
         var dd = document.getElementById('engineDropdown');
         if (!dd) return;
-        dd.classList.toggle('open');
+        // 如果已打开，则关闭；否则打开并渲染
         if (dd.classList.contains('open')) {
+            dd.classList.remove('open');
+        } else {
+            dd.classList.add('open');
             window.renderEngineDropdown();
         }
     };
