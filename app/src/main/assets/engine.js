@@ -1,5 +1,5 @@
 // ============================================================
-// 引擎管理模块（优化：点击后立即更新勾选标记）
+// 引擎管理模块（切换后立即生效，保存并刷新下拉）
 // ============================================================
 (function() {
     'use strict';
@@ -34,7 +34,7 @@
                 var eng = JSON.parse(this.dataset.engine);
                 // 更新当前引擎
                 window.currentEngine = eng;
-                window.saveCurrentEngine();
+                window.saveCurrentEngine(); // 立即保存到 localStorage
                 // 更新按钮文字
                 window.updateEngineBtn();
                 // 重新渲染下拉列表（使勾选标记立即更新）
