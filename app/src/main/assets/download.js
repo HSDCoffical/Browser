@@ -1,5 +1,5 @@
 // ============================================================
-// 下载管理模块（模拟实现，不依赖Java接口）
+// 下载管理模块（模拟）
 // ============================================================
 (function() {
     'use strict';
@@ -150,7 +150,7 @@
         }
     };
 
-    // 暴露给Java调用的接口（占位）
+    // 暴露给 Java 调用（占位）
     window._addDownloadTask = function(id, name, totalSize) {
         if (window.DownloadManager) window.DownloadManager.addTask(id, name, totalSize);
     };
