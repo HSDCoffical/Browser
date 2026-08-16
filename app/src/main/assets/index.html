@@ -268,7 +268,7 @@
             padding: 12px 20px 24px 20px;
             background: transparent;
             position: relative;
-            z-index: 200; /* 确保在面板之上 */
+            z-index: 200;
         }
         .bottom-actions .nav-capsule {
             display: flex;
@@ -293,10 +293,11 @@
             min-width: 44px;
             background: transparent;
             border: none;
-            font-size: 18px;
+            font-size: 20px;
             color: #1a1a2e;
             cursor: pointer;
             transition: background 0.2s, transform 0.15s;
+            line-height: 1;
         }
         .bottom-actions .nav-capsule .action-btn:active {
             transform: scale(0.90);
@@ -309,7 +310,7 @@
             flex-shrink: 0;
         }
 
-        /* 面板通用 - 底部留空 */
+        /* 面板系统 - 使用 display:none 彻底隐藏 */
         .panel-overlay {
             position: fixed;
             top: 0;
@@ -331,7 +332,7 @@
 
         .panel-sheet {
             position: fixed;
-            bottom: 76px; /* 关键修复：为底部胶囊留空 */
+            bottom: 76px;
             left: 0;
             right: 0;
             max-width: 480px;
@@ -339,16 +340,21 @@
             background: rgba(255, 255, 255, 0.92);
             border-radius: 28px 28px 0 0;
             z-index: 101;
-            transform: translateY(100%);
-            transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-            max-height: calc(100% - 76px);
-            display: flex;
+            display: none;
             flex-direction: column;
+            max-height: calc(100% - 76px);
             box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.10);
             border-top: 1px solid rgba(255,255,255,0.2);
+            overflow: hidden;
+            transition: none; /* 不使用transform，直接显示/隐藏 */
         }
         .panel-sheet.show {
-            transform: translateY(0);
+            display: flex;
+            animation: slideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .panel-header {
@@ -387,7 +393,7 @@
             display: none;
         }
 
-        /* 菜单列表（无图标） */
+        /* 菜单列表 */
         .menu-list {
             display: flex;
             flex-direction: column;
@@ -943,7 +949,7 @@
         function saveHistory() {
             localStorage.setItem('mybrowser_history', JSON.stringify(history));
         }
-        // 为了兼容 Java 调用，暴露 addHistory 到全局
+        // 暴露给 Java 调用
         window.addHistory = function(title, url) {
             if (isIncognito) return;
             history = history.filter(item => item.url !== url);
@@ -954,7 +960,6 @@
         window.addDownloadItem = function(name, url) {
             downloads.push({ name, url, time: Date.now() });
             saveDownloads();
-            // 如果下载面板打开，刷新
             if (document.getElementById('downloadSheet').classList.contains('show')) {
                 renderDownloads();
             }
@@ -1318,7 +1323,7 @@
         }
 
         // ============================================================
-        // 面板控制
+        // 面板控制（使用 display 控制）
         // ============================================================
 
         let activePanel = null;
@@ -1419,7 +1424,7 @@
         }
 
         // ============================================================
-        // 背景图片设置（多选 + 轮播）
+        // 背景图片设置
         // ============================================================
 
         function setupBackgroundPicker() {
@@ -1464,4 +1469,5 @@
                 this.value = '';
             });
 
-            reset.a
+            reset.addEventListener('click', function() {
+  
