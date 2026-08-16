@@ -37,8 +37,8 @@
             display: flex;
             align-items: center;
             background: white;
-            border-radius: 30px;  /* 大圆角 R角 */
-            padding: 8px 20px;
+            border-radius: 30px;
+            padding: 4px 4px 4px 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.15);
             transition: box-shadow 0.2s;
         }
@@ -59,18 +59,21 @@
             font-size: 16px;
         }
         .search-box button {
-            background: transparent;
+            background: #4285f4;
+            color: white;
             border: none;
+            border-radius: 30px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 500;
             cursor: pointer;
-            font-size: 22px;
-            padding: 8px 12px;
-            color: #4285f4;
-            transition: transform 0.1s;
+            transition: background 0.2s, transform 0.1s;
+            white-space: nowrap;
         }
         .search-box button:active {
-            transform: scale(0.9);
+            background: #3367d6;
+            transform: scale(0.96);
         }
-        /* 可选小提示 */
         .hint {
             margin-top: 30px;
             color: #777;
@@ -83,7 +86,7 @@
         <div class="logo">My<span>Browser</span></div>
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="搜索或输入网址" autofocus>
-            <button id="searchBtn">🔍</button>
+            <button id="searchBtn">搜索</button>
         </div>
         <div class="hint">直接输入关键字搜索 · 输入网址直接访问</div>
     </div>
@@ -95,13 +98,11 @@
         function doSearch() {
             let query = input.value.trim();
             if (!query) return;
-            // 判断是否为网址（含点或http开头）
             if (query.startsWith('http://') || query.startsWith('https://')) {
                 window.location.href = query;
             } else if (query.includes('.') && !query.includes(' ')) {
                 window.location.href = 'https://' + query;
             } else {
-                // 默认用必应搜索
                 window.location.href = 'https://www.bing.com/search?q=' + encodeURIComponent(query);
             }
         }
