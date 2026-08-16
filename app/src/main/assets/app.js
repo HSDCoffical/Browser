@@ -369,7 +369,7 @@ function closePanel(name) {
     if (activePanel === name) activePanel = null;
 }
 function closeAllPanels() {
-    ['menu', 'window', 'settings', 'download'].forEach(function(name) {
+    ['menu', 'window', 'settings', 'download', 'tools'].forEach(function(name) {
         var overlay = document.getElementById(name + 'Overlay');
         var sheet = document.getElementById(name + 'Sheet');
         if (overlay) overlay.classList.remove('show');
@@ -390,7 +390,6 @@ function handleMenuAction(action) {
         case 'download':
             closePanel('menu');
             openPanel('download');
-            // 调用下载渲染函数（若已定义）
             if (typeof window.renderDownloadList === 'function') {
                 window.renderDownloadList();
             } else if (typeof window.DownloadManager !== 'undefined' && window.DownloadManager.render) {
@@ -402,8 +401,10 @@ function handleMenuAction(action) {
             closePanel('menu');
             break;
         case 'tools':
-            window.showToast('工具箱功能开发中');
             closePanel('menu');
+            openPanel('tools');
+            // 确保所有工具按钮已注入
+            injectTools();
             break;
         case 'fav':
             if (window.location.href && window.location.href !== 'about:blank') {
@@ -572,7 +573,6 @@ window.updateTopBar = function(title, url) {
 window.renderDownloadList = function() {
     var list = document.getElementById('downloadList');
     if (!list) {
-        // 如果下载面板没有专门的列表容器，尝试查找通用容器
         list = document.getElementById('downloadListContainer');
     }
     if (!list) return;
@@ -625,9 +625,6 @@ window.renderDownloadList = function() {
     });
 };
 
-// ============================================================
-// 添加下载项（供 Java 调用）
-// ============================================================
 window.addDownloadItem = function(name, url) {
     var downloads = [];
     try {
@@ -643,152 +640,125 @@ window.addDownloadItem = function(name, url) {
 };
 
 // ============================================================
-// 初始化事件
+// 工具函数：创建通用浮层
 // ============================================================
-function initApp() {
-    // 问候语
-    setGreeting();
+function createToolOverlay(title, contentHTML) {
+    var overlay = document.createElement('div');
+    overlay.className = 'tool-overlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
 
-    // 刷新按钮
-    var refreshBtn = document.getElementById('refreshBtn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', function() {
-            window.location.reload();
-        });
-    }
+    var sheet = document.createElement('div');
+    sheet.style.cssText = 'background:#fff;border-radius:16px;max-width:92%;max-height:90%;width:540px;overflow-y:auto;padding:20px;box-shadow:0 8px 40px rgba(0,0,0,0.3);position:relative;';
+    sheet.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;">${title}</h3>
+            <button class="close-tool" style="background:none;border:none;font-size:24px;cursor:pointer;">✕</button>
+        </div>
+        ${contentHTML}
+    `;
+    overlay.appendChild(sheet);
+    document.body.appendChild(overlay);
 
-    // 翻译按钮
-    var translateBtn = document.getElementById('translateBtn');
-    if (translateBtn) {
-        translateBtn.addEventListener('click', function() {
-            var currentUrl = window.location.href;
-            if (currentUrl && currentUrl !== 'about:blank' && !currentUrl.startsWith('file://')) {
-                var transUrl = 'https://translate.google.com/translate?sl=auto&tl=zh-CN&u=' + encodeURIComponent(currentUrl);
-                window.open(transUrl, '_blank');
-            } else {
-                window.showToast('无法翻译当前页面');
-            }
-        });
-    }
-
-    // 监听下载面板打开时刷新列表
-    var downloadSheet = document.getElementById('downloadSheet');
-    if (downloadSheet) {
-        var observer = new MutationObserver(function() {
-            if (downloadSheet.classList.contains('show')) {
-                if (typeof window.renderDownloadList === 'function') {
-                    window.renderDownloadList();
-                }
-            }
-        });
-        observer.observe(downloadSheet, { attributes: true, attributeFilter: ['class'] });
-    }
+    // 关闭事件
+    overlay.querySelector('.close-tool').addEventListener('click', function() {
+        overlay.remove();
+    });
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) overlay.remove();
+    });
+    return overlay;
 }
 
 // ============================================================
-// 启动
+// 工具1：HTTP 请求测试（Hoppscotch 风格）
 // ============================================================
-function startApp() {
-    loadData();
-    updateEngineBtn();
-    renderWindows();
-    setupBackgroundPicker();
-    updateCarouselPreview();
-    if (bgImages && bgImages.length > 0) {
-        if (isCarouselMode && bgImages.length > 1) {
-            startCarousel();
-        }
-    }
-    initApp();
+function openHttpTool() {
+    var html = `
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+            <select id="nt-method" style="flex:1;padding:8px;border-radius:6px;border:1px solid #ddd;background:#f9f9f9;font-size:14px;">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+                <option value="PATCH">PATCH</option>
+                <option value="HEAD">HEAD</option>
+                <option value="OPTIONS">OPTIONS</option>
+            </select>
+            <input id="nt-url" type="text" placeholder="请求URL" style="flex:3;padding:8px;border-radius:6px;border:1px solid #ddd;font-size:14px;">
+            <button id="nt-send" style="padding:8px 20px;background:#2979ff;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">发送</button>
+        </div>
+        <div style="margin-bottom:8px;">
+            <div style="display:flex;gap:4px;margin-bottom:4px;">
+                <span style="font-weight:500;font-size:14px;">请求头</span>
+                <button id="nt-add-header" style="background:none;border:1px solid #ddd;border-radius:4px;padding:2px 8px;font-size:12px;cursor:pointer;">+</button>
+            </div>
+            <div id="nt-headers-container" style="display:flex;flex-direction:column;gap:4px;max-height:120px;overflow-y:auto;padding:4px 0;">
+                <div style="display:flex;gap:4px;">
+                    <input class="nt-header-key" placeholder="Key" style="flex:1;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+                    <input class="nt-header-value" placeholder="Value" style="flex:1;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+                    <button class="nt-header-remove" style="background:none;border:none;color:#e74c3c;cursor:pointer;">✕</button>
+                </div>
+            </div>
+        </div>
+        <div style="margin-bottom:8px;">
+            <textarea id="nt-body" rows="4" placeholder="请求体（JSON/文本）" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:monospace;resize:vertical;"></textarea>
+        </div>
+        <div style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;font-size:14px;">
+                <span id="nt-status" style="font-weight:500;">状态码：</span>
+                <span id="nt-time" style="color:#888;">耗时：</span>
+            </div>
+            <div style="margin-top:4px;">
+                <div style="font-weight:500;font-size:14px;">响应头</div>
+                <div id="nt-response-headers" style="background:#f5f5f5;border-radius:6px;padding:8px;font-size:12px;font-family:monospace;max-height:80px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border:1px solid #eee;"></div>
+            </div>
+            <div style="margin-top:8px;">
+                <div style="font-weight:500;font-size:14px;">响应体</div>
+                <div id="nt-response-body" style="background:#f5f5f5;border-radius:6px;padding:8px;font-size:13px;font-family:monospace;max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border:1px solid #eee;"></div>
+            </div>
+        </div>
+    `;
+    var overlay = createToolOverlay('🌐 HTTP 请求测试', html);
 
-    // ---- 事件绑定 ----
-    var searchBtn = document.getElementById('searchBtn');
-    var searchInput = document.getElementById('searchInput');
-    var engineBtn = document.getElementById('engineBtn');
-    var navMenu = document.getElementById('navMenu');
-    var navWindow = document.getElementById('navWindow');
-    var addWindowBtn = document.getElementById('addWindowBtn');
-
-    if (searchBtn) {
-        searchBtn.addEventListener('click', function() {
-            doSearch(searchInput.value);
+    // 事件绑定（与之前相同）
+    overlay.querySelector('#nt-add-header').addEventListener('click', function() {
+        var container = overlay.querySelector('#nt-headers-container');
+        var div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.gap = '4px';
+        div.innerHTML = `
+            <input class="nt-header-key" placeholder="Key" style="flex:1;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+            <input class="nt-header-value" placeholder="Value" style="flex:1;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+            <button class="nt-header-remove" style="background:none;border:none;color:#e74c3c;cursor:pointer;">✕</button>
+        `;
+        container.appendChild(div);
+        div.querySelector('.nt-header-remove').addEventListener('click', function() {
+            if (container.children.length > 1) div.remove();
+            else window.showToast('至少保留一个请求头');
         });
-    }
-    if (searchInput) {
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                doSearch(this.value);
-            }
-        });
-    }
-
-    if (engineBtn) {
-        engineBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleEngineDropdown();
-        });
-    }
-
-    document.addEventListener('click', function(e) {
-        var dd = document.getElementById('engineDropdown');
-        var btn = document.getElementById('engineBtn');
-        if (dd && btn && !dd.contains(e.target) && !btn.contains(e.target)) {
-            closeEngineDropdown();
-        }
     });
-
-    if (navMenu) {
-        navMenu.addEventListener('click', function() {
-            if (activePanel === 'menu') { closePanel('menu'); return; }
-            openPanel('menu');
-        });
-    }
-    if (navWindow) {
-        navWindow.addEventListener('click', function() {
-            if (activePanel === 'window') { closePanel('window'); return; }
-            renderWindows();
-            openPanel('window');
-        });
-    }
-
-    document.querySelectorAll('.panel-close').forEach(function(btn) {
+    // 为初始的删除按钮绑定事件
+    overlay.querySelectorAll('.nt-header-remove').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            closePanel(this.dataset.close);
-        });
-    });
-    document.querySelectorAll('.panel-overlay').forEach(function(overlay) {
-        overlay.addEventListener('click', function() {
-            var name = this.id.replace('Overlay', '');
-            closePanel(name);
-        });
-    });
-
-    document.querySelectorAll('.menu-item').forEach(function(item) {
-        item.addEventListener('click', function() {
-            var action = this.dataset.action;
-            handleMenuAction(action);
+            var parent = this.parentElement;
+            if (parent.parentElement.children.length > 1) {
+                parent.remove();
+            } else {
+                window.showToast('至少保留一个请求头');
+            }
         });
     });
 
-    if (addWindowBtn) {
-        addWindowBtn.addEventListener('click', function() {
-            var id = 'win_' + Date.now();
-            windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Date.now() });
-            saveWindows();
-            renderWindows();
-            window.showToast('已创建新窗口');
-            window.location.href = 'about:blank';
-        });
-    }
+    overlay.querySelector('#nt-send').addEventListener('click', function() {
+        var method = overlay.querySelector('#nt-method').value;
+        var url = overlay.querySelector('#nt-url').value.trim();
+        if (!url) {
+            window.showToast('请输入请求URL');
+            return;
+        }
 
-    setTimeout(function() {
-        if (searchInput) searchInput.focus();
-    }, 300);
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startApp);
-} else {
-    startApp();
-}
+        var headers = {};
+        var headerKeys = overlay.querySelectorAll('.nt-header-key');
+        var headerValues = overlay.querySelectorAll('.nt-header-value');
+        for (var i = 0; i < headerKeys.length; i++) {
+       
