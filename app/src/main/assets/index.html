@@ -3,118 +3,954 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的浏览器</title>
+    <title>MyBrowser</title>
     <style>
+        /* ===== 全局重置 ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
-        body {
-            background: #f1f3f4;
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #f2f4f8;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* ===== 主容器 ===== */
+        .app-container {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-            margin: 0;
+            flex-direction: column;
+            height: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            background: #f2f4f8;
+            position: relative;
+            overflow: hidden;
         }
-        .container {
-            text-align: center;
-            width: 90%;
-            max-width: 600px;
+
+        /* ===== 顶部状态栏占位 ===== */
+        .status-bar {
+            height: 32px;
+            background: #f2f4f8;
+            flex-shrink: 0;
         }
-        .logo {
-            font-size: 36px;
-            font-weight: bold;
-            color: #4285f4;
-            margin-bottom: 30px;
+
+        /* ===== 内容区（可滚动） ===== */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 18px 12px 18px;
+            -webkit-overflow-scrolling: touch;
         }
-        .logo span {
-            color: #ea4335;
+        .content-area::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* ===== 搜索框区域 ===== */
+        .search-section {
+            padding-top: 10px;
+            padding-bottom: 18px;
         }
         .search-box {
             display: flex;
             align-items: center;
-            background: white;
-            border-radius: 30px;
-            padding: 4px 4px 4px 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-            transition: box-shadow 0.2s;
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            padding: 0 4px 0 0;
+            transition: box-shadow 0.25s ease;
+            border: 1px solid rgba(0, 0, 0, 0.02);
         }
         .search-box:focus-within {
-            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            box-shadow: 0 4px 20px rgba(41, 121, 255, 0.18);
+            border-color: #2979ff;
         }
+
+        /* 引擎切换按钮 */
+        .engine-btn {
+            flex-shrink: 0;
+            padding: 0 10px 0 16px;
+            height: 48px;
+            background: transparent;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: #2979ff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            position: relative;
+            white-space: nowrap;
+        }
+        .engine-btn::after {
+            content: "▾";
+            font-size: 11px;
+            color: #999;
+            margin-left: 2px;
+        }
+        .engine-btn:active {
+            opacity: 0.6;
+        }
+
+        /* 搜索输入框 */
         .search-box input {
             flex: 1;
             border: none;
             outline: none;
-            font-size: 18px;
-            padding: 14px 0;
+            font-size: 16px;
+            padding: 12px 4px;
             background: transparent;
-            color: #333;
+            color: #1a1a2e;
+            min-width: 0;
+            height: 48px;
         }
         .search-box input::placeholder {
-            color: #999;
-            font-size: 16px;
+            color: #b0b8c8;
+            font-size: 15px;
         }
-        .search-box button {
-            background: #4285f4;
-            color: white;
+
+        /* 搜索按钮 */
+        .search-btn {
+            flex-shrink: 0;
+            background: #2979ff;
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            margin-right: 4px;
+            white-space: nowrap;
+        }
+        .search-btn:active {
+            background: #1a5fd0;
+            transform: scale(0.96);
+        }
+
+        /* ===== 继续浏览卡片 ===== */
+        .continue-section {
+            margin-top: 4px;
+            margin-bottom: 18px;
+        }
+        .continue-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 16px 18px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .continue-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        }
+        .continue-card .left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            overflow: hidden;
+            flex: 1;
+        }
+        .continue-card .icon-wrap {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: #eef3fe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 18px;
+            color: #2979ff;
+            font-weight: 600;
+        }
+        .continue-card .info {
+            overflow: hidden;
+            flex: 1;
+        }
+        .continue-card .info .title {
+            font-size: 15px;
+            font-weight: 500;
+            color: #1a1a2e;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .continue-card .info .url {
+            font-size: 12px;
+            color: #999;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+        .continue-card .arrow {
+            color: #ccc;
+            font-size: 18px;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+        .continue-empty {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 22px 18px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+            text-align: center;
+            color: #b0b8c8;
+            font-size: 14px;
+            border: 1px dashed #e0e4ec;
+        }
+
+        /* ===== 底部导航 ===== */
+        .bottom-nav {
+            flex-shrink: 0;
+            background: #ffffff;
+            border-top: 1px solid #f0f2f5;
+            display: flex;
+            align-items: stretch;
+            height: 64px;
+            padding: 0 12px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.03);
+        }
+        .bottom-nav .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #888;
+            transition: color 0.2s;
+            border-radius: 12px;
+            padding: 4px 0;
+            position: relative;
+        }
+        .bottom-nav .nav-item:active {
+            background: #f5f7fa;
+        }
+        .bottom-nav .nav-item .nav-icon {
+            font-size: 22px;
+            line-height: 1.2;
+            transition: transform 0.2s;
+        }
+        .bottom-nav .nav-item .nav-label {
+            font-size: 11px;
+            margin-top: 2px;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+        .bottom-nav .nav-item.active {
+            color: #2979ff;
+        }
+        .bottom-nav .nav-item.active .nav-icon {
+            transform: scale(1.05);
+        }
+
+        /* ===== 面板通用 ===== */
+        .panel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.35);
+            z-index: 100;
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+        .panel-overlay.show {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .panel-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 480px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 28px 28px 0 0;
+            z-index: 101;
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.12);
+        }
+        .panel-sheet.show {
+            transform: translateY(0);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px 12px 20px;
+            border-bottom: 1px solid #f0f2f5;
+            flex-shrink: 0;
+        }
+        .panel-header .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .panel-header .panel-close {
+            font-size: 26px;
+            color: #999;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+        }
+        .panel-header .panel-close:active {
+            color: #555;
+        }
+
+        .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 18px 28px 18px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .panel-body::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* ===== 菜单面板 ===== */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px 8px;
+            padding-top: 8px;
+        }
+        .menu-grid .menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 4px 12px 4px;
+            background: #f5f7fa;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            gap: 8px;
+        }
+        .menu-grid .menu-item:active {
+            background: #e8ecf2;
+            transform: scale(0.95);
+        }
+        .menu-grid .menu-item .mi-icon {
+            font-size: 28px;
+            line-height: 1;
+        }
+        .menu-grid .menu-item .mi-label {
+            font-size: 12px;
+            color: #333;
+            font-weight: 400;
+        }
+
+        /* ===== 窗口面板 ===== */
+        .window-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-top: 4px;
+        }
+        .window-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: #f5f7fa;
+            border-radius: 14px;
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .window-item:active {
+            background: #e8ecf2;
+        }
+        .window-item .w-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: #eef3fe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2979ff;
+            flex-shrink: 0;
+        }
+        .window-item .w-info {
+            flex: 1;
+            overflow: hidden;
+        }
+        .window-item .w-info .w-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1a1a2e;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .window-item .w-info .w-url {
+            font-size: 11px;
+            color: #999;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+        .window-item .w-del {
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 6px;
+            flex-shrink: 0;
+            transition: color 0.15s;
+        }
+        .window-item .w-del:active {
+            color: #e74c3c;
+        }
+        .window-empty {
+            text-align: center;
+            color: #b0b8c8;
+            font-size: 14px;
+            padding: 40px 0;
+        }
+        .window-add {
+            margin-top: 16px;
+            display: flex;
+            justify-content: center;
+        }
+        .window-add button {
+            background: #2979ff;
+            color: #fff;
             border: none;
             border-radius: 30px;
-            padding: 12px 24px;
+            padding: 14px 40px;
             font-size: 16px;
             font-weight: 500;
             cursor: pointer;
             transition: background 0.2s, transform 0.1s;
+            width: 100%;
+        }
+        .window-add button:active {
+            background: #1a5fd0;
+            transform: scale(0.97);
+        }
+
+        /* ===== 设置面板 ===== */
+        .settings-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            padding-top: 4px;
+        }
+        .settings-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 4px;
+            border-bottom: 1px solid #f0f2f5;
+            cursor: pointer;
+            transition: background 0.1s;
+            border-radius: 4px;
+        }
+        .settings-item:active {
+            background: #f5f7fa;
+        }
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+        .settings-item .s-label {
+            font-size: 15px;
+            color: #1a1a2e;
+        }
+        .settings-item .s-value {
+            font-size: 14px;
+            color: #999;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .settings-item .s-value .s-arrow {
+            color: #ccc;
+            font-size: 16px;
+        }
+
+        /* ===== 引擎下拉（自定义弹窗） ===== */
+        .engine-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.30);
+            z-index: 200;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        .engine-popup-overlay.show {
+            display: flex;
+        }
+        .engine-popup {
+            background: #ffffff;
+            border-radius: 28px 28px 0 0;
+            max-width: 480px;
+            width: 100%;
+            padding: 20px 20px 32px 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .engine-popup-overlay.show .engine-popup {
+            transform: translateY(0);
+        }
+        .engine-popup .ep-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1a1a2e;
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .engine-popup .ep-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 6px;
+            border-bottom: 1px solid #f5f6f8;
+            cursor: pointer;
+            transition: background 0.1s;
+            border-radius: 4px;
+        }
+        .engine-popup .ep-item:active {
+            background: #f5f7fa;
+        }
+        .engine-popup .ep-item .ep-name {
+            font-size: 15px;
+            color: #1a1a2e;
+        }
+        .engine-popup .ep-item .ep-check {
+            color: #2979ff;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .engine-popup .ep-custom {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .engine-popup .ep-custom input {
+            flex: 1;
+            min-width: 100px;
+            padding: 12px 14px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+            background: #f8f9fc;
+        }
+        .engine-popup .ep-custom input:focus {
+            border-color: #2979ff;
+            background: #fff;
+        }
+        .engine-popup .ep-custom button {
+            padding: 12px 24px;
+            background: #2979ff;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
             white-space: nowrap;
         }
-        .search-box button:active {
-            background: #3367d6;
-            transform: scale(0.96);
+        .engine-popup .ep-custom button:active {
+            background: #1a5fd0;
         }
-        .hint {
-            margin-top: 30px;
-            color: #777;
-            font-size: 14px;
+
+        /* ===== Toast 提示 ===== */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(0, 0, 0, 0.72);
+            color: #fff;
+            padding: 16px 30px;
+            border-radius: 14px;
+            font-size: 15px;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s, transform 0.25s;
+            backdrop-filter: blur(4px);
+            text-align: center;
+            max-width: 75%;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* ===== 工具类 ===== */
+        .hidden {
+            display: none !important;
+        }
+        .mt-8 {
+            margin-top: 8px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">My<span>Browser</span></div>
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="搜索或输入网址" autofocus>
-            <button id="searchBtn">搜索</button>
+
+    <!-- ===== 主容器 ===== -->
+    <div class="app-container" id="app">
+
+        <!-- 状态栏占位 -->
+        <div class="status-bar"></div>
+
+        <!-- 内容区 -->
+        <div class="content-area" id="contentArea">
+            <!-- 搜索区域 -->
+            <div class="search-section">
+                <div class="search-box">
+                    <button class="engine-btn" id="engineBtn">必应 ▾</button>
+                    <input type="text" id="searchInput" placeholder="搜索或输入网址" autofocus>
+                    <button class="search-btn" id="searchBtn">搜索</button>
+                </div>
+            </div>
+
+            <!-- 继续浏览 -->
+            <div class="continue-section" id="continueSection">
+                <!-- 动态由 JS 渲染 -->
+            </div>
+
+            <!-- 底部留白 -->
+            <div style="height: 8px;"></div>
         </div>
-        <div class="hint">直接输入关键字搜索 · 输入网址直接访问</div>
+
+        <!-- 底部导航 -->
+        <div class="bottom-nav">
+            <button class="nav-item" data-panel="menu" id="navMenu">
+                <span class="nav-icon">☰</span>
+                <span class="nav-label">菜单</span>
+            </button>
+            <button class="nav-item" data-panel="window" id="navWindow">
+                <span class="nav-icon">⊞</span>
+                <span class="nav-label">窗口</span>
+            </button>
+            <button class="nav-item" data-panel="settings" id="navSettings">
+                <span class="nav-icon">⚙</span>
+                <span class="nav-label">设置</span>
+            </button>
+        </div>
     </div>
 
-    <script>
-        const input = document.getElementById('searchInput');
-        const btn = document.getElementById('searchBtn');
+    <!-- ===== 面板：菜单 ===== -->
+    <div class="panel-overlay" id="menuOverlay"></div>
+    <div class="panel-sheet" id="menuSheet">
+        <div class="panel-header">
+            <span class="panel-title">菜单</span>
+            <button class="panel-close" data-close="menu">✕</button>
+        </div>
+        <div class="panel-body">
+            <div class="menu-grid">
+                <button class="menu-item" data-action="download">
+                    <span class="mi-icon">📥</span>
+                    <span class="mi-label">下载管理</span>
+                </button>
+                <button class="menu-item" data-action="history">
+                    <span class="mi-icon">⭐</span>
+                    <span class="mi-label">收藏/历史</span>
+                </button>
+                <button class="menu-item" data-action="video">
+                    <span class="mi-icon">🎬</span>
+                    <span class="mi-label">我的视频</span>
+                </button>
+                <button class="menu-item" data-action="novel">
+                    <span class="mi-icon">📖</span>
+                    <span class="mi-label">免费小说</span>
+                </button>
+                <button class="menu-item" data-action="tools">
+                    <span class="mi-icon">🧰</span>
+                    <span class="mi-label">工具箱</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
-        function doSearch() {
-            let query = input.value.trim();
-            if (!query) return;
-            if (query.startsWith('http://') || query.startsWith('https://')) {
-                window.location.href = query;
-            } else if (query.includes('.') && !query.includes(' ')) {
-                window.location.href = 'https://' + query;
-            } else {
-                window.location.href = 'https://www.bing.com/search?q=' + encodeURIComponent(query);
-            }
+    <!-- ===== 面板：窗口 ===== -->
+    <div class="panel-overlay" id="windowOverlay"></div>
+    <div class="panel-sheet" id="windowSheet">
+        <div class="panel-header">
+            <span class="panel-title">窗口管理</span>
+            <button class="panel-close" data-close="window">✕</button>
+        </div>
+        <div class="panel-body">
+            <div class="window-list" id="windowList">
+                <!-- 动态由 JS 渲染 -->
+            </div>
+            <div class="window-add">
+                <button id="addWindowBtn">+ 新建窗口</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 面板：设置 ===== -->
+    <div class="panel-overlay" id="settingsOverlay"></div>
+    <div class="panel-sheet" id="settingsSheet">
+        <div class="panel-header">
+            <span class="panel-title">设置</span>
+            <button class="panel-close" data-close="settings">✕</button>
+        </div>
+        <div class="panel-body">
+            <div class="settings-list">
+                <div class="settings-item" data-setting="font">
+                    <span class="s-label">字体设置</span>
+                    <span class="s-value">默认 <span class="s-arrow">›</span></span>
+                </div>
+                <div class="settings-item" data-setting="homepage">
+                    <span class="s-label">首页设置</span>
+                    <span class="s-value">极简首页 <span class="s-arrow">›</span></span>
+                </div>
+                <div class="settings-item" data-setting="search">
+                    <span class="s-label">搜索设置</span>
+                    <span class="s-value">必应 <span class="s-arrow">›</span></span>
+                </div>
+                <div class="settings-item" data-setting="browse">
+                    <span class="s-label">网页浏览设置</span>
+                    <span class="s-value"><span class="s-arrow">›</span></span>
+                </div>
+                <div class="settings-item" data-setting="download">
+                    <span class="s-label">网页下载设置</span>
+                    <span class="s-value"><span class="s-arrow">›</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 引擎切换下拉 ===== -->
+    <div class="engine-popup-overlay" id="enginePopup">
+        <div class="engine-popup">
+            <div class="ep-title">切换搜索引擎</div>
+            <div id="engineList">
+                <!-- 动态由 JS 渲染 -->
+            </div>
+            <div class="ep-custom">
+                <input type="text" id="customEngineName" placeholder="引擎名称">
+                <input type="text" id="customEngineUrl" placeholder="搜索URL（{q}代表关键词）">
+                <button id="addCustomEngine">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Toast ===== -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============================================================
+        // 数据层
+        // ============================================================
+
+        const DEFAULT_ENGINES = [
+            { name: '百度', url: 'https://www.baidu.com/s?wd={q}' },
+            { name: '360', url: 'https://www.so.com/s?q={q}' },
+            { name: '抖音', url: 'https://www.douyin.com/search/{q}' },
+            { name: '谷歌', url: 'https://www.google.com/search?q={q}' },
+        ];
+
+        // 当前引擎（默认必应）
+        let currentEngine = { name: '必应', url: 'https://www.bing.com/search?q={q}' };
+
+        // 自定义引擎列表
+        let customEngines = [];
+
+        // 窗口列表
+        let windows = [];
+
+        // 上次访问
+        let lastVisit = null;
+
+        // ============================================================
+        // 存储
+        // ============================================================
+
+        function loadData() {
+            try {
+                const ce = localStorage.getItem('mybrowser_custom_engines');
+                if (ce) customEngines = JSON.parse(ce);
+
+                const eng = localStorage.getItem('mybrowser_current_engine');
+                if (eng) currentEngine = JSON.parse(eng);
+
+                const ws = localStorage.getItem('mybrowser_windows');
+                if (ws) windows = JSON.parse(ws);
+
+                const lv = localStorage.getItem('mybrowser_last_visit');
+                if (lv) lastVisit = JSON.parse(lv);
+            } catch (e) { /* ignore */ }
         }
 
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                doSearch();
-            }
-        });
+        function saveCustomEngines() {
+            localStorage.setItem('mybrowser_custom_engines', JSON.stringify(customEngines));
+        }
 
-        btn.addEventListener('click', doSearch);
-    </script>
-</body>
-</html>
+        function saveCurrentEngine() {
+            localStorage.setItem('mybrowser_current_engine', JSON.stringify(currentEngine));
+        }
+
+        function saveWindows() {
+            localStorage.setItem('mybrowser_windows', JSON.stringify(windows));
+        }
+
+        function saveLastVisit(title, url) {
+            lastVisit = { title: title || url, url: url, time: Date.now() };
+            localStorage.setItem('mybrowser_last_visit', JSON.stringify(lastVisit));
+        }
+
+        // ============================================================
+        // 引擎管理
+        // ============================================================
+
+        function getAllEngines() {
+            return [...DEFAULT_ENGINES, ...customEngines];
+        }
+
+        function renderEnginePopup() {
+            const container = document.getElementById('engineList');
+            const all = getAllEngines();
+            const currentName = currentEngine.name;
+            let html = '';
+            all.forEach(eng => {
+                const checked = eng.name === currentName ? '✓' : '';
+                html += `
+                    <div class="ep-item" data-engine='${JSON.stringify(eng).replace(/'/g, "&#39;")}'>
+                        <span class="ep-name">${eng.name}</span>
+                        ${checked ? '<span class="ep-check">✓</span>' : ''}
+                    </div>
+                `;
+            });
+            // 自定义-Bing（用户自定义入口）
+            html += `
+                <div class="ep-item" style="border-bottom:none;margin-top:4px;color:#2979ff;" id="customBingEntry">
+                    <span class="ep-name">✏️ 自定义引擎</span>
+                </div>
+            `;
+            container.innerHTML = html;
+
+            // 绑定点击
+            container.querySelectorAll('.ep-item[data-engine]').forEach(el => {
+                el.addEventListener('click', function() {
+                    const eng = JSON.parse(this.dataset.engine);
+                    currentEngine = eng;
+                    saveCurrentEngine();
+                    updateEngineBtn();
+                    closeEnginePopup();
+                    showToast('已切换到：' + eng.name);
+                });
+            });
+
+            document.getElementById('customBingEntry').addEventListener('click', function() {
+                // 聚焦到自定义输入框
+                document.getElementById('customEngineName').focus();
+            });
+        }
+
+        function updateEngineBtn() {
+            document.getElementById('engineBtn').textContent = currentEngine.name + ' ▾';
+        }
+
+        // ============================================================
+        // 搜索
+        // ============================================================
+
+        function doSearch(query) {
+            if (!query || !query.trim()) return;
+            const q = query.trim();
+            let url = '';
+            if (q.startsWith('http://') || q.startsWith('https://')) {
+                url = q;
+            } else if (q.includes('.') && !q.includes(' ')) {
+                url = 'https://' + q;
+            } else {
+                url = currentEngine.url.replace(/\{q\}/g, encodeURIComponent(q));
+            }
+            // 记录上次访问
+            saveLastVisit(q, url);
+            // 添加到窗口列表（如果当前窗口不存在则新建）
+            addWindow(q, url);
+            // 跳转
+            window.location.href = url;
+        }
+
+        // ============================================================
+        // 窗口管理
+        // ============================================================
+
+        function addWindow(title, url) {
+            const id = Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+            windows.unshift({ id, title: title || url, url: url, time: Date.now() });
+            if (windows.length > 50) windows = windows.slice(0, 50);
+            saveWindows();
+            renderWindows();
+        }
+
+        function deleteWindow(id) {
+            windows = windows.filter(w => w.id !== id);
+            saveWindows();
+            renderWindows();
+        }
+
+        function renderWindows() {
+            const container = document.getElementById('windowList');
+            if (windows.length === 0) {
+                container.innerHTML = '<div class="window-empty">暂无窗口</div>';
+                return;
+            }
+            let html = '';
+            windows.forEach(w => {
+                const initial = (w.title || '网')[0].toUpperCase();
+                html += `
+                    <div class="window-item" data-id="${w.id}">
+                        <div class="w-icon">${initial}</div>
+                        <div class="w-info">
+                            <div class="w-title">${w.title || '未命名'}</div>
+                            <div class="w-url">${w.url || ''}</div>
+                        </div>
+                        <button class="w-del" data-id="${w.id}">✕</butt
