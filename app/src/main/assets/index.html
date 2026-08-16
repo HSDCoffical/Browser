@@ -268,7 +268,7 @@
             padding: 12px 20px 24px 20px;
             background: transparent;
             position: relative;
-            z-index: 2;
+            z-index: 200; /* 确保在面板之上 */
         }
         .bottom-actions .nav-capsule {
             display: flex;
@@ -309,7 +309,7 @@
             flex-shrink: 0;
         }
 
-        /* 面板通用 */
+        /* 面板通用 - 底部留空 */
         .panel-overlay {
             position: fixed;
             top: 0;
@@ -331,7 +331,7 @@
 
         .panel-sheet {
             position: fixed;
-            bottom: 0;
+            bottom: 76px; /* 关键修复：为底部胶囊留空 */
             left: 0;
             right: 0;
             max-width: 480px;
@@ -341,7 +341,7 @@
             z-index: 101;
             transform: translateY(100%);
             transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-            max-height: 85vh;
+            max-height: calc(100% - 76px);
             display: flex;
             flex-direction: column;
             box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.10);
@@ -683,6 +683,10 @@
             gap: 8px;
             margin-top: 8px;
         }
+        .carousel-setting .cs-preview .cs-thumb-wrap {
+            position: relative;
+            display: inline-block;
+        }
         .carousel-setting .cs-preview .cs-thumb {
             width: 60px;
             height: 60px;
@@ -694,26 +698,6 @@
         }
         .carousel-setting .cs-preview .cs-thumb.active {
             border-color: #2979ff;
-        }
-        .carousel-setting .cs-preview .cs-thumb .cs-del {
-            position: relative;
-            top: -10px;
-            right: -50px;
-            background: rgba(0,0,0,0.5);
-            color: #fff;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            cursor: pointer;
-        }
-        /* 修复缩略图容器相对定位 */
-        .carousel-setting .cs-preview .cs-thumb-wrap {
-            position: relative;
-            display: inline-block;
         }
         .carousel-setting .cs-preview .cs-thumb-wrap .cs-del {
             position: absolute;
@@ -761,6 +745,7 @@
         </div>
     </div>
 
+    <!-- ===== 第一批结束，第二批紧接下面 ===== -->
     <!-- ===== 菜单面板 ===== -->
     <div class="panel-overlay" id="menuOverlay"></div>
     <div class="panel-sheet" id="menuSheet">
@@ -877,9 +862,6 @@
     <div class="toast" id="toast"></div>
 
     <!-- ========================================================== -->
-    <!-- 第一批结束，第二批紧接下面                                  -->
-    <!-- ========================================================== -->
-    <!-- ========================================================== -->
     <!-- JavaScript 部分                                            -->
     <!-- ========================================================== -->
     <script>
@@ -898,14 +880,12 @@
         let windows = [];
         let lastVisit = null;
         let isIncognito = false;
-        let bgImages = [];           // 图片 base64 数组
+        let bgImages = [];
         let currentBgIndex = 0;
         let carouselTimer = null;
-        let carouselInterval = 3;    // 秒
+        let carouselInterval = 3;
 
-        // 下载管理数据
         let downloads = [];
-        // 收藏和历史
         let favorites = [];
         let history = [];
 
@@ -939,7 +919,6 @@
                 const hist = localStorage.getItem('mybrowser_history');
                 if (hist) history = JSON.parse(hist);
 
-                // 设置初始背景
                 if (bgImages && bgImages.length > 0) {
                     applyBgImage(currentBgIndex);
                 }
@@ -964,6 +943,22 @@
         function saveHistory() {
             localStorage.setItem('mybrowser_history', JSON.stringify(history));
         }
+        // 为了兼容 Java 调用，暴露 addHistory 到全局
+        window.addHistory = function(title, url) {
+            if (isIncognito) return;
+            history = history.filter(item => item.url !== url);
+            history.unshift({ title: title || url, url: url, time: Date.now() });
+            if (history.length > 100) history = history.slice(0, 100);
+            saveHistory();
+        };
+        window.addDownloadItem = function(name, url) {
+            downloads.push({ name, url, time: Date.now() });
+            saveDownloads();
+            // 如果下载面板打开，刷新
+            if (document.getElementById('downloadSheet').classList.contains('show')) {
+                renderDownloads();
+            }
+        };
 
         // ============================================================
         // 背景轮播管理
@@ -978,7 +973,6 @@
             document.body.style.backgroundImage = 'url(' + img + ')';
             currentBgIndex = index;
             saveBgIndex();
-            // 更新预览高亮
             updateCarouselPreview();
         }
 
@@ -1016,15 +1010,13 @@
             });
             container.innerHTML = html;
 
-            // 点击缩略图切换
             container.querySelectorAll('.cs-thumb').forEach(el => {
                 el.addEventListener('click', function() {
                     const idx = parseInt(this.dataset.index);
                     applyBgImage(idx);
-                    startCarousel(); // 重新启动轮播（如有）
+                    startCarousel();
                 });
             });
-            // 删除图片
             container.querySelectorAll('.cs-del').forEach(el => {
                 el.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -1048,15 +1040,6 @@
         // ============================================================
         // 收藏 / 历史管理
         // ============================================================
-
-        function addHistory(title, url) {
-            if (isIncognito) return;
-            // 去重
-            history = history.filter(item => item.url !== url);
-            history.unshift({ title: title || url, url: url, time: Date.now() });
-            if (history.length > 100) history = history.slice(0, 100);
-            saveHistory();
-        }
 
         function addFavorite(title, url) {
             if (favorites.some(item => item.url === url)) {
@@ -1092,14 +1075,12 @@
             });
             list.innerHTML = html;
 
-            // 打开
             list.querySelectorAll('.func-action').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const url = this.dataset.url;
                     if (url) window.location.href = url;
                 });
             });
-            // 删除
             list.querySelectorAll('.func-del').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const idx = parseInt(this.dataset.idx);
@@ -1148,7 +1129,6 @@
                 btn.addEventListener('click', function() {
                     const url = this.dataset.url;
                     if (url) {
-                        // 触发下载（通过创建a标签）
                         const a = document.createElement('a');
                         a.href = url;
                         a.target = '_blank';
@@ -1268,7 +1248,6 @@
             } else {
                 url = currentEngine.url.replace(/\{q\}/g, encodeURIComponent(q));
             }
-            // 记录历史
             addHistory(q, url);
             addWindow(q, url);
             window.location.href = url;
@@ -1412,7 +1391,6 @@
                     openPanel('tools');
                     break;
                 case 'fav':
-                    // 收藏当前页面
                     if (window.location.href && window.location.href !== 'about:blank') {
                         addFavorite(document.title || window.location.href, window.location.href);
                     } else {
@@ -1457,7 +1435,6 @@
             fileInput.addEventListener('change', function(e) {
                 const files = e.target.files;
                 if (!files || files.length === 0) return;
-                // 限制最多9张
                 const total = bgImages.length + files.length;
                 if (total > 9) {
                     showToast('最多选择9张图片');
@@ -1487,139 +1464,4 @@
                 this.value = '';
             });
 
-            reset.addEventListener('click', function() {
-                bgImages = [];
-                saveBgImages();
-                stopCarousel();
-                document.body.style.backgroundImage = '';
-                updateCarouselPreview();
-                showToast('已恢复默认背景');
-                closePanel('settings');
-            });
-
-            // 轮播间隔变化
-            document.getElementById('carouselInterval').addEventListener('change', function() {
-                const val = parseInt(this.value) || 3;
-                carouselInterval = val;
-                saveCarouselInterval();
-                if (bgImages.length > 1) {
-                    startCarousel();
-                }
-            });
-        }
-
-        // ============================================================
-        // 下载管理添加
-        // ============================================================
-
-        function setupDownloadAdd() {
-            document.getElementById('addDownloadBtn').addEventListener('click', function() {
-                const name = document.getElementById('downloadNameInput').value.trim();
-                const url = document.getElementById('downloadUrlInput').value.trim();
-                if (!name || !url) {
-                    showToast('请填写完整');
-                    return;
-                }
-                downloads.push({ name, url, time: Date.now() });
-                saveDownloads();
-                renderDownloads();
-                document.getElementById('downloadNameInput').value = '';
-                document.getElementById('downloadUrlInput').value = '';
-                showToast('已添加');
-            });
-        }
-
-        // ============================================================
-        // 历史/收藏切换
-        // ============================================================
-
-        function setupHistoryTabs() {
-            let currentMode = 'fav';
-            document.getElementById('historyTabFav').addEventListener('click', function() {
-                currentMode = 'fav';
-                renderHistory('fav');
-                this.style.background = '#2979ff';
-                document.getElementById('historyTabHist').style.background = '#888';
-            });
-            document.getElementById('historyTabHist').addEventListener('click', function() {
-                currentMode = 'hist';
-                renderHistory('hist');
-                this.style.background = '#2979ff';
-                document.getElementById('historyTabFav').style.background = '#888';
-            });
-        }
-
-        // ============================================================
-        // 初始化
-        // ============================================================
-
-        function init() {
-            loadData();
-            updateEngineBtn();
-            renderWindows();
-            setupBackgroundPicker();
-            setupDownloadAdd();
-            setupHistoryTabs();
-            updateCarouselPreview();
-            if (bgImages && bgImages.length > 1) {
-                startCarousel();
-            } else if (bgImages && bgImages.length === 1) {
-                applyBgImage(0);
-            }
-
-            document.getElementById('searchBtn').addEventListener('click', function() {
-                doSearch(document.getElementById('searchInput').value);
-            });
-            document.getElementById('searchInput').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    doSearch(this.value);
-                }
-            });
-
-            document.getElementById('engineBtn').addEventListener('click', function(e) {
-                e.stopPropagation();
-                toggleEngineDropdown();
-            });
-
-            document.addEventListener('click', function(e) {
-                const dd = document.getElementById('engineDropdown');
-                const btn = document.getElementById('engineBtn');
-                if (!dd.contains(e.target) && !btn.contains(e.target)) {
-                    closeEngineDropdown();
-                }
-            });
-
-            document.getElementById('navMenu').addEventListener('click', function() {
-                if (activePanel === 'menu') { closePanel('menu'); return; }
-                openPanel('menu');
-            });
-            document.getElementById('navWindow').addEventListener('click', function() {
-                if (activePanel === 'window') { closePanel('window'); return; }
-                renderWindows();
-                openPanel('window');
-            });
-
-            document.querySelectorAll('.panel-close').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    closePanel(this.dataset.close);
-                });
-            });
-            document.querySelectorAll('.panel-overlay').forEach(overlay => {
-                overlay.addEventListener('click', function() {
-                    const name = this.id.replace('Overlay', '');
-                    closePanel(name);
-                });
-            });
-
-            document.querySelectorAll('.menu-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const action = this.dataset.action;
-                    handleMenuAction(action);
-                });
-            });
-
-            document.getElementById('addWindowBtn').addEventListener('click', function() {
-                const id = 'win_' + Date.now();
-                windows.unshift({ id, title: '新窗口', url: 'about:blank', time: Date.now() });
-                saveWindows();
+            reset.a
