@@ -125,4 +125,331 @@
             }
 
             var body = overlay.querySelector('#nt-body').value;
-            var
+            var statusEl = overlay.querySelector('#nt-status');
+            var timeEl = overlay.querySelector('#nt-time');
+            var respBody = overlay.querySelector('#nt-response-body');
+            var respHeaders = overlay.querySelector('#nt-response-headers');
+
+            statusEl.textContent = '状态码：发送中...';
+            timeEl.textContent = '耗时：';
+            respBody.textContent = '等待响应...';
+            respHeaders.textContent = '';
+
+            var startTime = Date.now();
+            var fetchOptions = {
+                method: method,
+                headers: headers,
+                body: (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') ? body : undefined
+            };
+
+            fetch(url, fetchOptions)
+                .then(function(response) {
+                    var elapsed = Date.now() - startTime;
+                    statusEl.textContent = '状态码：' + response.status + ' ' + response.statusText;
+                    timeEl.textContent = '耗时：' + elapsed + 'ms';
+                    var headerText = '';
+                    response.headers.forEach(function(value, key) {
+                        headerText += key + ': ' + value + '\n';
+                    });
+                    respHeaders.textContent = headerText;
+                    return response.text();
+                })
+                .then(function(data) {
+                    try {
+                        var json = JSON.parse(data);
+                        respBody.textContent = JSON.stringify(json, null, 2);
+                    } catch(e) {
+                        respBody.textContent = data;
+                    }
+                })
+                .catch(function(err) {
+                    statusEl.textContent = '状态码：请求失败';
+                    timeEl.textContent = '耗时：-';
+                    respBody.textContent = '错误：' + err.message;
+                });
+        });
+    }
+
+    // ---------- WHOIS 查询 ----------
+    function openWhoisTool() {
+        var html = `
+            <div style="display:flex;gap:6px;margin-bottom:10px;">
+                <input id="whois-domain" type="text" placeholder="输入域名（如 example.com）" style="flex:3;padding:8px;border-radius:6px;border:1px solid #ddd;font-size:14px;">
+                <button id="whois-query" style="padding:8px 20px;background:#2979ff;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">查询</button>
+            </div>
+            <div id="whois-result" style="background:#f5f5f5;border-radius:6px;padding:12px;font-size:13px;font-family:monospace;max-height:400px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border:1px solid #eee;"></div>
+        `;
+        var overlay = createToolOverlay('📋 WHOIS 查询', html);
+        overlay.querySelector('#whois-query').addEventListener('click', function() {
+            var domain = overlay.querySelector('#whois-domain').value.trim();
+            if (!domain) { window.showToast('请输入域名'); return; }
+            var resultDiv = overlay.querySelector('#whois-result');
+            resultDiv.textContent = '查询中...';
+            fetch('https://api.hackertarget.com/whois/?q=' + encodeURIComponent(domain))
+                .then(function(res) { return res.text(); })
+                .then(function(data) {
+                    resultDiv.textContent = data || '未获取到信息';
+                })
+                .catch(function(err) {
+                    resultDiv.textContent = '查询失败：' + err.message;
+                });
+        });
+    }
+
+    // ---------- Ping 检测 ----------
+    function openPingTool() {
+        var html = `
+            <div style="display:flex;gap:6px;margin-bottom:10px;">
+                <input id="ping-host" type="text" placeholder="输入域名或IP（如 google.com）" style="flex:3;padding:8px;border-radius:6px;border:1px solid #ddd;font-size:14px;">
+                <button id="ping-start" style="padding:8px 20px;background:#2979ff;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">Ping</button>
+            </div>
+            <div id="ping-result" style="background:#f5f5f5;border-radius:6px;padding:12px;font-size:13px;font-family:monospace;max-height:400px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border:1px solid #eee;"></div>
+        `;
+        var overlay = createToolOverlay('📡 Ping 检测', html);
+        overlay.querySelector('#ping-start').addEventListener('click', function() {
+            var host = overlay.querySelector('#ping-host').value.trim();
+            if (!host) { window.showToast('请输入域名或IP'); return; }
+            var resultDiv = overlay.querySelector('#ping-result');
+            resultDiv.textContent = '正在检测...\n';
+            var url = host;
+            if (!host.startsWith('http://') && !host.startsWith('https://')) {
+                url = 'https://' + host;
+            }
+            var startTime = Date.now();
+            fetch(url, { method: 'HEAD', mode: 'no-cors' })
+                .then(function() {
+                    var elapsed = Date.now() - startTime;
+                    resultDiv.textContent = '✅ 响应正常，延迟：' + elapsed + 'ms';
+                })
+                .catch(function(err) {
+                    fetch(url, { method: 'GET', mode: 'no-cors' })
+                        .then(function() {
+                            var elapsed = Date.now() - startTime;
+                            resultDiv.textContent = '✅ 响应正常（no-cors），延迟：' + elapsed + 'ms';
+                        })
+                        .catch(function(e) {
+                            resultDiv.textContent = '❌ 请求失败：' + e.message + '\n注意：某些网站可能禁止跨域请求，可尝试使用 HTTP 测试工具。';
+                        });
+                });
+        });
+    }
+
+    // ---------- DNS 查询 ----------
+    function openDnsTool() {
+        var html = `
+            <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+                <input id="dns-domain" type="text" placeholder="输入域名" style="flex:2;padding:8px;border-radius:6px;border:1px solid #ddd;font-size:14px;">
+                <select id="dns-type" style="flex:1;padding:8px;border-radius:6px;border:1px solid #ddd;background:#f9f9f9;font-size:14px;">
+                    <option value="A">A</option>
+                    <option value="AAAA">AAAA</option>
+                    <option value="CNAME">CNAME</option>
+                    <option value="MX">MX</option>
+                    <option value="TXT">TXT</option>
+                    <option value="NS">NS</option>
+                </select>
+                <button id="dns-query" style="padding:8px 20px;background:#2979ff;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">查询</button>
+            </div>
+            <div id="dns-result" style="background:#f5f5f5;border-radius:6px;padding:12px;font-size:13px;font-family:monospace;max-height:400px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border:1px solid #eee;"></div>
+        `;
+        var overlay = createToolOverlay('🔍 DNS 查询', html);
+        overlay.querySelector('#dns-query').addEventListener('click', function() {
+            var domain = overlay.querySelector('#dns-domain').value.trim();
+            var type = overlay.querySelector('#dns-type').value;
+            if (!domain) { window.showToast('请输入域名'); return; }
+            var resultDiv = overlay.querySelector('#dns-result');
+            resultDiv.textContent = '查询中...';
+            var url = 'https://cloudflare-dns.com/dns-query?name=' + encodeURIComponent(domain) + '&type=' + type;
+            fetch(url, { headers: { 'Accept': 'application/dns-json' } })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.Status === 0 && data.Answer) {
+                        var lines = [];
+                        data.Answer.forEach(function(ans) {
+                            lines.push(ans.name + '  ' + ans.type + '  ' + ans.data);
+                        });
+                        resultDiv.textContent = lines.join('\n') || '无记录';
+                    } else {
+                        resultDiv.textContent = '未找到记录或查询失败';
+                    }
+                })
+                .catch(function(err) {
+                    resultDiv.textContent = '查询失败：' + err.message;
+                });
+        });
+    }
+
+    // ---------- IP 信息查询 ----------
+    function openIpTool() {
+        var html = `
+            <div style="display:flex;gap:6px;margin-bottom:10px;">
+                <input id="ip-address" type="text" placeholder="输入IP地址（留空查本机）" style="flex:3;padding:8px;border-radius:6px;border:1px solid #ddd;font-size:14px;">
+                <button id="ip-query" style="padding:8px 20px;background:#2979ff;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">查询</button>
+            </div>
+            <div id="ip-result" style="background:#f5f5f5;border-radius:6px;padding:12px;font-size:13px;font-family:monospace;max-height:400px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border:1px solid #eee;"></div>
+        `;
+        var overlay = createToolOverlay('🌍 IP 信息查询', html);
+        overlay.querySelector('#ip-query').addEventListener('click', function() {
+            var ip = overlay.querySelector('#ip-address').value.trim();
+            var resultDiv = overlay.querySelector('#ip-result');
+            resultDiv.textContent = '查询中...';
+            var url = ip ? 'https://ip-api.com/json/' + ip : 'https://ip-api.com/json/';
+            fetch(url)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.status === 'success') {
+                        resultDiv.textContent = 'IP: ' + data.query + '\n' +
+                            '国家: ' + data.country + '\n' +
+                            '地区: ' + data.regionName + '\n' +
+                            '城市: ' + data.city + '\n' +
+                            'ISP: ' + data.isp + '\n' +
+                            '时区: ' + data.timezone + '\n' +
+                            '经纬度: ' + data.lat + ', ' + data.lon;
+                    } else {
+                        resultDiv.textContent = '查询失败：' + (data.message || '未知错误');
+                    }
+                })
+                .catch(function(err) {
+                    resultDiv.textContent = '查询失败：' + err.message;
+                });
+        });
+    }
+
+    // ---------- Base64 编解码 ----------
+    function openBase64Tool() {
+        var html = `
+            <div style="margin-bottom:8px;">
+                <textarea id="b64-input" rows="4" placeholder="输入要编码/解码的文本" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:monospace;resize:vertical;"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+                <button id="b64-encode" style="padding:8px 20px;background:#2979ff;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">编码</button>
+                <button id="b64-decode" style="padding:8px 20px;background:#f5a623;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">解码</button>
+                <button id="b64-clear" style="padding:8px 20px;background:#e74c3c;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">清空</button>
+            </div>
+            <div>
+                <div style="font-weight:500;font-size:14px;">结果</div>
+                <div id="b64-result" style="background:#f5f5f5;border-radius:6px;padding:12px;font-size:13px;font-family:monospace;min-height:80px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border:1px solid #eee;"></div>
+            </div>
+        `;
+        var overlay = createToolOverlay('🔐 Base64 编解码', html);
+        overlay.querySelector('#b64-encode').addEventListener('click', function() {
+            var input = overlay.querySelector('#b64-input').value;
+            try {
+                var encoded = btoa(unescape(encodeURIComponent(input)));
+                overlay.querySelector('#b64-result').textContent = encoded;
+            } catch(e) {
+                overlay.querySelector('#b64-result').textContent = '编码失败：' + e.message;
+            }
+        });
+        overlay.querySelector('#b64-decode').addEventListener('click', function() {
+            var input = overlay.querySelector('#b64-input').value;
+            try {
+                var decoded = decodeURIComponent(escape(atob(input)));
+                overlay.querySelector('#b64-result').textContent = decoded;
+            } catch(e) {
+                overlay.querySelector('#b64-result').textContent = '解码失败：' + e.message;
+            }
+        });
+        overlay.querySelector('#b64-clear').addEventListener('click', function() {
+            overlay.querySelector('#b64-input').value = '';
+            overlay.querySelector('#b64-result').textContent = '';
+        });
+    }
+
+    // ---------- URL 编解码 ----------
+    function openUrlTool() {
+        var html = `
+            <div style="margin-bottom:8px;">
+                <textarea id="url-input" rows="4" placeholder="输入要编码/解码的URL" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:monospace;resize:vertical;"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+                <button id="url-encode" style="padding:8px 20px;background:#2979ff;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">编码</button>
+                <button id="url-decode" style="padding:8px 20px;background:#f5a623;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">解码</button>
+                <button id="url-clear" style="padding:8px 20px;background:#e74c3c;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">清空</button>
+            </div>
+            <div>
+                <div style="font-weight:500;font-size:14px;">结果</div>
+                <div id="url-result" style="background:#f5f5f5;border-radius:6px;padding:12px;font-size:13px;font-family:monospace;min-height:80px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border:1px solid #eee;"></div>
+            </div>
+        `;
+        var overlay = createToolOverlay('🔗 URL 编解码', html);
+        overlay.querySelector('#url-encode').addEventListener('click', function() {
+            var input = overlay.querySelector('#url-input').value;
+            try {
+                overlay.querySelector('#url-result').textContent = encodeURIComponent(input);
+            } catch(e) {
+                overlay.querySelector('#url-result').textContent = '编码失败：' + e.message;
+            }
+        });
+        overlay.querySelector('#url-decode').addEventListener('click', function() {
+            var input = overlay.querySelector('#url-input').value;
+            try {
+                overlay.querySelector('#url-result').textContent = decodeURIComponent(input);
+            } catch(e) {
+                overlay.querySelector('#url-result').textContent = '解码失败：' + e.message;
+            }
+        });
+        overlay.querySelector('#url-clear').addEventListener('click', function() {
+            overlay.querySelector('#url-input').value = '';
+            overlay.querySelector('#url-result').textContent = '';
+        });
+    }
+
+    // ---------- 工具箱主面板 ----------
+    function openToolsPanel() {
+        var overlay = document.createElement('div');
+        overlay.id = 'toolsPanelOverlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+        var sheet = document.createElement('div');
+        sheet.style.cssText = 'background:#fff;border-radius:16px;max-width:92%;max-height:90%;width:480px;overflow-y:auto;padding:20px;box-shadow:0 8px 40px rgba(0,0,0,0.3);position:relative;';
+        sheet.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h3 style="margin:0;">🧰 工具箱</h3>
+                <button id="closeToolsPanel" style="background:none;border:none;font-size:24px;cursor:pointer;">✕</button>
+            </div>
+            <div id="toolsList" style="display:flex;flex-direction:column;gap:10px;"></div>
+        `;
+        overlay.appendChild(sheet);
+        document.body.appendChild(overlay);
+
+        overlay.querySelector('#closeToolsPanel').addEventListener('click', function() {
+            overlay.remove();
+        });
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) overlay.remove();
+        });
+
+        var tools = [
+            { id: 'http', label: '🌐 HTTP 请求测试', desc: 'GET/POST/PUT/DELETE，自定义请求头' },
+            { id: 'whois', label: '📋 WHOIS 查询', desc: '查询域名 WHOIS 信息' },
+            { id: 'ping', label: '📡 Ping 检测', desc: 'HTTP 延迟测速' },
+            { id: 'dns', label: '🔍 DNS 查询', desc: 'A/AAAA/CNAME/MX/TXT/NS 记录' },
+            { id: 'ip', label: '🌍 IP 信息查询', desc: '地理位置和 ISP' },
+            { id: 'b64', label: '🔐 Base64 编解码', desc: '文本与 Base64 互转' },
+            { id: 'url', label: '🔗 URL 编解码', desc: 'URL 编码与解码' }
+        ];
+
+        var container = document.getElementById('toolsList');
+        container.innerHTML = '';
+        tools.forEach(function(tool) {
+            var div = document.createElement('div');
+            div.style.cssText = 'background:#f5f7fa;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border:1px solid rgba(0,0,0,0.04);transition:background 0.15s;';
+            div.innerHTML = '<div><div style="font-weight:500;font-size:15px;">' + tool.label + '</div><div style="font-size:13px;color:#888;">' + tool.desc + '</div></div><span style="color:#ccc;font-size:20px;">›</span>';
+            container.appendChild(div);
+            div.addEventListener('click', function() {
+                if (overlay) overlay.remove();
+                switch (tool.id) {
+                    case 'http': openHttpTool(); break;
+                    case 'whois': openWhoisTool(); break;
+                    case 'ping': openPingTool(); break;
+                    case 'dns': openDnsTool(); break;
+                    case 'ip': openIpTool(); break;
+                    case 'b64': openBase64Tool(); break;
+                    case 'url': openUrlTool(); break;
+                }
+            });
+        });
+    }
+
+    window.openToolsPanel = openToolsPanel;
+})();
