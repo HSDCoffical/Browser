@@ -8,11 +8,11 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- 顶部状态栏占位 -->
+        <!-- 状态栏占位 -->
         <div class="status-bar"></div>
 
-        <!-- ===== 新增顶部地址栏 ===== -->
-        <div class="top-bar" id="topBar">
+        <!-- 顶部地址栏（默认隐藏） -->
+        <div class="top-bar" id="topBar" style="display:none;">
             <div class="top-title" id="topTitle">MyBrowser</div>
             <div class="top-actions">
                 <button class="top-btn" id="refreshBtn">⟳</button>
@@ -20,8 +20,8 @@
             </div>
         </div>
 
-        <!-- 搜索框 -->
-        <div class="content-area">
+        <!-- 搜索框区域 -->
+        <div class="content-area" id="contentArea">
             <div class="search-section">
                 <div class="search-box">
                     <button class="engine-btn" id="engineBtn">必应 ▾</button>
@@ -112,7 +112,7 @@
         </div>
     </div>
 
-    <!-- 下载管理面板（独立） -->
+    <!-- 下载管理面板 -->
     <div class="panel-overlay" id="downloadOverlay"></div>
     <div class="panel-sheet" id="downloadSheet">
         <div class="panel-header">
