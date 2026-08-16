@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.inputmethod.EditorInfo;  // ← 关键导入
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -21,7 +22,6 @@ public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private EditText urlEdit;
 
-    // 文件选择器回调
     private ValueCallback<Uri[]> mFilePathCallback;
     private static final int FILE_CHOOSER_REQUEST_CODE = 1;
     private static final int PERMISSION_REQUEST_CODE = 100;
@@ -34,17 +34,14 @@ public class MainActivity extends AppCompatActivity {
         webView = findViewById(R.id.webView);
         urlEdit = findViewById(R.id.urlEdit);
 
-        // 请求所有必要权限（特别是存储权限）
         checkAndRequestPermissions();
 
-        // WebView 设置
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
         webSettings.setAllowFileAccess(true);
         webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
-        // 设置 WebViewClient（注入 Eruda）
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
@@ -59,12 +56,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 设置 WebChromeClient（支持文件选择器）
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback,
                                              FileChooserParams fileChooserParams) {
-                // 确保有存储权限再打开文件选择器
                 if (checkAndRequestPermissions()) {
                     mFilePathCallback = filePathCallback;
                     Intent intent = fileChooserParams.createIntent();
@@ -81,10 +76,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 加载自定义首页
         webView.loadUrl("file:///android_asset/index.html");
 
-        // 地址栏逻辑（虽然隐藏但保留）
         urlEdit.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_GO) {
                 String input = urlEdit.getText().toString().trim();
@@ -101,10 +94,6 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
     }
-
-    // ============================================================
-    // 权限管理
-    // ============================================================
 
     private boolean checkAndRequestPermissions() {
         String[] permissions = getRequiredPermissions();
@@ -159,15 +148,8 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            // 可以在这里提示用户权限结果
-            // 如果用户拒绝，可以再次请求或提示
-        }
+        // 可以在此处理权限结果
     }
-
-    // ============================================================
-    // 文件选择器回调
-    // ============================================================
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
