@@ -87,6 +87,14 @@ function loadData() {
         }
         var el = document.getElementById('carouselInterval');
         if (el) el.value = carouselInterval;
+        
+        // 恢复夜间模式状态
+        var nightMode = localStorage.getItem('mybrowser_night_mode');
+        if (nightMode === 'true') {
+            document.body.classList.add('night-mode');
+            var nightToggle = document.getElementById('nightModeToggle');
+            if (nightToggle) nightToggle.classList.add('active');
+        }
     } catch (e) { /* ignore */ }
 }
 
@@ -113,6 +121,9 @@ function saveWindows() {
 }
 function saveIncognito() {
     localStorage.setItem('mybrowser_incognito', JSON.stringify(isIncognito));
+}
+function saveNightMode() {
+    localStorage.setItem('mybrowser_night_mode', String(document.body.classList.contains('night-mode')));
 }
 
 // ============================================================
@@ -377,7 +388,7 @@ function closeAllPanels() {
 }
 
 // ============================================================
-// 菜单功能
+// 菜单功能（夜间模式已移除，移至设置面板）
 // ============================================================
 function handleMenuAction(action) {
     switch (action) {
@@ -408,11 +419,6 @@ function handleMenuAction(action) {
             }
             closePanel('menu');
             break;
-        case 'night':
-            document.body.classList.toggle('night-mode');
-            closePanel('menu');
-            window.showToast(document.body.classList.contains('night-mode') ? '夜间模式已开启' : '夜间模式已关闭');
-            break;
         case 'exit':
             if (confirm('确定退出应用吗？')) {
                 window.showToast('正在退出...');
@@ -429,7 +435,7 @@ function handleMenuAction(action) {
 }
 
 // ============================================================
-// 动态加载工具箱模块（修复版）
+// 动态加载工具箱模块
 // ============================================================
 var toolsLoaded = false;
 function loadToolsModule() {
@@ -455,6 +461,19 @@ function loadToolsModule() {
         window.showToast('工具箱加载失败，请检查 tools.js 文件是否存在');
     };
     document.head.appendChild(script);
+}
+
+// ============================================================
+// 夜间模式切换（在设置面板中使用）
+// ============================================================
+function toggleNightMode() {
+    document.body.classList.toggle('night-mode');
+    var toggle = document.getElementById('nightModeToggle');
+    if (toggle) {
+        toggle.classList.toggle('active');
+    }
+    saveNightMode();
+    window.showToast(document.body.classList.contains('night-mode') ? '夜间模式已开启' : '夜间模式已关闭');
 }
 
 // ============================================================
@@ -698,6 +717,14 @@ function initApp() {
             }
         });
         observer.observe(downloadSheet, { attributes: true, attributeFilter: ['class'] });
+    }
+    
+    // 夜间模式开关（在设置面板中）
+    var nightToggle = document.getElementById('nightModeToggle');
+    if (nightToggle) {
+        nightToggle.addEventListener('click', function() {
+            toggleNightMode();
+        });
     }
 }
 
