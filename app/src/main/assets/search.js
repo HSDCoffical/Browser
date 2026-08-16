@@ -13,11 +13,9 @@
         } else if (q.indexOf('.') !== -1 && q.indexOf(' ') === -1) {
             url = 'https://' + q;
         } else {
-            // 使用当前引擎
             if (window.currentEngine && window.currentEngine.url) {
                 url = window.currentEngine.url.replace(/\{q\}/g, encodeURIComponent(q));
             } else {
-                // 安全后备
                 url = 'https://cn.bing.com/search?q=' + encodeURIComponent(q) + '&from=vivosearch2025';
             }
         }
