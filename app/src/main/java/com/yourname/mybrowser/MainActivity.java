@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
         webView = findViewById(R.id.webView);
         urlEdit = findViewById(R.id.urlEdit);
 
-        // 请求存储权限（用于下载）
+        // 请求存储权限（下载需要）
         requestAllPermissions();
 
         WebSettings webSettings = webView.getSettings();
@@ -48,7 +48,6 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         webSettings.setAllowContentAccess(true);
 
-        // 设置 WebViewClient（注入 Eruda + 传递标题）
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
@@ -62,10 +61,9 @@ public class MainActivity extends AppCompatActivity {
                         "})();";
                 view.evaluateJavascript(erudaJs, null);
 
-                // 获取页面标题并传递给前端（更新顶部栏）
+                // 传递标题到前端（顶部栏）
                 String title = view.getTitle();
                 if (title == null || title.isEmpty()) title = url;
-                // 转义单引号
                 String safeTitle = title.replace("'", "\\'");
                 String safeUrl = url.replace("'", "\\'");
                 String js = "javascript:window.updateTopBar('" + safeTitle + "', '" + safeUrl + "');";
@@ -73,7 +71,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 设置 WebChromeClient（文件选择器）
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback,
@@ -91,14 +88,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // ===== 修改下载监听：使用 DownloadManager 下载，不跳转外部浏览器 =====
+        // ===== 下载监听：使用 DownloadManager 下载 =====
         webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
             // 获取文件名
             String fileName = Uri.parse(url).getLastPathSegment();
             if (fileName == null || fileName.isEmpty()) {
                 fileName = "下载文件_" + System.currentTimeMillis();
             }
-            // 通知前端记录下载（调用 addDownloadItem）
+
+            // 通知前端记录下载
             String js = "javascript:window.addDownloadItem('" + fileName.replace("'", "\\'") + "', '" + url.replace("'", "\\'") + "');";
             webView.evaluateJavascript(js, null);
 
@@ -107,15 +105,16 @@ public class MainActivity extends AppCompatActivity {
             request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE);
             request.setTitle(fileName);
             request.setDescription("正在下载...");
+            // 设置下载目录（公共 Downloads 目录）
             request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
 
             DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
             if (dm != null) {
-                dm.enqueue(request);
-                Toast.makeText(MainActivity.this, "下载开始：" + fileName, Toast.LENGTH_SHORT).show();
+                long id = dm.enqueue(request);
+                Toast.makeText(MainActivity.this, "开始下载：" + fileName, Toast.LENGTH_LONG).show();
             } else {
-                Toast.makeText(MainActivity.this, "下载失败", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "下载失败，请重试", Toast.LENGTH_SHORT).show();
             }
         });
 
