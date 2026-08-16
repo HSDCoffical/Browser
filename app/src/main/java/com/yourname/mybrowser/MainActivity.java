@@ -1,4 +1,4 @@
-package com.yourname.mybrowser;
+package com.yourname.mybrowser; // 请改为你的实际包名
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
         webView = findViewById(R.id.webView);
         urlEdit = findViewById(R.id.urlEdit);
 
+        // 请求权限
         requestAllPermissions();
 
         WebSettings webSettings = webView.getSettings();
@@ -72,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                // Eruda
+                // 注入 Eruda
                 String erudaJs = "javascript:(function(){" +
                         "var s=document.createElement('script');" +
                         "s.src='https://cdn.jsdelivr.net/npm/eruda';" +
@@ -81,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
                         "})();";
                 view.evaluateJavascript(erudaJs, null);
 
+                // 更新顶部栏
                 String title = view.getTitle();
                 if (title == null || title.isEmpty()) title = url;
                 String safeTitle = title.replace("'", "\\'");
@@ -107,9 +109,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 自定义下载拦截
+        // 自定义下载拦截（弹出确认框）
         webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
-            // 弹出确认框
             new AlertDialog.Builder(MainActivity.this)
                     .setTitle("下载文件")
                     .setMessage("是否下载该文件？\n" + url)
@@ -137,33 +138,163 @@ public class MainActivity extends AppCompatActivity {
             }
             return false;
         });
+
+        // 注册 JS 接口（下载控制）
+        setupJSInterface();
     }
 
-    // 启动下载任务
+    // ============================================================
+    // 权限管理
+    // ============================================================
+    private void requestAllPermissions() {
+        String[] permissions = getAllPermissions();
+        boolean needRequest = false;
+        for (String perm : permissions) {
+            if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
+                needRequest = true;
+                break;
+            }
+        }
+        if (needRequest) {
+            ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    private String[] getAllPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return new String[]{
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_VIDEO,
+                    Manifest.permission.READ_MEDIA_AUDIO,
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.READ_CONTACTS,
+                    Manifest.permission.READ_CALENDAR,
+                    Manifest.permission.BODY_SENSORS,
+                    Manifest.permission.ACTIVITY_RECOGNITION
+            };
+        } else {
+            return new String[]{
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.READ_CONTACTS,
+                    Manifest.permission.WRITE_CONTACTS,
+                    Manifest.permission.READ_CALENDAR,
+                    Manifest.permission.WRITE_CALENDAR,
+                    Manifest.permission.BODY_SENSORS,
+                    Manifest.permission.ACTIVITY_RECOGNITION
+            };
+        }
+    }
+
+    private boolean checkStoragePermission() {
+        String permission = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                ? Manifest.permission.READ_MEDIA_IMAGES
+                : Manifest.permission.READ_EXTERNAL_STORAGE;
+        return ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestStoragePermission() {
+        String permission = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                ? Manifest.permission.READ_MEDIA_IMAGES
+                : Manifest.permission.READ_EXTERNAL_STORAGE;
+        ActivityCompat.requestPermissions(this, new String[]{permission}, PERMISSION_REQUEST_CODE);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        // 用户处理结果，可忽略
+    }
+
+    // ============================================================
+    // 文件选择器回调
+    // ============================================================
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
+            if (mFilePathCallback != null) {
+                Uri[] results = null;
+                if (resultCode == RESULT_OK && data != null) {
+                    String dataString = data.getDataString();
+                    if (dataString != null) {
+                        results = new Uri[]{Uri.parse(dataString)};
+                    }
+                }
+                mFilePathCallback.onReceiveValue(results);
+                mFilePathCallback = null;
+            }
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (webView.canGoBack()) {
+            webView.goBack();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    // ============================================================
+    // JS 接口（供前端调用下载控制）
+    // ============================================================
+    private class NativeDownloadBridge {
+        @android.webkit.JavascriptInterface
+        public void togglePause(String id, boolean resume) {
+            DownloadTask task = downloadTasks.get(id);
+            if (task != null) {
+                task.togglePause(resume);
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        public void cancel(String id) {
+            DownloadTask task = downloadTasks.get(id);
+            if (task != null) {
+                task.cancel();
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        public void openFile(String id) {
+            // 可扩展打开文件功能
+            Toast.makeText(MainActivity.this, "打开文件功能开发中", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void setupJSInterface() {
+        webView.addJavascriptInterface(new NativeDownloadBridge(), "_nativeDownload");
+    }
+
+    // ============================================================
+    // 下载任务管理
+    // ============================================================
     private void startDownload(String url, String contentDisposition) {
-        // 生成唯一ID
         String id = UUID.randomUUID().toString();
-        // 获取文件名
         String fileName = Uri.parse(url).getLastPathSegment();
         if (fileName == null || fileName.isEmpty()) {
             fileName = "download_" + System.currentTimeMillis();
         }
-        // 如果contentDisposition有文件名，可解析，这里简化
-        // 创建下载任务
         DownloadTask task = new DownloadTask(id, fileName, url, contentDisposition);
         downloadTasks.put(id, task);
         task.execute();
-
-        // 通知前端添加任务（总大小未知时先传0）
+        // 通知前端添加任务
         webView.evaluateJavascript("window._addDownloadTask('" + id + "', '" + fileName.replace("'", "\\'") + "', 0);", null);
     }
 
-    // 下载任务类
     private class DownloadTask extends AsyncTask<Void, Long, File> {
         private String id;
         private String fileName;
         private String url;
-        private String contentDisposition;
         private long totalSize = 0;
         private long downloaded = 0;
         private long lastUpdateTime = 0;
@@ -176,7 +307,6 @@ public class MainActivity extends AppCompatActivity {
             this.id = id;
             this.fileName = fileName;
             this.url = url;
-            this.contentDisposition = contentDisposition;
         }
 
         @Override
@@ -198,7 +328,7 @@ public class MainActivity extends AppCompatActivity {
                     return null;
                 }
                 totalSize = connection.getContentLength();
-                // 更新前端总大小
+                // 更新总大小
                 runOnUiThread(() -> {
                     String js = "window._updateDownloadProgress('" + id + "', 0, " + totalSize + ", 0);";
                     webView.evaluateJavascript(js, null);
@@ -207,7 +337,7 @@ public class MainActivity extends AppCompatActivity {
                 File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
                 if (!dir.exists()) dir.mkdirs();
                 File file = new File(dir, fileName);
-                // 如果文件已存在，重命名
+                // 重名处理
                 int i = 1;
                 while (file.exists()) {
                     String name = fileName;
@@ -262,7 +392,7 @@ public class MainActivity extends AppCompatActivity {
                 output.close();
                 input.close();
                 connection.disconnect();
-                // 下载完成
+                // 完成
                 runOnUiThread(() -> {
                     webView.evaluateJavascript("window._downloadComplete('" + id + "');", null);
                     Toast.makeText(MainActivity.this, "下载完成: " + finalFile.getName(), Toast.LENGTH_LONG).show();
@@ -284,11 +414,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         public void togglePause(boolean resume) {
-            if (resume) {
-                paused = false;
-            } else {
-                paused = true;
-            }
+            paused = !resume;
         }
 
         public void cancel() {
@@ -298,47 +424,4 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
-    // 暴露给JS的下载控制接口
-    private class NativeDownloadBridge {
-        @android.webkit.JavascriptInterface
-        public void togglePause(String id, boolean resume) {
-            DownloadTask task = downloadTasks.get(id);
-            if (task != null) {
-                task.togglePause(resume);
-            }
-        }
-
-        @android.webkit.JavascriptInterface
-        public void cancel(String id) {
-            DownloadTask task = downloadTasks.get(id);
-            if (task != null) {
-                task.cancel();
-            }
-        }
-
-        @android.webkit.JavascriptInterface
-        public void openFile(String id) {
-            // 通过id查找已下载的文件，这里简化
-            // 实际需要保存文件路径，这里省略
-            Toast.makeText(MainActivity.this, "打开文件功能开发中", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    // 注册JS接口
-    private void setupJSInterface() {
-        webView.addJavascriptInterface(new NativeDownloadBridge(), "_nativeDownload");
-    }
-
-    // 在onCreate中添加
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // 确保JS接口已注册
-        setupJSInterface();
-    }
-
-    // 权限方法省略（与之前相同）
-
-    // ... 其他代码如权限请求、文件选择器回调等保持不变 ...
 }
