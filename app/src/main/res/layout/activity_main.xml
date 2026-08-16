@@ -10,7 +10,8 @@
         android:layout_height="wrap_content"
         android:imeOptions="actionGo"
         android:inputType="textUri"
-        android:hint="输入网址或关键字（必应搜索）"/>
+        android:hint="输入网址或关键字（必应搜索）"
+        android:visibility="gone" />
 
     <WebView
         android:id="@+id/webView"
