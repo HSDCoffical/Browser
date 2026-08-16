@@ -13,7 +13,7 @@ window.showToast = function(msg) {
 };
 
 // ============================================================
-// 问候语设置
+// 问候语
 // ============================================================
 function setGreeting() {
     var el = document.getElementById('greeting');
@@ -30,7 +30,7 @@ function setGreeting() {
 }
 
 // ============================================================
-// 数据层
+// 数据
 // ============================================================
 var DEFAULT_ENGINES = [
     { name: '必应', url: 'https://cn.bing.com/search?q={q}&from=vivosearch2025' },
@@ -72,7 +72,6 @@ function loadData() {
         if (bgImages && bgImages.length > 0) {
             applyBgImage(currentBgIndex);
         }
-        // 恢复开关状态
         var toggle = document.getElementById('carouselToggle');
         if (toggle) {
             if (isCarouselMode) toggle.classList.add('active');
@@ -555,7 +554,7 @@ window.updateTopBar = function(title, url) {
 };
 
 // ============================================================
-// 下载管理（前端存储和渲染）
+// 下载管理
 // ============================================================
 window.renderDownloadList = function() {
     var container = document.getElementById('downloadListContainer');
@@ -647,7 +646,6 @@ function initApp() {
         });
     }
 
-    // 下载面板打开时刷新列表
     var downloadSheet = document.getElementById('downloadSheet');
     if (downloadSheet) {
         var observer = new MutationObserver(function() {
