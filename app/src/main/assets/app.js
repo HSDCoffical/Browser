@@ -92,7 +92,7 @@ function loadData() {
         var nightMode = localStorage.getItem('mybrowser_night_mode');
         if (nightMode === 'true') {
             document.body.classList.add('night-mode');
-            var nightToggle = document.getElementById('nightModeToggle');
+            var nightToggle = document.getElementById('nightModeToggleMenu');
             if (nightToggle) nightToggle.classList.add('active');
         }
     } catch (e) { /* ignore */ }
@@ -388,7 +388,7 @@ function closeAllPanels() {
 }
 
 // ============================================================
-// 菜单功能（夜间模式已移除，移至设置面板）
+// 菜单功能（夜间模式已移至菜单开关）
 // ============================================================
 function handleMenuAction(action) {
     switch (action) {
@@ -464,11 +464,11 @@ function loadToolsModule() {
 }
 
 // ============================================================
-// 夜间模式切换（在设置面板中使用）
+// 夜间模式切换（菜单开关调用）
 // ============================================================
 function toggleNightMode() {
     document.body.classList.toggle('night-mode');
-    var toggle = document.getElementById('nightModeToggle');
+    var toggle = document.getElementById('nightModeToggleMenu');
     if (toggle) {
         toggle.classList.toggle('active');
     }
@@ -719,10 +719,11 @@ function initApp() {
         observer.observe(downloadSheet, { attributes: true, attributeFilter: ['class'] });
     }
     
-    // 夜间模式开关（在设置面板中）
-    var nightToggle = document.getElementById('nightModeToggle');
+    // 夜间模式开关（菜单中）
+    var nightToggle = document.getElementById('nightModeToggleMenu');
     if (nightToggle) {
-        nightToggle.addEventListener('click', function() {
+        nightToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
             toggleNightMode();
         });
     }
