@@ -667,7 +667,6 @@ body.night-mode .greeting {
     transform: translateX(20px);
 }
 
-/* 下载列表 */
 #downloadListContainer {
     padding: 4px 0;
 }
@@ -770,7 +769,6 @@ body.night-mode .greeting {
     background: #f39c12;
 }
 
-/* 功能列表（用于收藏/历史/工具箱） */
 .func-list {
     display: flex;
     flex-direction: column;
