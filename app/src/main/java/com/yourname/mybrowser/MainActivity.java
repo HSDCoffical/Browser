@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
         webView = findViewById(R.id.webView);
         urlEdit = findViewById(R.id.urlEdit);
 
-        // 请求所有权限（包括存储和其他），但用户可拒绝非必要权限
+        // 请求所有权限（用户可拒绝非必要）
         requestAllPermissions();
 
         WebSettings webSettings = webView.getSettings();
@@ -43,11 +43,14 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setDomStorageEnabled(true);
         webSettings.setAllowFileAccess(true);
         webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        webSettings.setAllowContentAccess(true);
 
+        // 设置 WebViewClient（记录浏览历史到前端）
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                // 注入 Eruda
                 String js = "javascript:(function(){" +
                         "var s=document.createElement('script');" +
                         "s.src='https://cdn.jsdelivr.net/npm/eruda';" +
@@ -55,25 +58,50 @@ public class MainActivity extends AppCompatActivity {
                         "s.onload=function(){eruda.init({locale:'zh-CN'});}" +
                         "})();";
                 view.evaluateJavascript(js, null);
+
+                // 记录浏览历史（调用前端函数）
+                if (url != null && !url.startsWith("file://")) {
+                    String title = view.getTitle();
+                    if (title == null || title.isEmpty()) title = url;
+                    // 转义特殊字符
+                    title = title.replace("'", "\\'");
+                    url = url.replace("'", "\\'");
+                    view.evaluateJavascript("addHistory('" + title + "', '" + url + "');", null);
+                }
             }
         });
 
+        // 设置 WebChromeClient（文件选择器）
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback,
                                              FileChooserParams fileChooserParams) {
-                // 检查存储权限，若未授予则引导用户授权
                 if (checkStoragePermission()) {
                     mFilePathCallback = filePathCallback;
                     Intent intent = fileChooserParams.createIntent();
                     startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE);
                     return true;
                 } else {
-                    Toast.makeText(MainActivity.this, "需要存储权限才能选择背景图片", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "需要存储权限才能选择图片", Toast.LENGTH_SHORT).show();
                     requestStoragePermission();
                     return false;
                 }
             }
+        });
+
+        // 设置下载监听（用于下载管理）
+        webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
+            // 获取文件名
+            String fileName = Uri.parse(url).getLastPathSegment();
+            if (fileName == null || fileName.isEmpty()) {
+                fileName = "下载文件";
+            }
+            // 调用前端函数添加下载记录
+            String js = "addDownloadItem('" + fileName.replace("'", "\\'") + "', '" + url.replace("'", "\\'") + "');";
+            webView.evaluateJavascript(js, null);
+            // 触发系统下载
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(intent);
         });
 
         webView.loadUrl("file:///android_asset/index.html");
@@ -96,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ============================================================
-    // 权限管理：首次打开请求所有权限，但只有存储是必要的
+    // 权限管理
     // ============================================================
 
     private void requestAllPermissions() {
@@ -164,9 +192,7 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            // 可在此处理用户选择，但无需特殊处理，因为只有存储是必需的
-        }
+        // 用户选择结果，无需特殊处理
     }
 
     // ============================================================
