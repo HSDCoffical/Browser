@@ -1,11 +1,14 @@
 package com.yourname.mybrowser;
 
 import android.Manifest;
+import android.app.DownloadManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.inputmethod.EditorInfo;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -35,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
         webView = findViewById(R.id.webView);
         urlEdit = findViewById(R.id.urlEdit);
 
-        // 请求所有权限（用户可拒绝非必要）
+        // 请求存储权限（用于下载）
         requestAllPermissions();
 
         WebSettings webSettings = webView.getSettings();
@@ -45,29 +48,28 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         webSettings.setAllowContentAccess(true);
 
-        // 设置 WebViewClient（记录浏览历史到前端）
+        // 设置 WebViewClient（注入 Eruda + 传递标题）
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 // 注入 Eruda
-                String js = "javascript:(function(){" +
+                String erudaJs = "javascript:(function(){" +
                         "var s=document.createElement('script');" +
                         "s.src='https://cdn.jsdelivr.net/npm/eruda';" +
                         "document.body.appendChild(s);" +
                         "s.onload=function(){eruda.init({locale:'zh-CN'});}" +
                         "})();";
-                view.evaluateJavascript(js, null);
+                view.evaluateJavascript(erudaJs, null);
 
-                // 记录浏览历史（调用前端函数）
-                if (url != null && !url.startsWith("file://")) {
-                    String title = view.getTitle();
-                    if (title == null || title.isEmpty()) title = url;
-                    // 转义特殊字符
-                    title = title.replace("'", "\\'");
-                    url = url.replace("'", "\\'");
-                    view.evaluateJavascript("addHistory('" + title + "', '" + url + "');", null);
-                }
+                // 获取页面标题并传递给前端（更新顶部栏）
+                String title = view.getTitle();
+                if (title == null || title.isEmpty()) title = url;
+                // 转义单引号
+                String safeTitle = title.replace("'", "\\'");
+                String safeUrl = url.replace("'", "\\'");
+                String js = "javascript:window.updateTopBar('" + safeTitle + "', '" + safeUrl + "');";
+                view.evaluateJavascript(js, null);
             }
         });
 
@@ -89,19 +91,32 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 设置下载监听（用于下载管理）
+        // ===== 修改下载监听：使用 DownloadManager 下载，不跳转外部浏览器 =====
         webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
             // 获取文件名
             String fileName = Uri.parse(url).getLastPathSegment();
             if (fileName == null || fileName.isEmpty()) {
-                fileName = "下载文件";
+                fileName = "下载文件_" + System.currentTimeMillis();
             }
-            // 调用前端函数添加下载记录
-            String js = "addDownloadItem('" + fileName.replace("'", "\\'") + "', '" + url.replace("'", "\\'") + "');";
+            // 通知前端记录下载（调用 addDownloadItem）
+            String js = "javascript:window.addDownloadItem('" + fileName.replace("'", "\\'") + "', '" + url.replace("'", "\\'") + "');";
             webView.evaluateJavascript(js, null);
-            // 触发系统下载
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-            startActivity(intent);
+
+            // 使用 DownloadManager 下载
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+            request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE);
+            request.setTitle(fileName);
+            request.setDescription("正在下载...");
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+
+            DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+            if (dm != null) {
+                dm.enqueue(request);
+                Toast.makeText(MainActivity.this, "下载开始：" + fileName, Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(MainActivity.this, "下载失败", Toast.LENGTH_SHORT).show();
+            }
         });
 
         webView.loadUrl("file:///android_asset/index.html");
@@ -126,7 +141,6 @@ public class MainActivity extends AppCompatActivity {
     // ============================================================
     // 权限管理
     // ============================================================
-
     private void requestAllPermissions() {
         String[] permissions = getAllPermissions();
         boolean needRequest = false;
@@ -198,7 +212,6 @@ public class MainActivity extends AppCompatActivity {
     // ============================================================
     // 文件选择器回调
     // ============================================================
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
