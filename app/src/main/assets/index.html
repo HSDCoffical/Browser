@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MyBrowser</title>
     <style>
-        /* ===== 全局重置 ===== */
         * {
             margin: 0;
             padding: 0;
@@ -21,7 +20,6 @@
             user-select: none;
         }
 
-        /* ===== 主容器 ===== */
         .app-container {
             display: flex;
             flex-direction: column;
@@ -33,28 +31,27 @@
             overflow: hidden;
         }
 
-        /* ===== 顶部状态栏占位 ===== */
         .status-bar {
             height: 32px;
             background: #f2f4f8;
             flex-shrink: 0;
         }
 
-        /* ===== 内容区 ===== */
+        /* 内容区：垂直居中 */
         .content-area {
             flex: 1;
-            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             padding: 0 18px 12px 18px;
-            -webkit-overflow-scrolling: touch;
-        }
-        .content-area::-webkit-scrollbar {
-            display: none;
+            overflow-y: auto;
         }
 
-        /* ===== 搜索框 ===== */
         .search-section {
-            padding-top: 10px;
-            padding-bottom: 18px;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
         }
         .search-box {
             display: flex;
@@ -131,85 +128,7 @@
             transform: scale(0.96);
         }
 
-        /* ===== 继续浏览 ===== */
-        .continue-section {
-            margin-top: 4px;
-            margin-bottom: 18px;
-        }
-        .continue-card {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 16px 18px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-            cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
-            border: 1px solid rgba(0, 0, 0, 0.02);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .continue-card:active {
-            transform: scale(0.98);
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-        }
-        .continue-card .left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            overflow: hidden;
-            flex: 1;
-        }
-        .continue-card .icon-wrap {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            background: #eef3fe;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            font-size: 18px;
-            color: #2979ff;
-            font-weight: 600;
-        }
-        .continue-card .info {
-            overflow: hidden;
-            flex: 1;
-        }
-        .continue-card .info .title {
-            font-size: 15px;
-            font-weight: 500;
-            color: #1a1a2e;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .continue-card .info .url {
-            font-size: 12px;
-            color: #999;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-top: 2px;
-        }
-        .continue-card .arrow {
-            color: #ccc;
-            font-size: 18px;
-            flex-shrink: 0;
-            margin-left: 8px;
-        }
-        .continue-empty {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 22px 18px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-            text-align: center;
-            color: #b0b8c8;
-            font-size: 14px;
-            border: 1px dashed #e0e4ec;
-        }
-
-        /* ===== 底部导航 ===== */
+        /* 底部导航（只有两个） */
         .bottom-nav {
             flex-shrink: 0;
             background: #ffffff;
@@ -245,13 +164,12 @@
             font-size: 11px;
             margin-top: 2px;
             font-weight: 400;
-            letter-spacing: 0.3px;
         }
         .bottom-nav .nav-item.active {
             color: #2979ff;
         }
 
-        /* ===== 面板通用 ===== */
+        /* 面板通用 */
         .panel-overlay {
             position: fixed;
             top: 0;
@@ -328,10 +246,10 @@
             display: none;
         }
 
-        /* ===== 菜单网格（3列） ===== */
+        /* 菜单网格（4列，可滚动） */
         .menu-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 12px 8px;
             padding-top: 8px;
         }
@@ -360,9 +278,10 @@
             font-size: 12px;
             color: #333;
             font-weight: 400;
+            text-align: center;
         }
 
-        /* ===== 窗口列表 ===== */
+        /* 窗口列表（复用之前样式） */
         .window-list {
             display: flex;
             flex-direction: column;
@@ -456,46 +375,7 @@
             transform: scale(0.97);
         }
 
-        /* ===== 设置列表 ===== */
-        .settings-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-            padding-top: 4px;
-        }
-        .settings-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 4px;
-            border-bottom: 1px solid #f0f2f5;
-            cursor: pointer;
-            transition: background 0.1s;
-            border-radius: 4px;
-        }
-        .settings-item:active {
-            background: #f5f7fa;
-        }
-        .settings-item:last-child {
-            border-bottom: none;
-        }
-        .settings-item .s-label {
-            font-size: 15px;
-            color: #1a1a2e;
-        }
-        .settings-item .s-value {
-            font-size: 14px;
-            color: #999;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .settings-item .s-value .s-arrow {
-            color: #ccc;
-            font-size: 16px;
-        }
-
-        /* ===== 引擎弹窗 ===== */
+        /* 引擎弹窗 */
         .engine-popup-overlay {
             position: fixed;
             top: 0;
@@ -591,7 +471,7 @@
             background: #1a5fd0;
         }
 
-        /* ===== Toast ===== */
+        /* Toast */
         .toast {
             position: fixed;
             top: 50%;
@@ -618,20 +498,14 @@
         .hidden {
             display: none !important;
         }
-        .mt-8 {
-            margin-top: 8px;
-        }
     </style>
 </head>
 <body>
-
-    <!-- ===== 主容器 ===== -->
-    <div class="app-container" id="app">
-
+    <div class="app-container">
         <div class="status-bar"></div>
 
-        <div class="content-area" id="contentArea">
-            <!-- 搜索区域 -->
+        <!-- 内容区垂直居中 -->
+        <div class="content-area">
             <div class="search-section">
                 <div class="search-box">
                     <button class="engine-btn" id="engineBtn">必应 ▾</button>
@@ -639,14 +513,9 @@
                     <button class="search-btn" id="searchBtn">搜索</button>
                 </div>
             </div>
-
-            <!-- 继续浏览 -->
-            <div class="continue-section" id="continueSection"></div>
-
-            <div style="height: 8px;"></div>
         </div>
 
-        <!-- 底部导航 -->
+        <!-- 底部导航只有两个按钮 -->
         <div class="bottom-nav">
             <button class="nav-item" data-panel="menu" id="navMenu">
                 <span class="nav-icon">☰</span>
@@ -655,10 +524,6 @@
             <button class="nav-item" data-panel="window" id="navWindow">
                 <span class="nav-icon">⊞</span>
                 <span class="nav-label">窗口</span>
-            </button>
-            <button class="nav-item" data-panel="settings" id="navSettings">
-                <span class="nav-icon">⚙</span>
-                <span class="nav-label">设置</span>
             </button>
         </div>
     </div>
@@ -672,6 +537,10 @@
         </div>
         <div class="panel-body">
             <div class="menu-grid">
+                <button class="menu-item" data-action="settings">
+                    <span class="mi-icon">⚙</span>
+                    <span class="mi-label">设置</span>
+                </button>
                 <button class="menu-item" data-action="download">
                     <span class="mi-icon">📥</span>
                     <span class="mi-label">下载管理</span>
@@ -683,6 +552,26 @@
                 <button class="menu-item" data-action="tools">
                     <span class="mi-icon">🧰</span>
                     <span class="mi-label">工具箱</span>
+                </button>
+                <button class="menu-item" data-action="incognito">
+                    <span class="mi-icon">🕶️</span>
+                    <span class="mi-label">无痕浏览</span>
+                </button>
+                <button class="menu-item" data-action="fav">
+                    <span class="mi-icon">🔖</span>
+                    <span class="mi-label">收藏网址</span>
+                </button>
+                <button class="menu-item" data-action="window">
+                    <span class="mi-icon">⊞</span>
+                    <span class="mi-label">窗口</span>
+                </button>
+                <button class="menu-item" data-action="night">
+                    <span class="mi-icon">🌙</span>
+                    <span class="mi-label">夜间模式</span>
+                </button>
+                <button class="menu-item" data-action="exit">
+                    <span class="mi-icon">🚪</span>
+                    <span class="mi-label">退出</span>
                 </button>
             </div>
         </div>
@@ -699,39 +588,6 @@
             <div class="window-list" id="windowList"></div>
             <div class="window-add">
                 <button id="addWindowBtn">+ 新建窗口</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== 面板：设置 ===== -->
-    <div class="panel-overlay" id="settingsOverlay"></div>
-    <div class="panel-sheet" id="settingsSheet">
-        <div class="panel-header">
-            <span class="panel-title">设置</span>
-            <button class="panel-close" data-close="settings">✕</button>
-        </div>
-        <div class="panel-body">
-            <div class="settings-list">
-                <div class="settings-item" data-setting="font">
-                    <span class="s-label">字体设置</span>
-                    <span class="s-value">默认 <span class="s-arrow">›</span></span>
-                </div>
-                <div class="settings-item" data-setting="homepage">
-                    <span class="s-label">首页设置</span>
-                    <span class="s-value">极简首页 <span class="s-arrow">›</span></span>
-                </div>
-                <div class="settings-item" data-setting="search">
-                    <span class="s-label">搜索设置</span>
-                    <span class="s-value">必应 <span class="s-arrow">›</span></span>
-                </div>
-                <div class="settings-item" data-setting="browse">
-                    <span class="s-label">网页浏览设置</span>
-                    <span class="s-value"><span class="s-arrow">›</span></span>
-                </div>
-                <div class="settings-item" data-setting="download">
-                    <span class="s-label">网页下载设置</span>
-                    <span class="s-value"><span class="s-arrow">›</span></span>
-                </div>
             </div>
         </div>
     </div>
@@ -753,9 +609,8 @@
     <div class="toast" id="toast"></div>
 
     <!-- ========================================================== -->
-    <!-- JavaScript 在第二批（下半部分）                             -->
+    <!-- 第二批：JavaScript 从这里开始                                -->
     <!-- ========================================================== -->
-    <!-- ===== JavaScript 开始 ===== -->
     <script>
         // ============================================================
         // 数据层
@@ -772,6 +627,7 @@
         let customEngines = [];
         let windows = [];
         let lastVisit = null;
+        let isIncognito = false;
 
         // ============================================================
         // 存储
@@ -787,24 +643,27 @@
                 if (ws) windows = JSON.parse(ws);
                 const lv = localStorage.getItem('mybrowser_last_visit');
                 if (lv) lastVisit = JSON.parse(lv);
+                const incog = localStorage.getItem('mybrowser_incognito');
+                if (incog) isIncognito = JSON.parse(incog);
             } catch (e) { /* ignore */ }
         }
 
         function saveCustomEngines() {
             localStorage.setItem('mybrowser_custom_engines', JSON.stringify(customEngines));
         }
-
         function saveCurrentEngine() {
             localStorage.setItem('mybrowser_current_engine', JSON.stringify(currentEngine));
         }
-
         function saveWindows() {
             localStorage.setItem('mybrowser_windows', JSON.stringify(windows));
         }
-
         function saveLastVisit(title, url) {
+            if (isIncognito) return;
             lastVisit = { title: title || url, url: url, time: Date.now() };
             localStorage.setItem('mybrowser_last_visit', JSON.stringify(lastVisit));
+        }
+        function saveIncognito() {
+            localStorage.setItem('mybrowser_incognito', JSON.stringify(isIncognito));
         }
 
         // ============================================================
@@ -941,38 +800,6 @@
         }
 
         // ============================================================
-        // 继续浏览
-        // ============================================================
-
-        function renderContinue() {
-            const section = document.getElementById('continueSection');
-            if (lastVisit && lastVisit.url) {
-                const initial = (lastVisit.title || '网')[0].toUpperCase();
-                section.innerHTML = `
-                    <div class="continue-card" id="continueCard">
-                        <div class="left">
-                            <div class="icon-wrap">${initial}</div>
-                            <div class="info">
-                                <div class="title">${lastVisit.title || '上次访问'}</div>
-                                <div class="url">${lastVisit.url}</div>
-                            </div>
-                        </div>
-                        <div class="arrow">›</div>
-                    </div>
-                `;
-                document.getElementById('continueCard').addEventListener('click', function() {
-                    if (lastVisit && lastVisit.url) {
-                        window.location.href = lastVisit.url;
-                    }
-                });
-            } else {
-                section.innerHTML = `
-                    <div class="continue-empty">暂无浏览记录</div>
-                `;
-            }
-        }
-
-        // ============================================================
         // 面板控制
         // ============================================================
 
@@ -1000,7 +827,7 @@
         }
 
         function closeAllPanels() {
-            ['menu', 'window', 'settings'].forEach(name => {
+            ['menu', 'window'].forEach(name => {
                 const overlay = document.getElementById(name + 'Overlay');
                 const sheet = document.getElementById(name + 'Sheet');
                 if (overlay) overlay.classList.remove('show');
@@ -1040,13 +867,61 @@
         }
 
         // ============================================================
+        // 菜单功能
+        // ============================================================
+
+        function handleMenuAction(action) {
+            switch (action) {
+                case 'settings':
+                    showToast('「设置」功能开发中');
+                    break;
+                case 'download':
+                    showToast('「下载管理」功能开发中');
+                    break;
+                case 'history':
+                    showToast('「收藏/历史」功能开发中');
+                    break;
+                case 'tools':
+                    showToast('「工具箱」功能开发中');
+                    break;
+                case 'incognito':
+                    isIncognito = !isIncognito;
+                    saveIncognito();
+                    showToast(isIncognito ? '已开启无痕浏览' : '已关闭无痕浏览');
+                    break;
+                case 'fav':
+                    showToast('「收藏网址」功能开发中');
+                    break;
+                case 'window':
+                    closePanel('menu');
+                    openPanel('window');
+                    renderWindows();
+                    break;
+                case 'night':
+                    showToast('「夜间模式」功能开发中');
+                    break;
+                case 'exit':
+                    if (confirm('确定退出应用吗？')) {
+                        // 尝试退出（Android 不支持直接退出，但可以清理状态）
+                        showToast('正在退出...');
+                        setTimeout(() => {
+                            window.location.href = 'about:blank';
+                        }, 500);
+                    }
+                    break;
+                default:
+                    showToast('功能开发中');
+            }
+            closePanel('menu');
+        }
+
+        // ============================================================
         // 初始化
         // ============================================================
 
         function init() {
             loadData();
             updateEngineBtn();
-            renderContinue();
             renderWindows();
 
             document.getElementById('searchBtn').addEventListener('click', function() {
@@ -1091,20 +966,19 @@
                 if (e.target === this) closeEnginePopup();
             });
 
+            // 导航：菜单
             document.getElementById('navMenu').addEventListener('click', function() {
                 if (activePanel === 'menu') { closePanel('menu'); return; }
                 openPanel('menu');
             });
+            // 导航：窗口
             document.getElementById('navWindow').addEventListener('click', function() {
                 if (activePanel === 'window') { closePanel('window'); return; }
                 renderWindows();
                 openPanel('window');
             });
-            document.getElementById('navSettings').addEventListener('click', function() {
-                if (activePanel === 'settings') { closePanel('settings'); return; }
-                openPanel('settings');
-            });
 
+            // 关闭面板
             document.querySelectorAll('.panel-close').forEach(btn => {
                 btn.addEventListener('click', function() {
                     closePanel(this.dataset.close);
@@ -1117,26 +991,15 @@
                 });
             });
 
+            // 菜单项点击
             document.querySelectorAll('.menu-item').forEach(item => {
                 item.addEventListener('click', function() {
                     const action = this.dataset.action;
-                    const labels = {
-                        download: '下载管理',
-                        history: '收藏/历史',
-                        tools: '工具箱'
-                    };
-                    showToast('「' + (labels[action] || action) + '」功能开发中');
-                    closePanel('menu');
+                    handleMenuAction(action);
                 });
             });
 
-            document.querySelectorAll('.settings-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const label = this.querySelector('.s-label')?.textContent || '设置';
-                    showToast('「' + label + '」功能开发中');
-                });
-            });
-
+            // 新建窗口
             document.getElementById('addWindowBtn').addEventListener('click', function() {
                 const id = 'win_' + Date.now();
                 windows.unshift({ id, title: '新窗口', url: 'about:blank', time: Date.now() });
@@ -1146,6 +1009,7 @@
                 window.location.href = 'about:blank';
             });
 
+            // 自动聚焦
             setTimeout(() => {
                 document.getElementById('searchInput').focus();
             }, 300);
@@ -1156,7 +1020,6 @@
         window.addEventListener('pageshow', function(e) {
             if (e.persisted) {
                 loadData();
-                renderContinue();
                 renderWindows();
                 updateEngineBtn();
             }
