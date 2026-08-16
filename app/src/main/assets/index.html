@@ -106,7 +106,7 @@
             opacity: 0.6;
         }
 
-        /* 引擎下拉列表（从按钮下方展开） */
+        /* 引擎下拉列表 */
         .engine-dropdown {
             position: absolute;
             top: calc(100% + 6px);
@@ -226,20 +226,19 @@
             transform: scale(0.96);
         }
 
-        /* ===== 底部双圆钮（无文字，体积减半） ===== */
+        /* ===== 底部单按钮（圆形） ===== */
         .bottom-actions {
             flex-shrink: 0;
             display: flex;
             justify-content: center;
-            gap: 30px;
             padding: 12px 20px 24px 20px;
             background: transparent;
             position: relative;
             z-index: 2;
         }
         .bottom-actions .action-btn {
-            width: 52px;
-            height: 52px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.45);
             backdrop-filter: blur(16px) saturate(180%);
@@ -248,12 +247,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 26px;
             color: #1a1a2e;
             cursor: pointer;
             transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-            padding: 0;
         }
         .bottom-actions .action-btn:active {
             transform: scale(0.90);
@@ -342,42 +340,46 @@
             display: none;
         }
 
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px 8px;
-            padding-top: 8px;
-        }
-        .menu-grid .menu-item {
+        /* ===== 菜单列表样式（仿设置） ===== */
+        .menu-list {
             display: flex;
             flex-direction: column;
+            gap: 0;
+            padding-top: 4px;
+        }
+        .menu-list .menu-item {
+            display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 16px 4px 12px 4px;
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.2);
+            justify-content: space-between;
+            padding: 16px 4px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
             cursor: pointer;
-            transition: background 0.15s, transform 0.1s;
-            gap: 8px;
+            transition: background 0.1s;
+            border-radius: 4px;
         }
-        .menu-grid .menu-item:active {
-            background: rgba(255, 255, 255, 0.8);
-            transform: scale(0.95);
+        .menu-list .menu-item:active {
+            background: rgba(0, 0, 0, 0.03);
         }
-        .menu-grid .menu-item .mi-icon {
-            font-size: 28px;
-            line-height: 1;
+        .menu-list .menu-item .mi-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
         }
-        .menu-grid .menu-item .mi-label {
-            font-size: 12px;
-            color: #333;
-            font-weight: 400;
+        .menu-list .menu-item .mi-icon {
+            font-size: 22px;
+            width: 30px;
             text-align: center;
         }
+        .menu-list .menu-item .mi-label {
+            font-size: 15px;
+            color: #1a1a2e;
+        }
+        .menu-list .menu-item .mi-arrow {
+            color: #ccc;
+            font-size: 18px;
+        }
 
+        /* 窗口列表（保留） */
         .window-list {
             display: flex;
             flex-direction: column;
@@ -504,6 +506,7 @@
             display: none !important;
         }
 
+        /* 设置选项（背景选择） */
         .settings-option {
             display: flex;
             align-items: center;
@@ -544,14 +547,13 @@
             </div>
         </div>
 
-        <!-- 底部双圆钮（无文字） -->
+        <!-- 底部单按钮（菜单） -->
         <div class="bottom-actions">
             <button class="action-btn" id="navMenu">☰</button>
-            <button class="action-btn" id="navWindow">⊞</button>
         </div>
     </div>
 
-    <!-- ===== 面板：菜单 ===== -->
+    <!-- ===== 面板：菜单（列表样式） ===== -->
     <div class="panel-overlay" id="menuOverlay"></div>
     <div class="panel-sheet" id="menuSheet">
         <div class="panel-header">
@@ -559,21 +561,48 @@
             <button class="panel-close" data-close="menu">✕</button>
         </div>
         <div class="panel-body">
-            <div class="menu-grid">
-                <button class="menu-item" data-action="settings"><span class="mi-icon">⚙</span><span class="mi-label">设置</span></button>
-                <button class="menu-item" data-action="download"><span class="mi-icon">📥</span><span class="mi-label">下载管理</span></button>
-                <button class="menu-item" data-action="history"><span class="mi-icon">⭐</span><span class="mi-label">收藏/历史</span></button>
-                <button class="menu-item" data-action="tools"><span class="mi-icon">🧰</span><span class="mi-label">工具箱</span></button>
-                <button class="menu-item" data-action="incognito"><span class="mi-icon">🕶️</span><span class="mi-label">无痕浏览</span></button>
-                <button class="menu-item" data-action="fav"><span class="mi-icon">🔖</span><span class="mi-label">收藏网址</span></button>
-                <button class="menu-item" data-action="window"><span class="mi-icon">⊞</span><span class="mi-label">窗口</span></button>
-                <button class="menu-item" data-action="night"><span class="mi-icon">🌙</span><span class="mi-label">夜间模式</span></button>
-                <button class="menu-item" data-action="exit"><span class="mi-icon">🚪</span><span class="mi-label">退出</span></button>
+            <div class="menu-list">
+                <div class="menu-item" data-action="settings">
+                    <div class="mi-left"><span class="mi-icon">⚙</span><span class="mi-label">设置</span></div>
+                    <span class="mi-arrow">›</span>
+                </div>
+                <div class="menu-item" data-action="download">
+                    <div class="mi-left"><span class="mi-icon">📥</span><span class="mi-label">下载管理</span></div>
+                    <span class="mi-arrow">›</span>
+                </div>
+                <div class="menu-item" data-action="history">
+                    <div class="mi-left"><span class="mi-icon">⭐</span><span class="mi-label">收藏/历史</span></div>
+                    <span class="mi-arrow">›</span>
+                </div>
+                <div class="menu-item" data-action="tools">
+                    <div class="mi-left"><span class="mi-icon">🧰</span><span class="mi-label">工具箱</span></div>
+                    <span class="mi-arrow">›</span>
+                </div>
+                <div class="menu-item" data-action="incognito">
+                    <div class="mi-left"><span class="mi-icon">🕶️</span><span class="mi-label">无痕浏览</span></div>
+                    <span class="mi-arrow">›</span>
+                </div>
+                <div class="menu-item" data-action="fav">
+                    <div class="mi-left"><span class="mi-icon">🔖</span><span class="mi-label">收藏网址</span></div>
+                    <span class="mi-arrow">›</span>
+                </div>
+                <div class="menu-item" data-action="window">
+                    <div class="mi-left"><span class="mi-icon">⊞</span><span class="mi-label">窗口</span></div>
+                    <span class="mi-arrow">›</span>
+                </div>
+                <div class="menu-item" data-action="night">
+                    <div class="mi-left"><span class="mi-icon">🌙</span><span class="mi-label">夜间模式</span></div>
+                    <span class="mi-arrow">›</span>
+                </div>
+                <div class="menu-item" data-action="exit">
+                    <div class="mi-left"><span class="mi-icon">🚪</span><span class="mi-label">退出</span></div>
+                    <span class="mi-arrow">›</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- ===== 面板：窗口 ===== -->
+    <!-- ===== 面板：窗口（独立） ===== -->
     <div class="panel-overlay" id="windowOverlay"></div>
     <div class="panel-sheet" id="windowSheet">
         <div class="panel-header">
@@ -588,7 +617,7 @@
         </div>
     </div>
 
-    <!-- ===== 设置面板 ===== -->
+    <!-- ===== 面板：设置（背景选择） ===== -->
     <div class="panel-overlay" id="settingsOverlay"></div>
     <div class="panel-sheet" id="settingsSheet">
         <div class="panel-header">
@@ -619,7 +648,6 @@
         // 数据层
         // ============================================================
 
-        // 引擎列表：必应、百度、谷歌 + 自定义
         const DEFAULT_ENGINES = [
             { name: '必应', url: 'https://cn.bing.com/search?q={q}&from=vivosearch2025' },
             { name: '百度', url: 'https://www.baidu.com/s?wd={q}' },
@@ -902,7 +930,7 @@
         }
 
         // ============================================================
-        // 菜单功能
+        // 菜单功能（列表项）
         // ============================================================
 
         function handleMenuAction(action) {
@@ -958,7 +986,7 @@
         }
 
         // ============================================================
-        // 背景图片设置（修复点击无反应）
+        // 背景图片设置
         // ============================================================
 
         function setupBackgroundPicker() {
@@ -966,15 +994,11 @@
             const trigger = document.getElementById('bgPickerTrigger');
             const reset = document.getElementById('resetBg');
 
-            // 确保点击整个选项区域都能触发文件选择
             trigger.addEventListener('click', function(e) {
-                // 防止冒泡干扰
                 e.stopPropagation();
-                // 直接触发 file input
                 fileInput.click();
             });
 
-            // 文件选择变化时处理
             fileInput.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -986,11 +1010,9 @@
                     closePanel('settings');
                 };
                 reader.readAsDataURL(file);
-                // 重置 input 以便重复选择同一文件
                 this.value = '';
             });
 
-            // 重置背景
             reset.addEventListener('click', function() {
                 resetBgImage();
                 showToast('已恢复默认背景');
@@ -1031,17 +1053,13 @@
                 }
             });
 
-            // 底部双圆钮
+            // 底部单按钮
             document.getElementById('navMenu').addEventListener('click', function() {
                 if (activePanel === 'menu') { closePanel('menu'); return; }
                 openPanel('menu');
             });
-            document.getElementById('navWindow').addEventListener('click', function() {
-                if (activePanel === 'window') { closePanel('window'); return; }
-                renderWindows();
-                openPanel('window');
-            });
 
+            // 关闭面板
             document.querySelectorAll('.panel-close').forEach(btn => {
                 btn.addEventListener('click', function() {
                     closePanel(this.dataset.close);
@@ -1054,6 +1072,7 @@
                 });
             });
 
+            // 菜单列表点击
             document.querySelectorAll('.menu-item').forEach(item => {
                 item.addEventListener('click', function() {
                     const action = this.dataset.action;
@@ -1061,6 +1080,7 @@
                 });
             });
 
+            // 新建窗口
             document.getElementById('addWindowBtn').addEventListener('click', function() {
                 const id = 'win_' + Date.now();
                 windows.unshift({ id, title: '新窗口', url: 'about:blank', time: Date.now() });
