@@ -17,9 +17,7 @@
                 break;
             case 'history':
                 window.closePanel('menu');
-                if (typeof window.renderHistory === 'function') {
-                    window.renderHistory('fav');
-                }
+                if (typeof window.renderHistory === 'function') window.renderHistory('fav');
                 window.openPanel('history');
                 break;
             case 'tools':
