@@ -520,13 +520,25 @@ function setupBackgroundPicker() {
 }
 
 // ============================================================
-// 顶部栏更新（由 Java 调用）
+// 顶部栏控制（由 Java 调用）
 // ============================================================
 window.updateTopBar = function(title, url) {
-    var el = document.getElementById('topTitle');
-    if (el) {
-        el.textContent = title || url || 'MyBrowser';
-        el.title = url || '';
+    var topBar = document.getElementById('topBar');
+    var titleEl = document.getElementById('topTitle');
+    if (!topBar || !titleEl) return;
+
+    // 判断是否为本地页面或空白页
+    var isLocal = (url && (url.indexOf('file://') === 0 || url === 'about:blank'));
+    if (isLocal || !url || url === '') {
+        topBar.style.display = 'none';
+        // 调整内容区域边距
+        document.getElementById('contentArea').style.marginTop = '0';
+    } else {
+        topBar.style.display = 'flex';
+        titleEl.textContent = title || url;
+        titleEl.title = url;
+        // 内容区域适当下移
+        document.getElementById('contentArea').style.marginTop = '0';
     }
 };
 
@@ -603,7 +615,7 @@ window.addDownloadItem = function(name, url) {
 };
 
 // ============================================================
-// 初始化事件（在 DOMContentLoaded 执行）
+// 初始化事件（整合所有初始化逻辑）
 // ============================================================
 function initApp() {
     // 刷新按钮
@@ -641,21 +653,99 @@ function initApp() {
         observer.observe(downloadSheet, { attributes: true, attributeFilter: ['class'] });
     }
 
-    // 其余初始化已在原代码中执行
+    // 初始化时隐藏顶部栏（本地页面）
+    var topBar = document.getElementById('topBar');
+    if (topBar) {
+        topBar.style.display = 'none';
+    }
 }
 
-// 执行初始化（确保 DOM 已加载）
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        // 原有 init 在之前已定义，这里调用原有 init 和新增 initApp
-        if (typeof init === 'function') {
-            init();
+// ============================================================
+// 启动（确保所有加载完成）
+// ============================================================
+function startApp() {
+    loadData();
+    updateEngineBtn();
+    renderWindows();
+    setupBackgroundPicker();
+    updateCarouselPreview();
+    if (bgImages && bgImages.length > 0) {
+        if (isCarouselMode && bgImages.length > 1) {
+            startCarousel();
         }
-        initApp();
-    });
-} else {
-    if (typeof init === 'function') {
-        init();
     }
     initApp();
+
+    // ---- 事件绑定 ----
+    document.getElementById('searchBtn').addEventListener('click', function() {
+        doSearch(document.getElementById('searchInput').value);
+    });
+    document.getElementById('searchInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            doSearch(this.value);
+        }
+    });
+
+    document.getElementById('engineBtn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleEngineDropdown();
+    });
+
+    document.addEventListener('click', function(e) {
+        var dd = document.getElementById('engineDropdown');
+        var btn = document.getElementById('engineBtn');
+        if (!dd.contains(e.target) && !btn.contains(e.target)) {
+            closeEngineDropdown();
+        }
+    });
+
+    document.getElementById('navMenu').addEventListener('click', function() {
+        if (activePanel === 'menu') { closePanel('menu'); return; }
+        openPanel('menu');
+    });
+    document.getElementById('navWindow').addEventListener('click', function() {
+        if (activePanel === 'window') { closePanel('window'); return; }
+        renderWindows();
+        openPanel('window');
+    });
+
+    document.querySelectorAll('.panel-close').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            closePanel(this.dataset.close);
+        });
+    });
+    document.querySelectorAll('.panel-overlay').forEach(function(overlay) {
+        overlay.addEventListener('click', function() {
+            var name = this.id.replace('Overlay', '');
+            closePanel(name);
+        });
+    });
+
+    document.querySelectorAll('.menu-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+            var action = this.dataset.action;
+            handleMenuAction(action);
+        });
+    });
+
+    document.getElementById('addWindowBtn').addEventListener('click', function() {
+        var id = 'win_' + Date.now();
+        windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Date.now() });
+        saveWindows();
+        renderWindows();
+        window.showToast('已创建新窗口');
+        window.location.href = 'about:blank';
+    });
+
+    setTimeout(function() {
+        document.getElementById('searchInput').focus();
+    }, 300);
+}
+
+// 确定 DOM 加载完成后再执行
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startApp);
+} else {
+    startApp();
 }
