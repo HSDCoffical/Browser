@@ -30,19 +30,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                // Eruda 初始化并设置语言为中文
                 String js = "javascript:(function(){" +
                         "var s=document.createElement('script');" +
                         "s.src='https://cdn.jsdelivr.net/npm/eruda';" +
                         "document.body.appendChild(s);" +
-                        "s.onload=function(){eruda.init();}" +
+                        "s.onload=function(){eruda.init({locale:'zh-CN'});}" +
                         "})();";
                 view.evaluateJavascript(js, null);
             }
         });
 
-        // ✅ 改这里：加载你自定义的首页
+        // 加载自定义首页
         webView.loadUrl("file:///android_asset/index.html");
 
+        // 注意：urlEdit 已被隐藏，但保留逻辑以防将来启用
         urlEdit.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_GO) {
                 String input = urlEdit.getText().toString().trim();
