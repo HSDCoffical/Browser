@@ -69,7 +69,6 @@ function loadData() {
         if (bgImages && bgImages.length > 0) {
             applyBgImage(currentBgIndex);
         }
-        // UI 状态恢复
         var toggle = document.getElementById('carouselToggle');
         if (toggle) {
             if (isCarouselMode) toggle.classList.add('active');
@@ -549,7 +548,7 @@ window.updateTopBar = function(title, url) {
 };
 
 // ============================================================
-// 下载管理（占位功能，防止报错）
+// 下载管理
 // ============================================================
 window.DownloadManager = {
     tasks: {},
@@ -806,4 +805,5 @@ function startApp() {
     });
 
     document.querySelectorAll('.menu-item').forEach(function(item) {
-        item.addEventListener('click', functi
+        item.addEventListener('click', function() {
+            var action 
