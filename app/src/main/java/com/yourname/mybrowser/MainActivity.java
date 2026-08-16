@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
         webSettings.setAllowFileAccess(true);
-        webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW); // 修正行
+        webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -40,7 +40,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        webView.loadUrl("https://www.bing.com");
+        // ✅ 改这里：加载你自定义的首页
+        webView.loadUrl("file:///android_asset/index.html");
 
         urlEdit.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_GO) {
