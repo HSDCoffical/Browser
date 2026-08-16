@@ -622,7 +622,7 @@ window.updateTopBar = function(title, url) {
 };
 
 // ============================================================
-// 下载管理（完整）
+// 下载管理（模拟实现，不依赖Java接口）
 // ============================================================
 window.DownloadManager = {
     tasks: {},
@@ -653,15 +653,10 @@ window.DownloadManager = {
         var task = this.tasks[id];
         if (!task || task.status === 'done') return;
         task.status = (task.status === 'paused') ? 'downloading' : 'paused';
-        if (window._nativeDownload) {
-            window._nativeDownload.togglePause(id, task.status === 'downloading');
-        }
+        // 模拟暂停/继续效果，实际需Java配合
         this.render();
     },
     cancel: function(id) {
-        if (window._nativeDownload) {
-            window._nativeDownload.cancel(id);
-        }
         delete this.tasks[id];
         this.render();
     },
@@ -671,9 +666,7 @@ window.DownloadManager = {
             window.showToast('文件不存在');
             return;
         }
-        if (window._nativeDownload) {
-            window._nativeDownload.install(task.filePath);
-        }
+        window.showToast('安装功能需Java端实现');
     },
     render: function() {
         var container = document.getElementById('downloadListContainer');
@@ -769,6 +762,7 @@ window.DownloadManager = {
     }
 };
 
+// 暴露给 Java 调用（如有实现）
 window._addDownloadTask = function(id, name, totalSize) {
     window.DownloadManager.addTask(id, name, totalSize);
 };
@@ -797,4 +791,9 @@ function initApp() {
         }
     });
 
-    var downloadSheet = document.ge
+    var downloadSheet = document.getElementById('downloadSheet');
+    if (downloadSheet) {
+        var observer = new MutationObserver(function() {
+            if (downloadSheet.classList.contains('show')) {
+                window.DownloadManager.render();
+     
