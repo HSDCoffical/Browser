@@ -226,7 +226,7 @@
             transform: scale(0.96);
         }
 
-        /* ===== 底部单按钮（圆形） ===== */
+        /* ===== 底部合并成长条胶囊 ===== */
         .bottom-actions {
             flex-shrink: 0;
             display: flex;
@@ -236,26 +236,46 @@
             position: relative;
             z-index: 2;
         }
-        .bottom-actions .action-btn {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
+        .bottom-actions .nav-capsule {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
             background: rgba(255, 255, 255, 0.45);
             backdrop-filter: blur(16px) saturate(180%);
             -webkit-backdrop-filter: blur(16px) saturate(180%);
             border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 30px;
+            padding: 4px 8px;
+            min-width: 140px;
+            width: auto;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        }
+        .bottom-actions .nav-capsule .action-btn {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 26px;
+            padding: 8px 16px;
+            border-radius: 24px;
+            min-width: 52px;
+            height: 44px;
+            background: transparent;
+            border: none;
+            font-size: 20px;
             color: #1a1a2e;
             cursor: pointer;
-            transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            transition: background 0.2s, transform 0.15s;
         }
-        .bottom-actions .action-btn:active {
+        .bottom-actions .nav-capsule .action-btn:active {
             transform: scale(0.90);
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.4);
+        }
+        /* 两个按钮中间加一个细分隔线 */
+        .bottom-actions .nav-capsule .divider {
+            width: 1px;
+            height: 28px;
+            background: rgba(0, 0, 0, 0.08);
+            flex-shrink: 0;
         }
 
         /* ===== 面板毛玻璃 ===== */
@@ -340,7 +360,7 @@
             display: none;
         }
 
-        /* ===== 菜单列表样式（仿设置） ===== */
+        /* ===== 菜单列表样式 ===== */
         .menu-list {
             display: flex;
             flex-direction: column;
@@ -379,7 +399,7 @@
             font-size: 18px;
         }
 
-        /* 窗口列表（保留） */
+        /* ===== 窗口列表 ===== */
         .window-list {
             display: flex;
             flex-direction: column;
@@ -506,7 +526,7 @@
             display: none !important;
         }
 
-        /* 设置选项（背景选择） */
+        /* 设置选项 */
         .settings-option {
             display: flex;
             align-items: center;
@@ -542,18 +562,21 @@
                     <input type="text" id="searchInput" placeholder="搜索或输入网址" autofocus>
                     <button class="search-btn" id="searchBtn">搜索</button>
                 </div>
-                <!-- 引擎下拉列表 -->
                 <div class="engine-dropdown" id="engineDropdown"></div>
             </div>
         </div>
 
-        <!-- 底部单按钮（菜单） -->
+        <!-- ===== 底部合并成长条胶囊 ===== -->
         <div class="bottom-actions">
-            <button class="action-btn" id="navMenu">☰</button>
+            <div class="nav-capsule">
+                <button class="action-btn" id="navMenu">☰</button>
+                <div class="divider"></div>
+                <button class="action-btn" id="navWindow">⊞</button>
+            </div>
         </div>
     </div>
 
-    <!-- ===== 面板：菜单（列表样式） ===== -->
+    <!-- ===== 面板：菜单 ===== -->
     <div class="panel-overlay" id="menuOverlay"></div>
     <div class="panel-sheet" id="menuSheet">
         <div class="panel-header">
@@ -586,10 +609,6 @@
                     <div class="mi-left"><span class="mi-icon">🔖</span><span class="mi-label">收藏网址</span></div>
                     <span class="mi-arrow">›</span>
                 </div>
-                <div class="menu-item" data-action="window">
-                    <div class="mi-left"><span class="mi-icon">⊞</span><span class="mi-label">窗口</span></div>
-                    <span class="mi-arrow">›</span>
-                </div>
                 <div class="menu-item" data-action="night">
                     <div class="mi-left"><span class="mi-icon">🌙</span><span class="mi-label">夜间模式</span></div>
                     <span class="mi-arrow">›</span>
@@ -602,7 +621,7 @@
         </div>
     </div>
 
-    <!-- ===== 面板：窗口（独立） ===== -->
+    <!-- ===== 面板：窗口 ===== -->
     <div class="panel-overlay" id="windowOverlay"></div>
     <div class="panel-sheet" id="windowSheet">
         <div class="panel-header">
@@ -617,7 +636,7 @@
         </div>
     </div>
 
-    <!-- ===== 面板：设置（背景选择） ===== -->
+    <!-- ===== 面板：设置 ===== -->
     <div class="panel-overlay" id="settingsOverlay"></div>
     <div class="panel-sheet" id="settingsSheet">
         <div class="panel-header">
@@ -930,7 +949,7 @@
         }
 
         // ============================================================
-        // 菜单功能（列表项）
+        // 菜单功能
         // ============================================================
 
         function handleMenuAction(action) {
@@ -960,11 +979,6 @@
                 case 'fav':
                     showToast('「收藏网址」功能开发中');
                     closePanel('menu');
-                    break;
-                case 'window':
-                    closePanel('menu');
-                    openPanel('window');
-                    renderWindows();
                     break;
                 case 'night':
                     showToast('「夜间模式」功能开发中');
@@ -1053,10 +1067,15 @@
                 }
             });
 
-            // 底部单按钮
+            // 底部胶囊按钮
             document.getElementById('navMenu').addEventListener('click', function() {
                 if (activePanel === 'menu') { closePanel('menu'); return; }
                 openPanel('menu');
+            });
+            document.getElementById('navWindow').addEventListener('click', function() {
+                if (activePanel === 'window') { closePanel('window'); return; }
+                renderWindows();
+                openPanel('window');
             });
 
             // 关闭面板
