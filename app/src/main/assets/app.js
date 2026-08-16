@@ -40,7 +40,6 @@ var DEFAULT_ENGINES = [
 var currentEngine = { name: '必应', url: 'https://cn.bing.com/search?q={q}&from=vivosearch2025' };
 var customEngines = [];
 var windows = [];
-var isIncognito = false;
 var bgImages = [];
 var currentBgIndex = 0;
 var carouselTimer = null;
@@ -58,8 +57,6 @@ function loadData() {
         if (eng) currentEngine = JSON.parse(eng);
         var ws = localStorage.getItem('mybrowser_windows');
         if (ws) windows = JSON.parse(ws);
-        var incog = localStorage.getItem('mybrowser_incognito');
-        if (incog) isIncognito = JSON.parse(incog);
         var bg = localStorage.getItem('mybrowser_bg_images');
         if (bg) bgImages = JSON.parse(bg);
         var idx = localStorage.getItem('mybrowser_bg_index');
@@ -72,6 +69,7 @@ function loadData() {
         if (bgImages && bgImages.length > 0) {
             applyBgImage(currentBgIndex);
         }
+        // UI 状态恢复
         var toggle = document.getElementById('carouselToggle');
         if (toggle) {
             if (isCarouselMode) toggle.classList.add('active');
@@ -110,9 +108,6 @@ function saveCurrentEngine() {
 }
 function saveWindows() {
     localStorage.setItem('mybrowser_windows', JSON.stringify(windows));
-}
-function saveIncognito() {
-    localStorage.setItem('mybrowser_incognito', JSON.stringify(isIncognito));
 }
 
 // ============================================================
@@ -536,7 +531,7 @@ function setupBackgroundPicker() {
 }
 
 // ============================================================
-// 顶部栏控制
+// 顶部栏控制（由 Java 调用）
 // ============================================================
 window.updateTopBar = function(title, url) {
     var topBar = document.getElementById('topBar');
@@ -554,26 +549,14 @@ window.updateTopBar = function(title, url) {
 };
 
 // ============================================================
-// 下载管理（完整实现）
+// 下载管理（占位功能，防止报错）
 // ============================================================
 window.DownloadManager = {
     tasks: {},
-
     addTask: function(id, name, totalSize) {
-        this.tasks[id] = {
-            id: id,
-            name: name,
-            totalSize: totalSize || 0,
-            downloadedSize: 0,
-            speed: 0,
-            status: 'downloading',
-            progress: 0,
-            startTime: Date.now(),
-            filePath: null
-        };
+        this.tasks[id] = { id: id, name: name, totalSize: totalSize || 0, downloadedSize: 0, speed: 0, status: 'downloading', progress: 0, filePath: null };
         this.render();
     },
-
     updateProgress: function(id, downloaded, total, speed) {
         var task = this.tasks[id];
         if (!task) return;
@@ -581,12 +564,9 @@ window.DownloadManager = {
         if (total) task.totalSize = total;
         task.speed = speed || 0;
         task.progress = task.totalSize > 0 ? (downloaded / task.totalSize) * 100 : 0;
-        if (task.progress >= 100) {
-            task.status = 'done';
-        }
+        if (task.progress >= 100) task.status = 'done';
         this.render();
     },
-
     complete: function(id, filePath) {
         var task = this.tasks[id];
         if (!task) return;
@@ -596,28 +576,22 @@ window.DownloadManager = {
         task.filePath = filePath;
         this.render();
     },
-
     togglePause: function(id) {
         var task = this.tasks[id];
         if (!task || task.status === 'done') return;
-        var newStatus = task.status === 'paused' ? 'downloading' : 'paused';
-        task.status = newStatus;
+        task.status = (task.status === 'paused') ? 'downloading' : 'paused';
         if (window._nativeDownload) {
-            window._nativeDownload.togglePause(id, newStatus === 'downloading');
+            window._nativeDownload.togglePause(id, task.status === 'downloading');
         }
         this.render();
     },
-
     cancel: function(id) {
-        var task = this.tasks[id];
-        if (!task) return;
         if (window._nativeDownload) {
             window._nativeDownload.cancel(id);
         }
         delete this.tasks[id];
         this.render();
     },
-
     install: function(id) {
         var task = this.tasks[id];
         if (!task || task.status !== 'done' || !task.filePath) {
@@ -628,7 +602,6 @@ window.DownloadManager = {
             window._nativeDownload.install(task.filePath);
         }
     },
-
     render: function() {
         var container = document.getElementById('downloadListContainer');
         if (!container) return;
@@ -648,17 +621,10 @@ window.DownloadManager = {
             var isDone = task.status === 'done';
             var isPaused = task.status === 'paused';
             var statusClass = isDone ? 'done' : (isPaused ? 'paused' : '');
-
             html += '<div class="download-item ' + statusClass + '" data-id="' + id + '">';
-            html += '  <div class="di-header">';
-            html += '    <span class="di-name">' + task.name + '</span>';
-            html += '    <span class="di-status">' + statusText + '</span>';
-            html += '  </div>';
+            html += '  <div class="di-header"><span class="di-name">' + task.name + '</span><span class="di-status">' + statusText + '</span></div>';
             html += '  <div class="di-progress-track"><div class="di-progress-fill" style="width:' + progress + '%;"></div></div>';
-            html += '  <div class="di-info">';
-            html += '    <span>' + sizeText + '</span>';
-            html += '    <span>' + speedText + '</span>';
-            html += '  </div>';
+            html += '  <div class="di-info"><span>' + sizeText + '</span><span>' + speedText + '</span></div>';
             html += '  <div class="di-actions">';
             if (!isDone) {
                 html += '    <button class="di-pause" data-id="' + id + '">' + (isPaused ? '继续' : '暂停') + '</button>';
@@ -667,8 +633,7 @@ window.DownloadManager = {
                 html += '    <button class="di-install" data-id="' + id + '">安装</button>';
                 html += '    <button class="di-cancel" data-id="' + id + '">删除</button>';
             }
-            html += '  </div>';
-            html += '</div>';
+            html += '  </div></div>';
         });
         container.innerHTML = html;
 
@@ -704,7 +669,7 @@ window.DownloadManager = {
             });
         });
 
-        // 长按删除（通过 touch 事件）
+        // 长按删除
         var longPressTimer = null;
         container.querySelectorAll('.download-item').forEach(function(item) {
             item.addEventListener('touchstart', function(e) {
@@ -723,7 +688,6 @@ window.DownloadManager = {
             });
         });
     },
-
     _formatSize: function(bytes) {
         if (!bytes) return '0B';
         var units = ['B', 'KB', 'MB', 'GB'];
@@ -745,18 +709,16 @@ window._downloadComplete = function(id, filePath) {
 };
 
 // ============================================================
-// 初始化（稳定版）
+// 初始化
 // ============================================================
 function initApp() {
     setGreeting();
 
-    // 刷新按钮
     var refreshBtn = document.getElementById('refreshBtn');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', function() { window.location.reload(); });
     }
 
-    // 翻译按钮
     var translateBtn = document.getElementById('translateBtn');
     if (translateBtn) {
         translateBtn.addEventListener('click', function() {
@@ -770,7 +732,6 @@ function initApp() {
         });
     }
 
-    // 下载面板打开时刷新列表
     var downloadSheet = document.getElementById('downloadSheet');
     if (downloadSheet) {
         var observer = new MutationObserver(function() {
@@ -786,7 +747,6 @@ function initApp() {
 // 主启动函数
 // ============================================================
 function startApp() {
-    // 加载数据
     loadData();
     updateEngineBtn();
     renderWindows();
@@ -799,7 +759,7 @@ function startApp() {
     }
     initApp();
 
-    // ---- 事件绑定 ----
+    // 事件绑定
     document.getElementById('searchBtn').addEventListener('click', function() {
         doSearch(document.getElementById('searchInput').value);
     });
@@ -827,4 +787,23 @@ function startApp() {
         if (activePanel === 'menu') { closePanel('menu'); return; }
         openPanel('menu');
     });
- 
+    document.getElementById('navWindow').addEventListener('click', function() {
+        if (activePanel === 'window') { closePanel('window'); return; }
+        renderWindows();
+        openPanel('window');
+    });
+
+    document.querySelectorAll('.panel-close').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            closePanel(this.dataset.close);
+        });
+    });
+    document.querySelectorAll('.panel-overlay').forEach(function(overlay) {
+        overlay.addEventListener('click', function() {
+            var name = this.id.replace('Overlay', '');
+            closePanel(name);
+        });
+    });
+
+    document.querySelectorAll('.menu-item').forEach(function(item) {
+        item.addEventListener('click', functi
