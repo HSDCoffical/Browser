@@ -9,16 +9,30 @@
 <body>
     <div class="app-container">
         <div class="status-bar"></div>
+
+        <!-- 顶部地址栏（默认隐藏） -->
+        <div class="top-bar" id="topBar" style="display:none;">
+            <div class="top-title" id="topTitle">MyBrowser</div>
+            <div class="top-actions">
+                <button class="top-btn" id="refreshBtn">⟳</button>
+                <button class="top-btn" id="translateBtn">🌐</button>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
         <div class="content-area">
+            <div class="greeting" id="greeting">下午好</div>
             <div class="search-section">
                 <div class="search-box">
-                    <button class="engine-btn" id="engineBtn">必应 ▾</button>
+                    <button class="engine-btn" id="engineBtn">必应 ›</button>
                     <input type="text" id="searchInput" placeholder="搜索或输入网址" autofocus>
                     <button class="search-btn" id="searchBtn">搜索</button>
                 </div>
                 <div class="engine-dropdown" id="engineDropdown"></div>
             </div>
         </div>
+
+        <!-- 底部胶囊 -->
         <div class="bottom-actions">
             <div class="nav-capsule">
                 <button class="action-btn" id="navMenu">☰</button>
@@ -28,7 +42,7 @@
         </div>
     </div>
 
-    <!-- 菜单面板 -->
+    <!-- 面板：菜单 -->
     <div class="panel-overlay" id="menuOverlay"></div>
     <div class="panel-sheet" id="menuSheet">
         <div class="panel-header">
@@ -48,7 +62,7 @@
         </div>
     </div>
 
-    <!-- 窗口面板 -->
+    <!-- 面板：窗口 -->
     <div class="panel-overlay" id="windowOverlay"></div>
     <div class="panel-sheet" id="windowSheet">
         <div class="panel-header">
@@ -63,7 +77,7 @@
         </div>
     </div>
 
-    <!-- 设置面板 -->
+    <!-- 面板：设置 -->
     <div class="panel-overlay" id="settingsOverlay"></div>
     <div class="panel-sheet" id="settingsSheet">
         <div class="panel-header">
@@ -98,9 +112,26 @@
         </div>
     </div>
 
-    <!-- Toast -->
-    <div class="toast" id="toast"></div>
+    <!-- 面板：下载管理 -->
+    <div class="panel-overlay" id="downloadOverlay"></div>
+    <div class="panel-sheet" id="downloadSheet">
+        <div class="panel-header">
+            <span class="panel-title">下载管理</span>
+            <button class="panel-close" data-close="download">✕</button>
+        </div>
+        <div class="panel-body">
+            <div id="downloadListContainer"></div>
+        </div>
+    </div>
 
-    <script src="app.js"></script>
-</body>
-</html>
+    <!-- 面板：收藏/历史 -->
+    <div class="panel-overlay" id="historyOverlay"></div>
+    <div class="panel-sheet" id="historySheet">
+        <div class="panel-header">
+            <span class="panel-title">收藏 &amp; 历史</span>
+            <button class="panel-close" data-close="history">✕</button>
+        </div>
+        <div class="panel-body">
+            <div style="margin-bottom:10px;display:flex;gap:8px;">
+                <button id="historyTabFav" class="func-action" style="background:#2979ff;">收藏</button>
+                <button id
