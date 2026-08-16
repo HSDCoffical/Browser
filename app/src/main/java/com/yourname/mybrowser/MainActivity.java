@@ -6,13 +6,14 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.inputmethod.EditorInfo;  // ← 关键导入
+import android.view.inputmethod.EditorInfo;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -34,7 +35,8 @@ public class MainActivity extends AppCompatActivity {
         webView = findViewById(R.id.webView);
         urlEdit = findViewById(R.id.urlEdit);
 
-        checkAndRequestPermissions();
+        // 请求所有权限（包括存储和其他），但用户可拒绝非必要权限
+        requestAllPermissions();
 
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
@@ -60,17 +62,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback,
                                              FileChooserParams fileChooserParams) {
-                if (checkAndRequestPermissions()) {
+                // 检查存储权限，若未授予则引导用户授权
+                if (checkStoragePermission()) {
                     mFilePathCallback = filePathCallback;
                     Intent intent = fileChooserParams.createIntent();
-                    try {
-                        startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE);
-                    } catch (Exception e) {
-                        mFilePathCallback = null;
-                        return false;
-                    }
+                    startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE);
                     return true;
                 } else {
+                    Toast.makeText(MainActivity.this, "需要存储权限才能选择背景图片", Toast.LENGTH_SHORT).show();
+                    requestStoragePermission();
                     return false;
                 }
             }
@@ -95,23 +95,25 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private boolean checkAndRequestPermissions() {
-        String[] permissions = getRequiredPermissions();
-        boolean allGranted = true;
+    // ============================================================
+    // 权限管理：首次打开请求所有权限，但只有存储是必要的
+    // ============================================================
+
+    private void requestAllPermissions() {
+        String[] permissions = getAllPermissions();
+        boolean needRequest = false;
         for (String perm : permissions) {
             if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
-                allGranted = false;
+                needRequest = true;
                 break;
             }
         }
-        if (!allGranted) {
+        if (needRequest) {
             ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST_CODE);
-            return false;
         }
-        return true;
     }
 
-    private String[] getRequiredPermissions() {
+    private String[] getAllPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             return new String[]{
                     Manifest.permission.READ_MEDIA_IMAGES,
@@ -144,12 +146,32 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private boolean checkStoragePermission() {
+        String permission = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                ? Manifest.permission.READ_MEDIA_IMAGES
+                : Manifest.permission.READ_EXTERNAL_STORAGE;
+        return ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestStoragePermission() {
+        String permission = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                ? Manifest.permission.READ_MEDIA_IMAGES
+                : Manifest.permission.READ_EXTERNAL_STORAGE;
+        ActivityCompat.requestPermissions(this, new String[]{permission}, PERMISSION_REQUEST_CODE);
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        // 可以在此处理权限结果
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            // 可在此处理用户选择，但无需特殊处理，因为只有存储是必需的
+        }
     }
+
+    // ============================================================
+    // 文件选择器回调
+    // ============================================================
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
