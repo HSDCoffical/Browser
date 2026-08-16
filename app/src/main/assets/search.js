@@ -1,0 +1,27 @@
+// ============================================================
+// 搜索模块
+// ============================================================
+(function() {
+    'use strict';
+
+    window.doSearch = function(query) {
+        if (!query || !query.trim()) return;
+        var q = query.trim();
+        var url = '';
+        if (q.indexOf('http://') === 0 || q.indexOf('https://') === 0) {
+            url = q;
+        } else if (q.indexOf('.') !== -1 && q.indexOf(' ') === -1) {
+            url = 'https://' + q;
+        } else {
+            url = window.currentEngine.url.replace(/\{q\}/g, encodeURIComponent(q));
+        }
+        // 记录历史
+        if (typeof window.addHistory === 'function') {
+            window.addHistory(q, url);
+        }
+        if (typeof window.addWindow === 'function') {
+            window.addWindow(q, url);
+        }
+        window.location.href = url;
+    };
+})();
