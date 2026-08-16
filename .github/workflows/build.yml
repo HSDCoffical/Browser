@@ -18,15 +18,19 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: 自动配置 Gradle（无需手动写 wrapper）
+      - name: 自动配置 Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: 7.6.2
 
+      - name: 解码签名文件
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/mybrowser.keystore
+
       - name: 编译生成 APK
         run: gradle assembleDebug
 
-      - name: 上传 APK 文件
+      - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:
           name: MyBrowser-debug
