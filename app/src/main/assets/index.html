@@ -8,6 +8,7 @@
 </head>
 <body>
     <div class="app-container">
+        <!-- 状态栏占位 -->
         <div class="status-bar"></div>
 
         <!-- 顶部地址栏（默认隐藏） -->
@@ -19,9 +20,12 @@
             </div>
         </div>
 
-        <!-- 主内容区 -->
-        <div class="content-area">
+        <!-- 内容区域（垂直居中） -->
+        <div class="content-area" id="contentArea">
+            <!-- 问候语 -->
             <div class="greeting" id="greeting">下午好</div>
+
+            <!-- 搜索框 -->
             <div class="search-section">
                 <div class="search-box">
                     <button class="engine-btn" id="engineBtn">必应 ›</button>
@@ -42,7 +46,7 @@
         </div>
     </div>
 
-    <!-- 面板：菜单 -->
+    <!-- 菜单面板 -->
     <div class="panel-overlay" id="menuOverlay"></div>
     <div class="panel-sheet" id="menuSheet">
         <div class="panel-header">
@@ -62,7 +66,7 @@
         </div>
     </div>
 
-    <!-- 面板：窗口 -->
+    <!-- 窗口面板 -->
     <div class="panel-overlay" id="windowOverlay"></div>
     <div class="panel-sheet" id="windowSheet">
         <div class="panel-header">
@@ -77,7 +81,7 @@
         </div>
     </div>
 
-    <!-- 面板：设置 -->
+    <!-- 设置面板 -->
     <div class="panel-overlay" id="settingsOverlay"></div>
     <div class="panel-sheet" id="settingsSheet">
         <div class="panel-header">
@@ -112,7 +116,7 @@
         </div>
     </div>
 
-    <!-- 面板：下载管理 -->
+    <!-- 下载管理面板 -->
     <div class="panel-overlay" id="downloadOverlay"></div>
     <div class="panel-sheet" id="downloadSheet">
         <div class="panel-header">
@@ -120,18 +124,13 @@
             <button class="panel-close" data-close="download">✕</button>
         </div>
         <div class="panel-body">
-            <div id="downloadListContainer"></div>
+            <div class="func-list" id="downloadList"></div>
         </div>
     </div>
 
-    <!-- 面板：收藏/历史 -->
-    <div class="panel-overlay" id="historyOverlay"></div>
-    <div class="panel-sheet" id="historySheet">
-        <div class="panel-header">
-            <span class="panel-title">收藏 &amp; 历史</span>
-            <button class="panel-close" data-close="history">✕</button>
-        </div>
-        <div class="panel-body">
-            <div style="margin-bottom:10px;display:flex;gap:8px;">
-                <button id="historyTabFav" class="func-action" style="background:#2979ff;">收藏</button>
-                <button id
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
