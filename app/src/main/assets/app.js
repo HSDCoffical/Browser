@@ -554,7 +554,7 @@ window.updateTopBar = function(title, url) {
 };
 
 // ============================================================
-// 下载管理（核心）
+// 下载管理（完整实现）
 // ============================================================
 window.DownloadManager = {
     tasks: {},
@@ -569,7 +569,7 @@ window.DownloadManager = {
             status: 'downloading',
             progress: 0,
             startTime: Date.now(),
-            filePath: null  // 完成后存储文件路径
+            filePath: null
         };
         this.render();
     },
@@ -595,7 +595,6 @@ window.DownloadManager = {
         task.downloadedSize = task.totalSize;
         task.filePath = filePath;
         this.render();
-        // 通知栏已由系统显示，这里不再重复
     },
 
     togglePause: function(id) {
@@ -673,7 +672,7 @@ window.DownloadManager = {
         });
         container.innerHTML = html;
 
-        // 绑定事件（使用委托方式避免重复绑定）
+        // 事件绑定
         container.querySelectorAll('.di-pause').forEach(function(btn) {
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
@@ -746,16 +745,18 @@ window._downloadComplete = function(id, filePath) {
 };
 
 // ============================================================
-// 初始化
+// 初始化（稳定版）
 // ============================================================
 function initApp() {
     setGreeting();
 
+    // 刷新按钮
     var refreshBtn = document.getElementById('refreshBtn');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', function() { window.location.reload(); });
     }
 
+    // 翻译按钮
     var translateBtn = document.getElementById('translateBtn');
     if (translateBtn) {
         translateBtn.addEventListener('click', function() {
@@ -769,6 +770,7 @@ function initApp() {
         });
     }
 
+    // 下载面板打开时刷新列表
     var downloadSheet = document.getElementById('downloadSheet');
     if (downloadSheet) {
         var observer = new MutationObserver(function() {
@@ -780,7 +782,11 @@ function initApp() {
     }
 }
 
+// ============================================================
+// 主启动函数
+// ============================================================
 function startApp() {
+    // 加载数据
     loadData();
     updateEngineBtn();
     renderWindows();
@@ -793,7 +799,7 @@ function startApp() {
     }
     initApp();
 
-    // 事件绑定
+    // ---- 事件绑定 ----
     document.getElementById('searchBtn').addEventListener('click', function() {
         doSearch(document.getElementById('searchInput').value);
     });
@@ -821,6 +827,4 @@ function startApp() {
         if (activePanel === 'menu') { closePanel('menu'); return; }
         openPanel('menu');
     });
-    document.getElementById('navWindow').addEventListener('click', function() {
-        if (activePanel === 'window') { closePanel('window'); return; }
-  
+ 
