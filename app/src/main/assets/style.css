@@ -132,7 +132,6 @@ body.night-mode .greeting {
     background: rgba(0,0,0,0.05);
 }
 
-/* 内容区域垂直居中 */
 .content-area {
     flex: 1;
     display: flex;
@@ -366,7 +365,6 @@ body.night-mode .greeting {
     flex-shrink: 0;
 }
 
-/* 面板系统 */
 .panel-overlay {
     position: fixed;
     top: 0;
