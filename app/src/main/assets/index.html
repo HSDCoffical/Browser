@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>我的浏览器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #f1f3f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+        }
+        .logo {
+            font-size: 36px;
+            font-weight: bold;
+            color: #4285f4;
+            margin-bottom: 30px;
+        }
+        .logo span {
+            color: #ea4335;
+        }
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 30px;  /* 大圆角 R角 */
+            padding: 8px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            transition: box-shadow 0.2s;
+        }
+        .search-box:focus-within {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+        }
+        .search-box input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 18px;
+            padding: 14px 0;
+            background: transparent;
+            color: #333;
+        }
+        .search-box input::placeholder {
+            color: #999;
+            font-size: 16px;
+        }
+        .search-box button {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 22px;
+            padding: 8px 12px;
+            color: #4285f4;
+            transition: transform 0.1s;
+        }
+        .search-box button:active {
+            transform: scale(0.9);
+        }
+        /* 可选小提示 */
+        .hint {
+            margin-top: 30px;
+            color: #777;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">My<span>Browser</span></div>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索或输入网址" autofocus>
+            <button id="searchBtn">🔍</button>
+        </div>
+        <div class="hint">直接输入关键字搜索 · 输入网址直接访问</div>
+    </div>
+
+    <script>
+        const input = document.getElementById('searchInput');
+        const btn = document.getElementById('searchBtn');
+
+        function doSearch() {
+            let query = input.value.trim();
+            if (!query) return;
+            // 判断是否为网址（含点或http开头）
+            if (query.startsWith('http://') || query.startsWith('https://')) {
+                window.location.href = query;
+            } else if (query.includes('.') && !query.includes(' ')) {
+                window.location.href = 'https://' + query;
+            } else {
+                // 默认用必应搜索
+                window.location.href = 'https://www.bing.com/search?q=' + encodeURIComponent(query);
+            }
+        }
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                doSearch();
+            }
+        });
+
+        btn.addEventListener('click', doSearch);
+    </script>
+</body>
+</html>
