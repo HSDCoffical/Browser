@@ -344,7 +344,7 @@ function closePanel(name) {
     if (activePanel === name) activePanel = null;
 }
 function closeAllPanels() {
-    ['menu', 'window', 'settings'].forEach(function(name) {
+    ['menu', 'window', 'settings', 'download'].forEach(function(name) {
         var overlay = document.getElementById(name + 'Overlay');
         var sheet = document.getElementById(name + 'Sheet');
         if (overlay) overlay.classList.remove('show');
@@ -363,8 +363,11 @@ function handleMenuAction(action) {
             openPanel('settings');
             break;
         case 'download':
-            window.showToast('下载管理功能开发中');
             closePanel('menu');
+            openPanel('download');
+            if (typeof window.renderDownloadList === 'function') {
+                window.renderDownloadList();
+            }
             break;
         case 'history':
             window.showToast('收藏/历史功能开发中');
@@ -517,88 +520,142 @@ function setupBackgroundPicker() {
 }
 
 // ============================================================
-// 初始化
+// 顶部栏更新（由 Java 调用）
 // ============================================================
-function init() {
-    loadData();
-    updateEngineBtn();
-    renderWindows();
-    setupBackgroundPicker();
-    updateCarouselPreview();
-    if (bgImages && bgImages.length > 0) {
-        if (isCarouselMode && bgImages.length > 1) {
-            startCarousel();
-        }
+window.updateTopBar = function(title, url) {
+    var el = document.getElementById('topTitle');
+    if (el) {
+        el.textContent = title || url || 'MyBrowser';
+        el.title = url || '';
+    }
+};
+
+// ============================================================
+// 下载管理
+// ============================================================
+window.renderDownloadList = function() {
+    var list = document.getElementById('downloadList');
+    if (!list) return;
+    var downloads = [];
+    try {
+        var data = localStorage.getItem('mybrowser_downloads');
+        if (data) downloads = JSON.parse(data);
+    } catch(e) {}
+    if (downloads.length === 0) {
+        list.innerHTML = '<div class="func-item">暂无下载记录</div>';
+        return;
+    }
+    var html = '';
+    downloads.forEach(function(item, idx) {
+        html += '<div class="func-item">' +
+                '<div class="func-info">' +
+                '<div class="func-title">' + (item.name || '未知文件') + '</div>' +
+                '<div class="func-desc">' + (item.url || '') + '</div>' +
+                '</div>' +
+                '<div style="display:flex;gap:4px;">' +
+                '<button class="func-action" data-url="' + item.url + '">打开</button>' +
+                '<button class="func-del" data-idx="' + idx + '">✕</button>' +
+                '</div>' +
+                '</div>';
+    });
+    list.innerHTML = html;
+
+    list.querySelectorAll('.func-action').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var url = this.dataset.url;
+            if (url) {
+                var a = document.createElement('a');
+                a.href = url;
+                a.target = '_blank';
+                a.download = '';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        });
+    });
+    list.querySelectorAll('.func-del').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var idx = parseInt(this.dataset.idx);
+            downloads.splice(idx, 1);
+            localStorage.setItem('mybrowser_downloads', JSON.stringify(downloads));
+            window.renderDownloadList();
+            window.showToast('已删除');
+        });
+    });
+};
+
+// ============================================================
+// 添加下载项（供 Java 调用）
+// ============================================================
+window.addDownloadItem = function(name, url) {
+    var downloads = [];
+    try {
+        var data = localStorage.getItem('mybrowser_downloads');
+        if (data) downloads = JSON.parse(data);
+    } catch(e) {}
+    downloads.push({ name: name || '下载文件', url: url, time: Date.now() });
+    localStorage.setItem('mybrowser_downloads', JSON.stringify(downloads));
+    if (typeof window.renderDownloadList === 'function') {
+        window.renderDownloadList();
+    }
+    window.showToast('下载已添加');
+};
+
+// ============================================================
+// 初始化事件（在 DOMContentLoaded 执行）
+// ============================================================
+function initApp() {
+    // 刷新按钮
+    var refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            window.location.reload();
+        });
     }
 
-    document.getElementById('searchBtn').addEventListener('click', function() {
-        doSearch(document.getElementById('searchInput').value);
-    });
-    document.getElementById('searchInput').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            doSearch(this.value);
-        }
-    });
-
-    document.getElementById('engineBtn').addEventListener('click', function(e) {
-        e.stopPropagation();
-        toggleEngineDropdown();
-    });
-
-    document.addEventListener('click', function(e) {
-        var dd = document.getElementById('engineDropdown');
-        var btn = document.getElementById('engineBtn');
-        if (!dd.contains(e.target) && !btn.contains(e.target)) {
-            closeEngineDropdown();
-        }
-    });
-
-    document.getElementById('navMenu').addEventListener('click', function() {
-        if (activePanel === 'menu') { closePanel('menu'); return; }
-        openPanel('menu');
-    });
-    document.getElementById('navWindow').addEventListener('click', function() {
-        if (activePanel === 'window') { closePanel('window'); return; }
-        renderWindows();
-        openPanel('window');
-    });
-
-    document.querySelectorAll('.panel-close').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            closePanel(this.dataset.close);
+    // 翻译按钮
+    var translateBtn = document.getElementById('translateBtn');
+    if (translateBtn) {
+        translateBtn.addEventListener('click', function() {
+            var currentUrl = window.location.href;
+            if (currentUrl && currentUrl !== 'about:blank' && !currentUrl.startsWith('file://')) {
+                var transUrl = 'https://translate.google.com/translate?sl=auto&tl=zh-CN&u=' + encodeURIComponent(currentUrl);
+                window.open(transUrl, '_blank');
+            } else {
+                window.showToast('无法翻译当前页面');
+            }
         });
-    });
-    document.querySelectorAll('.panel-overlay').forEach(function(overlay) {
-        overlay.addEventListener('click', function() {
-            var name = this.id.replace('Overlay', '');
-            closePanel(name);
+    }
+
+    // 监听下载面板打开时刷新列表
+    var downloadSheet = document.getElementById('downloadSheet');
+    if (downloadSheet) {
+        var observer = new MutationObserver(function() {
+            if (downloadSheet.classList.contains('show')) {
+                if (typeof window.renderDownloadList === 'function') {
+                    window.renderDownloadList();
+                }
+            }
         });
-    });
+        observer.observe(downloadSheet, { attributes: true, attributeFilter: ['class'] });
+    }
 
-    document.querySelectorAll('.menu-item').forEach(function(item) {
-        item.addEventListener('click', function() {
-            var action = this.dataset.action;
-            handleMenuAction(action);
-        });
-    });
-
-    document.getElementById('addWindowBtn').addEventListener('click', function() {
-        var id = 'win_' + Date.now();
-        windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Date.now() });
-        saveWindows();
-        renderWindows();
-        window.showToast('已创建新窗口');
-        window.location.href = 'about:blank';
-    });
-
-    setTimeout(function() {
-        document.getElementById('searchInput').focus();
-    }, 300);
+    // 其余初始化已在原代码中执行
 }
 
+// 执行初始化（确保 DOM 已加载）
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', function() {
+        // 原有 init 在之前已定义，这里调用原有 init 和新增 initApp
+        if (typeof init === 'function') {
+            init();
+        }
+        initApp();
+    });
 } else {
-    init();
+    if (typeof init === 'function') {
+        init();
+    }
+    initApp();
 }
