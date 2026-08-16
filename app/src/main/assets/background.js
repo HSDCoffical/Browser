@@ -1,5 +1,5 @@
 // ============================================================
-// 背景管理模块（单图/轮播模式优化）
+// 背景管理模块（单图/轮播模式）
 // ============================================================
 (function() {
     'use strict';
@@ -13,9 +13,7 @@
         document.body.style.backgroundImage = 'url(' + img + ')';
         window.currentBgIndex = index;
         window.saveBgIndex();
-        if (typeof window.updateCarouselPreview === 'function') {
-            window.updateCarouselPreview();
-        }
+        if (typeof window.updateCarouselPreview === 'function') window.updateCarouselPreview();
     };
 
     window.startCarousel = function() {
@@ -77,7 +75,7 @@
         });
     };
 
-    // 背景设置（文件选择、模式切换）
+    // 背景设置
     window.setupBackgroundPicker = function() {
         var fileInput = document.getElementById('bgFileInput');
         var trigger = document.getElementById('bgPickerTrigger');
@@ -96,7 +94,7 @@
                     if (label) label.textContent = '选择背景图片（多选）';
                     if (fileInput) {
                         fileInput.setAttribute('multiple', 'multiple');
-                        fileInput.value = ''; // 清空已选
+                        fileInput.value = '';
                     }
                     if (window.bgImages.length > 1) window.startCarousel();
                 } else {
@@ -108,7 +106,6 @@
                     }
                     window.stopCarousel();
                     if (window.bgImages.length > 1) {
-                        // 单图模式：只保留第一张
                         var first = window.bgImages[0];
                         window.bgImages = [first];
                         window.saveBgImages();
@@ -134,7 +131,6 @@
                 if (!files || files.length === 0) return;
 
                 if (window.isCarouselMode) {
-                    // 轮播模式：多选
                     var total = window.bgImages.length + files.length;
                     if (total > 9) {
                         window.showToast('最多选择9张图片');
@@ -164,7 +160,6 @@
                         })(files[i]);
                     }
                 } else {
-                    // 单图模式：只取第一张
                     var file = files[0];
                     var reader = new FileReader();
                     reader.onload = function(ev) {
@@ -195,7 +190,6 @@
             });
         }
 
-        // 自定义时长输入
         var intervalInput = document.getElementById('carouselInterval');
         if (intervalInput) {
             intervalInput.addEventListener('change', function() {
