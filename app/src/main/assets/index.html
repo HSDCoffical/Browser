@@ -856,10 +856,10 @@
         </div>
         <div class="panel-body">
             <div class="func-list">
-                <div class="func-item"><span class="func-title">📷 扫一扫</span><button class="func-action" onclick="showToast('扫一扫功能开发中')">打开</button></div>
-                <div class="func-item"><span class="func-title">📸 网页截图</span><button class="func-action" onclick="showToast('截图功能开发中')">打开</button></div>
-                <div class="func-item"><span class="func-title">🔗 二维码生成</span><button class="func-action" onclick="showToast('二维码生成功能开发中')">打开</button></div>
-                <div class="func-item"><span class="func-title">📄 页面翻译</span><button class="func-action" onclick="showToast('翻译功能开发中')">打开</button></div>
+                <div class="func-item"><span class="func-title">📷 扫一扫</span><button class="func-action" onclick="window.showToast('扫一扫功能开发中')">打开</button></div>
+                <div class="func-item"><span class="func-title">📸 网页截图</span><button class="func-action" onclick="window.showToast('截图功能开发中')">打开</button></div>
+                <div class="func-item"><span class="func-title">🔗 二维码生成</span><button class="func-action" onclick="window.showToast('二维码生成功能开发中')">打开</button></div>
+                <div class="func-item"><span class="func-title">📄 页面翻译</span><button class="func-action" onclick="window.showToast('翻译功能开发中')">打开</button></div>
             </div>
         </div>
     </div>
@@ -868,9 +868,23 @@
     <div class="toast" id="toast"></div>
 
     <!-- ========================================================== -->
-    <!-- JavaScript 部分                                            -->
+    <!-- JavaScript 部分（完整修复）                                 -->
     <!-- ========================================================== -->
     <script>
+        // ============================================================
+        // 全局 Toast（供内联 onclick 调用）
+        // ============================================================
+        window.showToast = function(msg) {
+            const el = document.getElementById('toast');
+            if (!el) return;
+            el.textContent = msg;
+            el.classList.add('show');
+            clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => {
+                el.classList.remove('show');
+            }, 1800);
+        };
+
         // ============================================================
         // 数据层
         // ============================================================
@@ -1037,7 +1051,7 @@
                         startCarousel();
                     }
                     updateCarouselPreview();
-                    showToast('已删除');
+                    window.showToast('已删除');
                 });
             });
         }
@@ -1048,12 +1062,12 @@
 
         function addFavorite(title, url) {
             if (favorites.some(item => item.url === url)) {
-                showToast('已收藏');
+                window.showToast('已收藏');
                 return;
             }
             favorites.unshift({ title: title || url, url: url, time: Date.now() });
             saveFavorites();
-            showToast('已收藏');
+            window.showToast('已收藏');
         }
 
         function renderHistory(mode) {
@@ -1098,7 +1112,7 @@
                         saveHistory();
                     }
                     renderHistory(mode);
-                    showToast('已删除');
+                    window.showToast('已删除');
                 });
             });
         }
@@ -1150,7 +1164,7 @@
                     downloads.splice(idx, 1);
                     saveDownloads();
                     renderDownloads();
-                    showToast('已删除');
+                    window.showToast('已删除');
                 });
             });
         }
@@ -1193,7 +1207,7 @@
                     saveCurrentEngine();
                     updateEngineBtn();
                     closeEngineDropdown();
-                    showToast('已切换到：' + eng.name);
+                    window.showToast('已切换到：' + eng.name);
                 });
             });
 
@@ -1202,15 +1216,15 @@
                 const name = document.getElementById('customEngineName').value.trim();
                 const url = document.getElementById('customEngineUrl').value.trim();
                 if (!name || !url) {
-                    showToast('请填写名称和URL');
+                    window.showToast('请填写名称和URL');
                     return;
                 }
                 if (!url.includes('{q}')) {
-                    showToast('URL中请包含 {q} 作为关键词占位');
+                    window.showToast('URL中请包含 {q} 作为关键词占位');
                     return;
                 }
                 if (getAllEngines().some(e => e.name === name)) {
-                    showToast('引擎名称已存在');
+                    window.showToast('引擎名称已存在');
                     return;
                 }
                 customEngines.push({ name, url });
@@ -1218,7 +1232,7 @@
                 document.getElementById('customEngineName').value = '';
                 document.getElementById('customEngineUrl').value = '';
                 renderEngineDropdown();
-                showToast('已添加：' + name);
+                window.showToast('已添加：' + name);
             });
         }
 
@@ -1307,7 +1321,7 @@
                         addHistory(w.title, w.url);
                         window.location.href = w.url;
                     } else {
-                        showToast('该窗口没有有效地址');
+                        window.showToast('该窗口没有有效地址');
                     }
                 });
             });
@@ -1317,7 +1331,7 @@
                     e.stopPropagation();
                     const id = this.dataset.id;
                     deleteWindow(id);
-                    showToast('已删除窗口');
+                    window.showToast('已删除窗口');
                 });
             });
         }
@@ -1356,22 +1370,6 @@
         }
 
         // ============================================================
-        // Toast
-        // ============================================================
-
-        let toastTimer = null;
-
-        function showToast(msg) {
-            const el = document.getElementById('toast');
-            el.textContent = msg;
-            el.classList.add('show');
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => {
-                el.classList.remove('show');
-            }, 1800);
-        }
-
-        // ============================================================
         // 菜单功能
         // ============================================================
 
@@ -1399,18 +1397,18 @@
                     if (window.location.href && window.location.href !== 'about:blank') {
                         addFavorite(document.title || window.location.href, window.location.href);
                     } else {
-                        showToast('无法收藏空白页');
+                        window.showToast('无法收藏空白页');
                     }
                     closePanel('menu');
                     break;
                 case 'night':
                     document.body.classList.toggle('night-mode');
                     closePanel('menu');
-                    showToast(document.body.classList.contains('night-mode') ? '夜间模式已开启' : '夜间模式已关闭');
+                    window.showToast(document.body.classList.contains('night-mode') ? '夜间模式已开启' : '夜间模式已关闭');
                     break;
                 case 'exit':
                     if (confirm('确定退出应用吗？')) {
-                        showToast('正在退出...');
+                        window.showToast('正在退出...');
                         setTimeout(() => {
                             window.location.href = 'about:blank';
                         }, 500);
@@ -1418,7 +1416,7 @@
                     closePanel('menu');
                     break;
                 default:
-                    showToast('功能开发中');
+                    window.showToast('功能开发中');
                     closePanel('menu');
             }
         }
@@ -1442,7 +1440,7 @@
                 if (!files || files.length === 0) return;
                 const total = bgImages.length + files.length;
                 if (total > 9) {
-                    showToast('最多选择9张图片');
+                    window.showToast('最多选择9张图片');
                     this.value = '';
                     return;
                 }
@@ -1460,14 +1458,8 @@
                                 startCarousel();
                             }
                             updateCarouselPreview();
-                            showToast('已添加 ' + files.length + ' 张图片');
+                            window.showToast('已添加 ' + files.length + ' 张图片');
                             closePanel('settings');
                         }
                     };
-                    reader.readAsDataURL(files[i]);
-                }
-                this.value = '';
-            });
-
-            reset.addEventListener('click', function() {
-                b
+      
