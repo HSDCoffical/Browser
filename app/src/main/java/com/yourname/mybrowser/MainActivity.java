@@ -2,6 +2,7 @@ package com.yourname.mybrowser;
 
 import android.os.Bundle;
 import android.view.inputmethod.EditorInfo;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
@@ -19,10 +20,11 @@ public class MainActivity extends AppCompatActivity {
         webView = findViewById(R.id.webView);
         urlEdit = findViewById(R.id.urlEdit);
 
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setDomStorageEnabled(true);
-        webView.getSettings().setAllowFileAccess(true);
-        webView.getSettings().setMixedContentMode(WebView.getSettings().MIXED_CONTENT_ALWAYS_ALLOW);
+        WebSettings webSettings = webView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
+        webSettings.setDomStorageEnabled(true);
+        webSettings.setAllowFileAccess(true);
+        webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW); // 修正行
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
