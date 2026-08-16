@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MyBrowser</title>
     <style>
+        /* ===== 全局重置 ===== */
         * {
             margin: 0;
             padding: 0;
@@ -15,26 +16,39 @@
             width: 100%;
             height: 100%;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
-            background: #f2f4f8;
+            background: #e8ecf1;
             overflow: hidden;
             user-select: none;
         }
 
+        /* 背景图片（可由用户自定义） */
+        body {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: background-image 0.5s ease;
+        }
+
+        /* 主容器 */
         .app-container {
             display: flex;
             flex-direction: column;
             height: 100%;
             max-width: 480px;
             margin: 0 auto;
-            background: #f2f4f8;
             position: relative;
             overflow: hidden;
+            /* 毛玻璃效果作为底层容器，但搜索框和底部按钮各自独立玻璃 */
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
         }
 
+        /* 状态栏占位 */
         .status-bar {
             height: 32px;
-            background: #f2f4f8;
             flex-shrink: 0;
+            background: transparent;
         }
 
         /* 内容区：垂直居中 */
@@ -48,6 +62,7 @@
             overflow-y: auto;
         }
 
+        /* ===== 搜索框（毛玻璃 + 辉光） ===== */
         .search-section {
             width: 100%;
             max-width: 400px;
@@ -56,18 +71,21 @@
         .search-box {
             display: flex;
             align-items: center;
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
             border-radius: 28px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 20px rgba(41, 121, 255, 0.15), 0 1px 6px rgba(0,0,0,0.05);
             padding: 0 4px 0 0;
-            transition: box-shadow 0.25s ease;
-            border: 1px solid rgba(0, 0, 0, 0.02);
+            transition: box-shadow 0.3s ease, background 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         .search-box:focus-within {
-            box-shadow: 0 4px 20px rgba(41, 121, 255, 0.18);
-            border-color: #2979ff;
+            box-shadow: 0 4px 30px rgba(41, 121, 255, 0.30), 0 1px 10px rgba(0,0,0,0.08);
+            background: rgba(255, 255, 255, 0.75);
         }
 
+        /* 引擎切换按钮（触发下拉） */
         .engine-btn {
             flex-shrink: 0;
             padding: 0 10px 0 16px;
@@ -82,6 +100,8 @@
             align-items: center;
             gap: 4px;
             white-space: nowrap;
+            position: relative;
+            z-index: 5;
         }
         .engine-btn::after {
             content: "▾";
@@ -91,6 +111,89 @@
         }
         .engine-btn:active {
             opacity: 0.6;
+        }
+
+        /* 下拉引擎列表（绝对定位，从按钮下方展开） */
+        .engine-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 200px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            padding: 8px 0;
+            transform-origin: top center;
+            transform: scaleY(0) translateY(-10px);
+            opacity: 0;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+            z-index: 20;
+            pointer-events: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .engine-dropdown.open {
+            transform: scaleY(1) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .engine-dropdown .ed-item {
+            padding: 12px 18px;
+            font-size: 14px;
+            color: #1a1a2e;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.15s;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+        }
+        .engine-dropdown .ed-item:last-child {
+            border-bottom: none;
+        }
+        .engine-dropdown .ed-item:active {
+            background: rgba(41, 121, 255, 0.10);
+        }
+        .engine-dropdown .ed-item .ed-check {
+            color: #2979ff;
+            font-weight: 600;
+        }
+        .engine-dropdown .ed-custom {
+            padding: 10px 18px;
+            border-top: 1px solid rgba(0,0,0,0.06);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .engine-dropdown .ed-custom input {
+            flex: 1;
+            min-width: 80px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 13px;
+            outline: none;
+            background: rgba(255,255,255,0.7);
+        }
+        .engine-dropdown .ed-custom input:focus {
+            border-color: #2979ff;
+        }
+        .engine-dropdown .ed-custom button {
+            padding: 8px 16px;
+            background: #2979ff;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .engine-dropdown .ed-custom button:active {
+            background: #1a5fd0;
         }
 
         .search-box input {
@@ -105,8 +208,9 @@
             height: 48px;
         }
         .search-box input::placeholder {
-            color: #b0b8c8;
+            color: #888;
             font-size: 15px;
+            font-weight: 400;
         }
 
         .search-btn {
@@ -122,64 +226,71 @@
             transition: background 0.2s, transform 0.1s;
             margin-right: 4px;
             white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(41, 121, 255, 0.3);
         }
         .search-btn:active {
             background: #1a5fd0;
             transform: scale(0.96);
         }
 
-        /* 底部导航（只有两个） */
-        .bottom-nav {
+        /* ===== 底部按钮（毛玻璃，与底部分离） ===== */
+        .bottom-actions {
             flex-shrink: 0;
-            background: #ffffff;
-            border-top: 1px solid #f0f2f5;
             display: flex;
-            align-items: stretch;
-            height: 64px;
-            padding: 0 12px;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.03);
+            justify-content: center;
+            gap: 30px;
+            padding: 16px 20px 28px 20px; /* 底部留白，分离效果 */
+            background: transparent;
+            position: relative;
+            z-index: 2;
         }
-        .bottom-nav .nav-item {
-            flex: 1;
+        .bottom-actions .action-btn {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: transparent;
-            border: none;
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 20px;
+            padding: 10px 24px;
+            min-width: 100px;
+            color: #1a1a2e;
+            font-size: 13px;
             cursor: pointer;
-            color: #888;
-            transition: color 0.2s;
-            border-radius: 12px;
-            padding: 4px 0;
+            transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            gap: 4px;
+            font-weight: 500;
         }
-        .bottom-nav .nav-item:active {
-            background: #f5f7fa;
+        .bottom-actions .action-btn:active {
+            transform: scale(0.94);
+            background: rgba(255, 255, 255, 0.7);
         }
-        .bottom-nav .nav-item .nav-icon {
+        .bottom-actions .action-btn .icon {
             font-size: 22px;
             line-height: 1.2;
         }
-        .bottom-nav .nav-item .nav-label {
+        .bottom-actions .action-btn .label {
             font-size: 11px;
-            margin-top: 2px;
             font-weight: 400;
-        }
-        .bottom-nav .nav-item.active {
-            color: #2979ff;
+            color: #444;
         }
 
-        /* 面板通用 */
+        /* ===== 面板（菜单/窗口）毛玻璃 ===== */
         .panel-overlay {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.35);
+            background: rgba(0, 0, 0, 0.25);
             z-index: 100;
             display: none;
             animation: fadeIn 0.25s ease;
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
         }
         .panel-overlay.show {
             display: block;
@@ -196,7 +307,9 @@
             right: 0;
             max-width: 480px;
             margin: 0 auto;
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
             border-radius: 28px 28px 0 0;
             z-index: 101;
             transform: translateY(100%);
@@ -204,7 +317,8 @@
             max-height: 85vh;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.10);
+            border-top: 1px solid rgba(255,255,255,0.2);
         }
         .panel-sheet.show {
             transform: translateY(0);
@@ -215,7 +329,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 18px 20px 12px 20px;
-            border-bottom: 1px solid #f0f2f5;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             flex-shrink: 0;
         }
         .panel-header .panel-title {
@@ -246,7 +360,7 @@
             display: none;
         }
 
-        /* 菜单网格（4列，可滚动） */
+        /* 菜单网格（4列） */
         .menu-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -259,15 +373,17 @@
             align-items: center;
             justify-content: center;
             padding: 16px 4px 12px 4px;
-            background: #f5f7fa;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             border-radius: 16px;
-            border: none;
+            border: 1px solid rgba(255,255,255,0.2);
             cursor: pointer;
             transition: background 0.15s, transform 0.1s;
             gap: 8px;
         }
         .menu-grid .menu-item:active {
-            background: #e8ecf2;
+            background: rgba(255, 255, 255, 0.8);
             transform: scale(0.95);
         }
         .menu-grid .menu-item .mi-icon {
@@ -281,7 +397,7 @@
             text-align: center;
         }
 
-        /* 窗口列表（复用之前样式） */
+        /* 窗口列表 */
         .window-list {
             display: flex;
             flex-direction: column;
@@ -292,20 +408,23 @@
             display: flex;
             align-items: center;
             gap: 14px;
-            background: #f5f7fa;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             border-radius: 14px;
             padding: 12px 14px;
             cursor: pointer;
             transition: background 0.15s;
+            border: 1px solid rgba(255,255,255,0.1);
         }
         .window-item:active {
-            background: #e8ecf2;
+            background: rgba(255, 255, 255, 0.8);
         }
         .window-item .w-icon {
             width: 36px;
             height: 36px;
             border-radius: 10px;
-            background: #eef3fe;
+            background: rgba(41, 121, 255, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -349,7 +468,7 @@
         }
         .window-empty {
             text-align: center;
-            color: #b0b8c8;
+            color: #999;
             font-size: 14px;
             padding: 40px 0;
         }
@@ -359,7 +478,7 @@
             justify-content: center;
         }
         .window-add button {
-            background: #2979ff;
+            background: rgba(41, 121, 255, 0.9);
             color: #fff;
             border: none;
             border-radius: 30px;
@@ -369,106 +488,12 @@
             cursor: pointer;
             transition: background 0.2s, transform 0.1s;
             width: 100%;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
         }
         .window-add button:active {
             background: #1a5fd0;
             transform: scale(0.97);
-        }
-
-        /* 引擎弹窗 */
-        .engine-popup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.30);
-            z-index: 200;
-            display: none;
-            align-items: flex-end;
-            justify-content: center;
-            animation: fadeIn 0.2s ease;
-        }
-        .engine-popup-overlay.show {
-            display: flex;
-        }
-        .engine-popup {
-            background: #ffffff;
-            border-radius: 28px 28px 0 0;
-            max-width: 480px;
-            width: 100%;
-            padding: 20px 20px 32px 20px;
-            max-height: 60vh;
-            overflow-y: auto;
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-        }
-        .engine-popup-overlay.show .engine-popup {
-            transform: translateY(0);
-        }
-        .engine-popup .ep-title {
-            font-size: 17px;
-            font-weight: 600;
-            color: #1a1a2e;
-            text-align: center;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #f0f2f5;
-        }
-        .engine-popup .ep-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 6px;
-            border-bottom: 1px solid #f5f6f8;
-            cursor: pointer;
-            transition: background 0.1s;
-            border-radius: 4px;
-        }
-        .engine-popup .ep-item:active {
-            background: #f5f7fa;
-        }
-        .engine-popup .ep-item .ep-name {
-            font-size: 15px;
-            color: #1a1a2e;
-        }
-        .engine-popup .ep-item .ep-check {
-            color: #2979ff;
-            font-size: 18px;
-            font-weight: 600;
-        }
-        .engine-popup .ep-custom {
-            margin-top: 12px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .engine-popup .ep-custom input {
-            flex: 1;
-            min-width: 100px;
-            padding: 12px 14px;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            font-size: 14px;
-            outline: none;
-            background: #f8f9fc;
-        }
-        .engine-popup .ep-custom input:focus {
-            border-color: #2979ff;
-            background: #fff;
-        }
-        .engine-popup .ep-custom button {
-            padding: 12px 24px;
-            background: #2979ff;
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        .engine-popup .ep-custom button:active {
-            background: #1a5fd0;
         }
 
         /* Toast */
@@ -478,6 +503,8 @@
             left: 50%;
             transform: translate(-50%, -50%) scale(0.9);
             background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             color: #fff;
             padding: 16px 30px;
             border-radius: 14px;
@@ -486,7 +513,6 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.25s, transform 0.25s;
-            backdrop-filter: blur(4px);
             text-align: center;
             max-width: 75%;
         }
@@ -498,6 +524,30 @@
         .hidden {
             display: none !important;
         }
+
+        /* 设置面板中的背景选择按钮 */
+        .settings-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 4px;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            cursor: pointer;
+        }
+        .settings-option:active {
+            background: rgba(0,0,0,0.03);
+        }
+        .settings-option .s-label {
+            font-size: 15px;
+            color: #1a1a2e;
+        }
+        .settings-option .s-value {
+            font-size: 14px;
+            color: #2979ff;
+        }
+        .settings-option input[type="file"] {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -506,24 +556,28 @@
 
         <!-- 内容区垂直居中 -->
         <div class="content-area">
-            <div class="search-section">
+            <div class="search-section" style="position:relative;">
                 <div class="search-box">
                     <button class="engine-btn" id="engineBtn">必应 ▾</button>
                     <input type="text" id="searchInput" placeholder="搜索或输入网址" autofocus>
                     <button class="search-btn" id="searchBtn">搜索</button>
                 </div>
+                <!-- 引擎下拉列表 -->
+                <div class="engine-dropdown" id="engineDropdown">
+                    <!-- 动态由 JS 渲染 -->
+                </div>
             </div>
         </div>
 
-        <!-- 底部导航只有两个按钮 -->
-        <div class="bottom-nav">
-            <button class="nav-item" data-panel="menu" id="navMenu">
-                <span class="nav-icon">☰</span>
-                <span class="nav-label">菜单</span>
+        <!-- 底部两个按钮（与底部分离） -->
+        <div class="bottom-actions">
+            <button class="action-btn" id="navMenu">
+                <span class="icon">☰</span>
+                <span class="label">菜单</span>
             </button>
-            <button class="nav-item" data-panel="window" id="navWindow">
-                <span class="nav-icon">⊞</span>
-                <span class="nav-label">窗口</span>
+            <button class="action-btn" id="navWindow">
+                <span class="icon">⊞</span>
+                <span class="label">窗口</span>
             </button>
         </div>
     </div>
@@ -592,15 +646,22 @@
         </div>
     </div>
 
-    <!-- ===== 引擎切换弹窗 ===== -->
-    <div class="engine-popup-overlay" id="enginePopup">
-        <div class="engine-popup">
-            <div class="ep-title">切换搜索引擎</div>
-            <div id="engineList"></div>
-            <div class="ep-custom">
-                <input type="text" id="customEngineName" placeholder="引擎名称">
-                <input type="text" id="customEngineUrl" placeholder="搜索URL（{q}代表关键词）">
-                <button id="addCustomEngine">添加</button>
+    <!-- ===== 设置面板（简单） ===== -->
+    <div class="panel-overlay" id="settingsOverlay"></div>
+    <div class="panel-sheet" id="settingsSheet">
+        <div class="panel-header">
+            <span class="panel-title">设置</span>
+            <button class="panel-close" data-close="settings">✕</button>
+        </div>
+        <div class="panel-body">
+            <div class="settings-option" id="bgPickerTrigger">
+                <span class="s-label">选择背景图片</span>
+                <span class="s-value">点击选择 ›</span>
+                <input type="file" id="bgFileInput" accept="image/*">
+            </div>
+            <div class="settings-option" id="resetBg">
+                <span class="s-label">恢复默认背景</span>
+                <span class="s-value">点击重置 ›</span>
             </div>
         </div>
     </div>
@@ -623,11 +684,12 @@
             { name: '谷歌', url: 'https://www.google.com/search?q={q}' },
         ];
 
-        let currentEngine = { name: '必应', url: 'https://www.bing.com/search?q={q}' };
+        let currentEngine = { name: '必应', url: 'https://cn.bing.com/search?q={q}&from=vivosearch2025' };
         let customEngines = [];
         let windows = [];
         let lastVisit = null;
         let isIncognito = false;
+        let bgImageData = null; // base64 图片数据
 
         // ============================================================
         // 存储
@@ -645,6 +707,11 @@
                 if (lv) lastVisit = JSON.parse(lv);
                 const incog = localStorage.getItem('mybrowser_incognito');
                 if (incog) isIncognito = JSON.parse(incog);
+                const bg = localStorage.getItem('mybrowser_bg_image');
+                if (bg) {
+                    bgImageData = bg;
+                    document.body.style.backgroundImage = 'url(' + bg + ')';
+                }
             } catch (e) { /* ignore */ }
         }
 
@@ -665,50 +732,96 @@
         function saveIncognito() {
             localStorage.setItem('mybrowser_incognito', JSON.stringify(isIncognito));
         }
+        function saveBgImage(data) {
+            bgImageData = data;
+            localStorage.setItem('mybrowser_bg_image', data);
+            document.body.style.backgroundImage = 'url(' + data + ')';
+        }
+        function resetBgImage() {
+            bgImageData = null;
+            localStorage.removeItem('mybrowser_bg_image');
+            document.body.style.backgroundImage = '';
+        }
 
         // ============================================================
-        // 引擎管理
+        // 引擎管理（下拉菜单）
         // ============================================================
 
         function getAllEngines() {
             return [...DEFAULT_ENGINES, ...customEngines];
         }
 
-        function renderEnginePopup() {
-            const container = document.getElementById('engineList');
+        function renderEngineDropdown() {
+            const container = document.getElementById('engineDropdown');
             const all = getAllEngines();
             const currentName = currentEngine.name;
             let html = '';
             all.forEach(eng => {
                 const checked = eng.name === currentName ? '✓' : '';
                 html += `
-                    <div class="ep-item" data-engine='${JSON.stringify(eng).replace(/'/g, "&#39;")}'>
-                        <span class="ep-name">${eng.name}</span>
-                        ${checked ? '<span class="ep-check">✓</span>' : ''}
+                    <div class="ed-item" data-engine='${JSON.stringify(eng).replace(/'/g, "&#39;")}'>
+                        <span>${eng.name}</span>
+                        ${checked ? '<span class="ed-check">✓</span>' : ''}
                     </div>
                 `;
             });
             html += `
-                <div class="ep-item" style="border-bottom:none;margin-top:4px;color:#2979ff;" id="customBingEntry">
-                    <span class="ep-name">✏️ 自定义引擎</span>
+                <div class="ed-custom">
+                    <input type="text" id="customEngineName" placeholder="引擎名称">
+                    <input type="text" id="customEngineUrl" placeholder="URL（{q}）">
+                    <button id="addCustomEngineBtn">添加</button>
                 </div>
             `;
             container.innerHTML = html;
 
-            container.querySelectorAll('.ep-item[data-engine]').forEach(el => {
+            // 点击引擎切换
+            container.querySelectorAll('.ed-item[data-engine]').forEach(el => {
                 el.addEventListener('click', function() {
                     const eng = JSON.parse(this.dataset.engine);
                     currentEngine = eng;
                     saveCurrentEngine();
                     updateEngineBtn();
-                    closeEnginePopup();
+                    closeEngineDropdown();
                     showToast('已切换到：' + eng.name);
                 });
             });
 
-            document.getElementById('customBingEntry').addEventListener('click', function() {
-                document.getElementById('customEngineName').focus();
+            // 添加自定义引擎
+            document.getElementById('addCustomEngineBtn').addEventListener('click', function(e) {
+                e.stopPropagation();
+                const name = document.getElementById('customEngineName').value.trim();
+                const url = document.getElementById('customEngineUrl').value.trim();
+                if (!name || !url) {
+                    showToast('请填写名称和URL');
+                    return;
+                }
+                if (!url.includes('{q}')) {
+                    showToast('URL中请包含 {q} 作为关键词占位');
+                    return;
+                }
+                if (getAllEngines().some(e => e.name === name)) {
+                    showToast('引擎名称已存在');
+                    return;
+                }
+                customEngines.push({ name, url });
+                saveCustomEngines();
+                document.getElementById('customEngineName').value = '';
+                document.getElementById('customEngineUrl').value = '';
+                renderEngineDropdown();
+                showToast('已添加：' + name);
             });
+        }
+
+        function toggleEngineDropdown() {
+            const dd = document.getElementById('engineDropdown');
+            dd.classList.toggle('open');
+            if (dd.classList.contains('open')) {
+                renderEngineDropdown(); // 刷新列表
+            }
+        }
+
+        function closeEngineDropdown() {
+            document.getElementById('engineDropdown').classList.remove('open');
         }
 
         function updateEngineBtn() {
@@ -812,9 +925,6 @@
             const sheet = document.getElementById(name + 'Sheet');
             if (overlay) overlay.classList.add('show');
             if (sheet) sheet.classList.add('show');
-            document.querySelectorAll('.nav-item').forEach(el => {
-                el.classList.toggle('active', el.dataset.panel === name);
-            });
         }
 
         function closePanel(name) {
@@ -823,31 +933,16 @@
             if (overlay) overlay.classList.remove('show');
             if (sheet) sheet.classList.remove('show');
             if (activePanel === name) activePanel = null;
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         }
 
         function closeAllPanels() {
-            ['menu', 'window'].forEach(name => {
+            ['menu', 'window', 'settings'].forEach(name => {
                 const overlay = document.getElementById(name + 'Overlay');
                 const sheet = document.getElementById(name + 'Sheet');
                 if (overlay) overlay.classList.remove('show');
                 if (sheet) sheet.classList.remove('show');
             });
             activePanel = null;
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        }
-
-        // ============================================================
-        // 引擎弹窗
-        // ============================================================
-
-        function openEnginePopup() {
-            renderEnginePopup();
-            document.getElementById('enginePopup').classList.add('show');
-        }
-
-        function closeEnginePopup() {
-            document.getElementById('enginePopup').classList.remove('show');
         }
 
         // ============================================================
@@ -873,24 +968,30 @@
         function handleMenuAction(action) {
             switch (action) {
                 case 'settings':
-                    showToast('「设置」功能开发中');
+                    closePanel('menu');
+                    openPanel('settings');
                     break;
                 case 'download':
                     showToast('「下载管理」功能开发中');
+                    closePanel('menu');
                     break;
                 case 'history':
                     showToast('「收藏/历史」功能开发中');
+                    closePanel('menu');
                     break;
                 case 'tools':
                     showToast('「工具箱」功能开发中');
+                    closePanel('menu');
                     break;
                 case 'incognito':
                     isIncognito = !isIncognito;
                     saveIncognito();
                     showToast(isIncognito ? '已开启无痕浏览' : '已关闭无痕浏览');
+                    closePanel('menu');
                     break;
                 case 'fav':
                     showToast('「收藏网址」功能开发中');
+                    closePanel('menu');
                     break;
                 case 'window':
                     closePanel('menu');
@@ -899,20 +1000,55 @@
                     break;
                 case 'night':
                     showToast('「夜间模式」功能开发中');
+                    closePanel('menu');
                     break;
                 case 'exit':
                     if (confirm('确定退出应用吗？')) {
-                        // 尝试退出（Android 不支持直接退出，但可以清理状态）
                         showToast('正在退出...');
                         setTimeout(() => {
                             window.location.href = 'about:blank';
                         }, 500);
                     }
+                    closePanel('menu');
                     break;
                 default:
                     showToast('功能开发中');
+                    closePanel('menu');
             }
-            closePanel('menu');
+        }
+
+        // ============================================================
+        // 背景图片设置
+        // ============================================================
+
+        function setupBackgroundPicker() {
+            const fileInput = document.getElementById('bgFileInput');
+            const trigger = document.getElementById('bgPickerTrigger');
+            const reset = document.getElementById('resetBg');
+
+            trigger.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const dataUrl = ev.target.result;
+                    saveBgImage(dataUrl);
+                    showToast('背景图片已更新');
+                    closePanel('settings');
+                };
+                reader.readAsDataURL(file);
+                this.value = ''; // 允许重复选择同一文件
+            });
+
+            reset.addEventListener('click', function() {
+                resetBgImage();
+                showToast('已恢复默认背景');
+                closePanel('settings');
+            });
         }
 
         // ============================================================
@@ -923,7 +1059,9 @@
             loadData();
             updateEngineBtn();
             renderWindows();
+            setupBackgroundPicker();
 
+            // 搜索按钮
             document.getElementById('searchBtn').addEventListener('click', function() {
                 doSearch(document.getElementById('searchInput').value);
             });
@@ -934,44 +1072,26 @@
                 }
             });
 
+            // 引擎按钮切换下拉
             document.getElementById('engineBtn').addEventListener('click', function(e) {
                 e.stopPropagation();
-                openEnginePopup();
+                toggleEngineDropdown();
             });
 
-            document.getElementById('addCustomEngine').addEventListener('click', function() {
-                const name = document.getElementById('customEngineName').value.trim();
-                const url = document.getElementById('customEngineUrl').value.trim();
-                if (!name || !url) {
-                    showToast('请填写名称和URL');
-                    return;
+            // 点击页面其它地方关闭下拉
+            document.addEventListener('click', function(e) {
+                const dd = document.getElementById('engineDropdown');
+                const btn = document.getElementById('engineBtn');
+                if (!dd.contains(e.target) && !btn.contains(e.target)) {
+                    closeEngineDropdown();
                 }
-                if (!url.includes('{q}')) {
-                    showToast('URL中请包含 {q} 作为关键词占位');
-                    return;
-                }
-                if (getAllEngines().some(e => e.name === name)) {
-                    showToast('引擎名称已存在');
-                    return;
-                }
-                customEngines.push({ name, url });
-                saveCustomEngines();
-                document.getElementById('customEngineName').value = '';
-                document.getElementById('customEngineUrl').value = '';
-                renderEnginePopup();
-                showToast('已添加：' + name);
             });
 
-            document.getElementById('enginePopup').addEventListener('click', function(e) {
-                if (e.target === this) closeEnginePopup();
-            });
-
-            // 导航：菜单
+            // 底部导航按钮
             document.getElementById('navMenu').addEventListener('click', function() {
                 if (activePanel === 'menu') { closePanel('menu'); return; }
                 openPanel('menu');
             });
-            // 导航：窗口
             document.getElementById('navWindow').addEventListener('click', function() {
                 if (activePanel === 'window') { closePanel('window'); return; }
                 renderWindows();
