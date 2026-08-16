@@ -1,92 +1,397 @@
-/* ===== 下载管理专用样式 ===== */
-.download-item {
-    background: rgba(255,255,255,0.5);
-    border-radius: 12px;
-    padding: 12px 14px;
-    margin-bottom: 10px;
-    border: 1px solid rgba(255,255,255,0.1);
-    transition: background 0.2s;
+/* ===== 基础重置 ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
-.download-item:active {
-    background: rgba(255,255,255,0.7);
+html, body {
+    width: 100%;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #e8ecf1;
+    overflow: hidden;
+    user-select: none;
 }
-.download-item .di-header {
+body {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-image 1.2s ease-in-out;
+}
+
+/* 夜间模式 */
+body.night-mode {
+    background-color: #1a1a2e;
+    color: #eee;
+}
+body.night-mode .search-box {
+    background: rgba(40,40,60,0.85);
+    border-color: rgba(255,255,255,0.1);
+}
+body.night-mode .search-box input {
+    color: #eee;
+}
+body.night-mode .search-box input::placeholder {
+    color: #aaa;
+}
+body.night-mode .bottom-actions .nav-capsule {
+    background: rgba(40,40,60,0.85);
+    border-color: rgba(255,255,255,0.1);
+}
+body.night-mode .panel-sheet {
+    background: rgba(30,30,50,0.92);
+    color: #eee;
+}
+body.night-mode .menu-list .menu-item {
+    border-bottom-color: rgba(255,255,255,0.05);
+}
+body.night-mode .menu-list .menu-item .mi-label {
+    color: #eee;
+}
+body.night-mode .menu-list .menu-item .mi-arrow {
+    color: #888;
+}
+body.night-mode .settings-option {
+    border-bottom-color: rgba(255,255,255,0.05);
+}
+body.night-mode .settings-option .s-label {
+    color: #eee;
+}
+body.night-mode .panel-header .panel-title {
+    color: #eee;
+}
+body.night-mode .top-bar {
+    background: rgba(40, 40, 60, 0.85);
+    border-bottom-color: rgba(255,255,255,0.05);
+}
+body.night-mode .top-bar .top-title {
+    color: #eee;
+}
+body.night-mode .top-bar .top-btn {
+    color: #ccc;
+}
+body.night-mode .greeting {
+    color: #eee;
+}
+
+.app-container {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
+    flex-direction: column;
+    height: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.10);
 }
-.download-item .di-name {
+
+.status-bar {
+    height: 32px;
+    flex-shrink: 0;
+    background: transparent;
+}
+
+/* 顶部地址栏 */
+.top-bar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.85);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    min-height: 48px;
+    backdrop-filter: blur(8px);
+}
+.top-bar .top-title {
+    flex: 1;
     font-size: 15px;
     font-weight: 500;
     color: #1a1a2e;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    flex: 1;
-    margin-right: 8px;
+    margin-right: 12px;
 }
-.download-item .di-status {
-    font-size: 12px;
-    color: #2979ff;
-    flex-shrink: 0;
-}
-.download-item .di-progress-track {
-    width: 100%;
-    height: 4px;
-    background: rgba(0,0,0,0.08);
-    border-radius: 2px;
-    overflow: hidden;
-    margin: 6px 0;
-}
-.download-item .di-progress-fill {
-    height: 100%;
-    background: #2979ff;
-    width: 0%;
-    border-radius: 2px;
-    transition: width 0.3s;
-}
-.download-item .di-info {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    color: #888;
-    margin: 4px 0 8px 0;
-}
-.download-item .di-actions {
+.top-bar .top-actions {
     display: flex;
     gap: 8px;
-    justify-content: flex-end;
+    flex-shrink: 0;
 }
-.download-item .di-actions button {
-    padding: 4px 12px;
+.top-bar .top-btn {
+    background: transparent;
     border: none;
-    border-radius: 16px;
-    font-size: 12px;
-    background: rgba(41,121,255,0.15);
-    color: #2979ff;
+    font-size: 20px;
     cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    color: #555;
     transition: background 0.2s;
 }
-.download-item .di-actions button:active {
-    background: rgba(41,121,255,0.3);
+.top-bar .top-btn:active {
+    background: rgba(0,0,0,0.05);
 }
-.download-item .di-actions .di-cancel {
-    color: #e74c3c;
-    background: rgba(231,76,60,0.1);
+
+/* 内容区域垂直居中 */
+.content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0 18px 12px 18px;
+    overflow-y: auto;
 }
-.download-item .di-actions .di-cancel:active {
-    background: rgba(231,76,60,0.2);
+
+.greeting {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 16px;
+    text-align: center;
+    opacity: 0.8;
 }
-.download-item.done .di-status {
-    color: #27ae60;
+
+.search-section {
+    width: 100%;
+    max-width: 400px;
+    position: relative;
 }
-.download-item.done .di-progress-fill {
-    background: #27ae60;
+.search-box {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 28px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    padding: 0 4px 0 0;
+    transition: box-shadow 0.3s ease, background 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    gap: 4px; /* 关键：增加间距，避免按钮和输入框紧挨 */
 }
-.download-item.paused .di-status {
-    color: #f39c12;
+.search-box:focus-within {
+    box-shadow: 0 4px 20px rgba(41, 121, 255, 0.25);
+    background: rgba(255, 255, 255, 0.95);
 }
-.download-item.paused .di-progress-fill {
-    background: #f39c12;
+
+.engine-btn {
+    flex-shrink: 0;
+    padding: 0 10px 0 16px;
+    height: 48px;
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #2979ff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    white-space: nowrap;
+    position: relative;
+    z-index: 5;
 }
+.engine-btn::after {
+    content: "›";
+    font-size: 18px;
+    color: #999;
+    margin-left: 2px;
+}
+.engine-btn:active {
+    opacity: 0.6;
+}
+
+.engine-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    width: 200px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+    transform-origin: top center;
+    transform: scaleY(0) translateY(-10px);
+    opacity: 0;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+    z-index: 20;
+    pointer-events: none;
+    border: 1px solid rgba(255,255,255,0.2);
+    max-height: 300px;
+    overflow-y: auto;
+}
+.engine-dropdown.open {
+    transform: scaleY(1) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+.engine-dropdown .ed-item {
+    padding: 12px 18px;
+    font-size: 14px;
+    color: #1a1a2e;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.15s;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+.engine-dropdown .ed-item:last-child {
+    border-bottom: none;
+}
+.engine-dropdown .ed-item:active {
+    background: rgba(41, 121, 255, 0.10);
+}
+.engine-dropdown .ed-item .ed-check {
+    color: #2979ff;
+    font-weight: 600;
+}
+.engine-dropdown .ed-custom {
+    padding: 10px 18px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+.engine-dropdown .ed-custom input {
+    flex: 1;
+    min-width: 80px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 13px;
+    outline: none;
+    background: rgba(255,255,255,0.7);
+}
+.engine-dropdown .ed-custom input:focus {
+    border-color: #2979ff;
+}
+.engine-dropdown .ed-custom button {
+    padding: 8px 16px;
+    background: #2979ff;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.engine-dropdown .ed-custom button:active {
+    background: #1a5fd0;
+}
+
+.search-box input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    padding: 12px 4px;
+    background: transparent;
+    color: #1a1a2e;
+    min-width: 0;
+    height: 48px;
+}
+.search-box input::placeholder {
+    color: #888;
+    font-size: 15px;
+    font-weight: 400;
+}
+
+.search-btn {
+    flex-shrink: 0;
+    background: #2979ff;
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    padding: 10px 20px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    margin-right: 4px;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(41, 121, 255, 0.3);
+}
+.search-btn:active {
+    background: #1a5fd0;
+    transform: scale(0.96);
+}
+
+.bottom-actions {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    padding: 12px 20px 24px 20px;
+    background: transparent;
+    position: relative;
+    z-index: 200;
+}
+.bottom-actions .nav-capsule {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 30px;
+    padding: 2px 6px;
+    min-width: 120px;
+    height: 40px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+.bottom-actions .nav-capsule .action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 34px;
+    padding: 4px 12px;
+    border-radius: 24px;
+    min-width: 44px;
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    color: #1a1a2e;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    line-height: 1;
+}
+.bottom-actions .nav-capsule .action-btn:active {
+    transform: scale(0.90);
+    background: rgba(255, 255, 255, 0.4);
+}
+.bottom-actions .nav-capsule .divider {
+    width: 1px;
+    height: 22px;
+    background: rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+}
+
+/* 面板系统：绝对定位，默认隐藏 */
+.panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.25);
+    z-index: 100;
+    display: none;
+    animation: fadeIn 0.25s ease;
+}
+.panel-overlay.show {
+    display: block;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.panel-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background: rgba(
