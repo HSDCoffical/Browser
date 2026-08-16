@@ -1,5 +1,5 @@
 // ============================================================
-// 初始化入口（整合所有模块）
+// 初始化入口
 // ============================================================
 (function() {
     'use strict';
@@ -45,23 +45,18 @@
         var histTab = document.getElementById('historyTabHist');
         if (favTab && histTab) {
             favTab.addEventListener('click', function() {
-                if (typeof window.renderHistory === 'function') {
-                    window.renderHistory('fav');
-                }
+                if (typeof window.renderHistory === 'function') window.renderHistory('fav');
                 this.style.background = '#2979ff';
                 histTab.style.background = '#888';
             });
             histTab.addEventListener('click', function() {
-                if (typeof window.renderHistory === 'function') {
-                    window.renderHistory('hist');
-                }
+                if (typeof window.renderHistory === 'function') window.renderHistory('hist');
                 this.style.background = '#2979ff';
                 favTab.style.background = '#888';
             });
         }
     }
 
-    // 主启动函数
     function startApp() {
         try {
             if (typeof window.loadData === 'function') window.loadData();
