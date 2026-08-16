@@ -72,7 +72,6 @@ function loadData() {
         if (bgImages && bgImages.length > 0) {
             applyBgImage(currentBgIndex);
         }
-        // 恢复开关状态
         var toggle = document.getElementById('carouselToggle');
         if (toggle) {
             if (isCarouselMode) toggle.classList.add('active');
@@ -267,7 +266,6 @@ function closeEngineDropdown() {
 function updateEngineBtn() {
     var btn = document.getElementById('engineBtn');
     if (btn) {
-        // 只显示引擎名称，不加箭头
         btn.textContent = currentEngine.name;
     }
 }
@@ -392,8 +390,6 @@ function handleMenuAction(action) {
             openPanel('download');
             if (typeof window.renderDownloadList === 'function') {
                 window.renderDownloadList();
-            } else if (typeof window.DownloadManager !== 'undefined' && window.DownloadManager.render) {
-                window.DownloadManager.render();
             }
             break;
         case 'history':
@@ -401,7 +397,7 @@ function handleMenuAction(action) {
             closePanel('menu');
             break;
         case 'tools':
-            // 动态加载工具箱模块
+            closePanel('menu');
             loadToolsModule();
             break;
         case 'fav':
@@ -433,16 +429,15 @@ function handleMenuAction(action) {
 }
 
 // ============================================================
-// 动态加载工具箱模块（独立文件）
+// 动态加载工具箱模块（修复版）
 // ============================================================
 var toolsLoaded = false;
 function loadToolsModule() {
     if (toolsLoaded) {
-        // 如果已加载，直接打开工具箱（由 tools.js 提供的函数）
         if (typeof window.openToolsPanel === 'function') {
             window.openToolsPanel();
         } else {
-            window.showToast('工具箱已加载，但初始化失败');
+            window.showToast('工具箱已加载，但初始化失败，请重试');
         }
         return;
     }
@@ -457,7 +452,7 @@ function loadToolsModule() {
         }
     };
     script.onerror = function() {
-        window.showToast('工具箱加载失败，请检查文件是否存在');
+        window.showToast('工具箱加载失败，请检查 tools.js 文件是否存在');
     };
     document.head.appendChild(script);
 }
@@ -596,7 +591,7 @@ window.updateTopBar = function(title, url) {
 };
 
 // ============================================================
-// 下载管理（简单版，用于演示）
+// 下载管理
 // ============================================================
 window.renderDownloadList = function() {
     var list = document.getElementById('downloadList');
