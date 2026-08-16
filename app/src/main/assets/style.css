@@ -729,6 +729,11 @@ body.night-mode .greeting {
     padding: 12px 14px;
     margin-bottom: 10px;
     border: 1px solid rgba(255,255,255,0.1);
+    transition: background 0.2s;
+    position: relative;
+}
+.download-item:active {
+    background: rgba(255,255,255,0.7);
 }
 .download-item .di-header {
     display: flex;
@@ -786,6 +791,7 @@ body.night-mode .greeting {
     background: rgba(41,121,255,0.15);
     color: #2979ff;
     cursor: pointer;
+    transition: background 0.2s;
 }
 .download-item .di-actions button:active {
     background: rgba(41,121,255,0.3);
@@ -796,6 +802,13 @@ body.night-mode .greeting {
 }
 .download-item .di-actions .di-cancel:active {
     background: rgba(231,76,60,0.2);
+}
+.download-item .di-actions .di-install {
+    background: #27ae60;
+    color: #fff;
+}
+.download-item .di-actions .di-install:active {
+    background: #1e8449;
 }
 .download-item.done .di-status {
     color: #27ae60;
