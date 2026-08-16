@@ -398,8 +398,8 @@ function handleMenuAction(action) {
             closePanel('menu');
             break;
         case 'tools':
-            // 跳转到独立的工具箱页面
-            window.location.href = 'tools.html';
+            closePanel('menu');
+            openToolsPanel();  // 打开工具箱浮层
             break;
         case 'fav':
             if (window.location.href && window.location.href !== 'about:blank') {
@@ -430,352 +430,296 @@ function handleMenuAction(action) {
 }
 
 // ============================================================
-// 背景设置
+// 工具箱（独立浮层，不依赖外部文件）
 // ============================================================
-function setupBackgroundPicker() {
-    var fileInput = document.getElementById('bgFileInput');
-    var trigger = document.getElementById('bgPickerTrigger');
-    var reset = document.getElementById('resetBg');
-    var toggle = document.getElementById('carouselToggle');
+var toolsPanelActive = false;
 
-    if (!toggle) return;
-    toggle.addEventListener('click', function() {
-        isCarouselMode = !isCarouselMode;
-        this.classList.toggle('active');
-        saveCarouselMode();
-        var settings = document.getElementById('carouselSettings');
-        if (isCarouselMode) {
-            settings.style.display = 'block';
-            document.getElementById('pickerLabel').textContent = '选择背景图片（多选）';
-            fileInput.setAttribute('multiple', 'multiple');
-            if (bgImages.length > 1) {
-                startCarousel();
-            }
-        } else {
-            settings.style.display = 'none';
-            document.getElementById('pickerLabel').textContent = '选择背景图片';
-            fileInput.removeAttribute('multiple');
-            stopCarousel();
-            if (bgImages.length > 1) {
-                var first = bgImages[0];
-                bgImages = [first];
-                saveBgImages();
-                currentBgIndex = 0;
-                applyBgImage(0);
-                updateCarouselPreview();
-                window.showToast('已切换为单图模式');
-            }
+function openToolsPanel() {
+    if (toolsPanelActive) {
+        // 如果已打开，聚焦到已有浮层
+        var exist = document.getElementById('toolsPanelOverlay');
+        if (exist) {
+            exist.style.display = 'flex';
+            return;
+        }
+    }
+
+    // 创建浮层
+    var overlay = document.createElement('div');
+    overlay.id = 'toolsPanelOverlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+    var sheet = document.createElement('div');
+    sheet.style.cssText = 'background:#fff;border-radius:16px;max-width:92%;max-height:90%;width:480px;overflow-y:auto;padding:20px;box-shadow:0 8px 40px rgba(0,0,0,0.3);position:relative;';
+    sheet.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;">🧰 工具箱</h3>
+            <button id="closeToolsPanel" style="background:none;border:none;font-size:24px;cursor:pointer;">✕</button>
+        </div>
+        <div id="toolsList" style="display:flex;flex-direction:column;gap:10px;"></div>
+    `;
+    overlay.appendChild(sheet);
+    document.body.appendChild(overlay);
+    toolsPanelActive = true;
+
+    // 关闭事件
+    overlay.querySelector('#closeToolsPanel').addEventListener('click', function() {
+        overlay.remove();
+        toolsPanelActive = false;
+    });
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+            overlay.remove();
+            toolsPanelActive = false;
         }
     });
 
-    trigger.addEventListener('click', function(e) {
-        e.stopPropagation();
-        fileInput.click();
-    });
+    // 渲染工具列表
+    renderToolsList();
+}
 
-    fileInput.addEventListener('change', function(e) {
-        var files = e.target.files;
-        if (!files || files.length === 0) return;
+function renderToolsList() {
+    var container = document.getElementById('toolsList');
+    if (!container) return;
+    var tools = [
+        { id: 'http', label: '🌐 HTTP 请求测试', desc: 'GET/POST/PUT/DELETE，自定义请求头' },
+        { id: 'whois', label: '📋 WHOIS 查询', desc: '查询域名 WHOIS 信息' },
+        { id: 'ping', label: '📡 Ping 检测', desc: 'HTTP 延迟测速' },
+        { id: 'dns', label: '🔍 DNS 查询', desc: 'A/AAAA/CNAME/MX/TXT/NS 记录' },
+        { id: 'ip', label: '🌍 IP 信息查询', desc: '地理位置和 ISP' },
+        { id: 'b64', label: '🔐 Base64 编解码', desc: '文本与 Base64 互转' },
+        { id: 'url', label: '🔗 URL 编解码', desc: 'URL 编码与解码' }
+    ];
 
-        if (isCarouselMode) {
-            var total = bgImages.length + files.length;
-            if (total > 9) {
-                window.showToast('最多选择9张图片');
-                this.value = '';
-                return;
-            }
-            var loaded = 0;
-            for (var i = 0; i < files.length; i++) {
-                (function(file) {
-                    var reader = new FileReader();
-                    reader.onload = function(ev) {
-                        bgImages.push(ev.target.result);
-                        loaded++;
-                        if (loaded === files.length) {
-                            saveBgImages();
-                            if (bgImages.length === 1) {
-                                applyBgImage(0);
-                            } else {
-                                startCarousel();
-                            }
-                            updateCarouselPreview();
-                            window.showToast('已添加 ' + files.length + ' 张图片');
-                            closePanel('settings');
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                })(files[i]);
-            }
-        } else {
-            var file = files[0];
-            var reader = new FileReader();
-            reader.onload = function(ev) {
-                var dataUrl = ev.target.result;
-                bgImages = [dataUrl];
-                saveBgImages();
-                currentBgIndex = 0;
-                applyBgImage(0);
-                updateCarouselPreview();
-                window.showToast('背景图片已更新');
-                closePanel('settings');
-            };
-            reader.readAsDataURL(file);
-        }
-        this.value = '';
-    });
-
-    reset.addEventListener('click', function() {
-        bgImages = [];
-        saveBgImages();
-        stopCarousel();
-        document.body.style.backgroundImage = '';
-        updateCarouselPreview();
-        window.showToast('已恢复默认背景');
-        closePanel('settings');
-    });
-
-    document.getElementById('carouselInterval').addEventListener('change', function() {
-        var val = parseInt(this.value) || 3;
-        carouselInterval = val;
-        saveCarouselInterval();
-        if (isCarouselMode && bgImages.length > 1) {
-            startCarousel();
-        }
+    container.innerHTML = '';
+    tools.forEach(function(tool) {
+        var div = document.createElement('div');
+        div.style.cssText = 'background:#f5f7fa;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border:1px solid rgba(0,0,0,0.04);transition:background 0.15s;';
+        div.innerHTML = '<div><div style="font-weight:500;font-size:15px;">' + tool.label + '</div><div style="font-size:13px;color:#888;">' + tool.desc + '</div></div><span style="color:#ccc;font-size:20px;">›</span>';
+        container.appendChild(div);
+        div.addEventListener('click', function() {
+            // 关闭工具箱浮层
+            var overlay = document.getElementById('toolsPanelOverlay');
+            if (overlay) overlay.remove();
+            toolsPanelActive = false;
+            // 打开具体工具
+            openTool(tool.id);
+        });
     });
 }
 
 // ============================================================
-// 顶部栏控制（由 Java 调用）
+// 具体工具实现（独立浮层）
 // ============================================================
-window.updateTopBar = function(title, url) {
-    var topBar = document.getElementById('topBar');
-    var titleEl = document.getElementById('topTitle');
-    if (!topBar || !titleEl) return;
+function createToolOverlay(title, contentHTML) {
+    var overlay = document.createElement('div');
+    overlay.className = 'tool-overlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
 
-    var isLocal = (url && (url.indexOf('file://') === 0 || url === 'about:blank'));
-    if (isLocal || !url || url === '') {
-        topBar.style.display = 'none';
-    } else {
-        topBar.style.display = 'flex';
-        titleEl.textContent = title || url;
-        titleEl.title = url;
-    }
-};
+    var sheet = document.createElement('div');
+    sheet.style.cssText = 'background:#fff;border-radius:16px;max-width:92%;max-height:90%;width:540px;overflow-y:auto;padding:20px;box-shadow:0 8px 40px rgba(0,0,0,0.3);position:relative;';
+    sheet.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;">${title}</h3>
+            <button class="close-tool" style="background:none;border:none;font-size:24px;cursor:pointer;">✕</button>
+        </div>
+        ${contentHTML}
+    `;
+    overlay.appendChild(sheet);
+    document.body.appendChild(overlay);
 
-// ============================================================
-// 下载管理
-// ============================================================
-window.renderDownloadList = function() {
-    var list = document.getElementById('downloadList');
-    if (!list) {
-        list = document.getElementById('downloadListContainer');
-    }
-    if (!list) return;
-    var downloads = [];
-    try {
-        var data = localStorage.getItem('mybrowser_downloads');
-        if (data) downloads = JSON.parse(data);
-    } catch(e) {}
-    if (downloads.length === 0) {
-        list.innerHTML = '<div class="func-item" style="text-align:center;color:#999;">暂无下载记录</div>';
-        return;
-    }
-    var html = '';
-    downloads.forEach(function(item, idx) {
-        html += '<div class="func-item">' +
-                '<div class="func-info">' +
-                '<div class="func-title">' + (item.name || '未知文件') + '</div>' +
-                '<div class="func-desc">' + (item.url || '') + '</div>' +
-                '</div>' +
-                '<div style="display:flex;gap:4px;">' +
-                '<button class="func-action" data-url="' + item.url + '">打开</button>' +
-                '<button class="func-del" data-idx="' + idx + '">✕</button>' +
-                '</div>' +
-                '</div>';
+    overlay.querySelector('.close-tool').addEventListener('click', function() {
+        overlay.remove();
     });
-    list.innerHTML = html;
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) overlay.remove();
+    });
+    return overlay;
+}
 
-    list.querySelectorAll('.func-action').forEach(function(btn) {
+function openTool(id) {
+    switch (id) {
+        case 'http': openHttpTool(); break;
+        case 'whois': openWhoisTool(); break;
+        case 'ping': openPingTool(); break;
+        case 'dns': openDnsTool(); break;
+        case 'ip': openIpTool(); break;
+        case 'b64': openBase64Tool(); break;
+        case 'url': openUrlTool(); break;
+        default: window.showToast('工具未实现');
+    }
+}
+
+// ---------- HTTP ----------
+function openHttpTool() {
+    var html = `
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+            <select id="nt-method" style="flex:1;padding:8px;border-radius:6px;border:1px solid #ddd;background:#f9f9f9;font-size:14px;">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+                <option value="PATCH">PATCH</option>
+                <option value="HEAD">HEAD</option>
+                <option value="OPTIONS">OPTIONS</option>
+            </select>
+            <input id="nt-url" type="text" placeholder="请求URL" style="flex:3;padding:8px;border-radius:6px;border:1px solid #ddd;font-size:14px;">
+            <button id="nt-send" style="padding:8px 20px;background:#2979ff;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">发送</button>
+        </div>
+        <div style="margin-bottom:8px;">
+            <div style="display:flex;gap:4px;margin-bottom:4px;">
+                <span style="font-weight:500;font-size:14px;">请求头</span>
+                <button id="nt-add-header" style="background:none;border:1px solid #ddd;border-radius:4px;padding:2px 8px;font-size:12px;cursor:pointer;">+</button>
+            </div>
+            <div id="nt-headers-container" style="display:flex;flex-direction:column;gap:4px;max-height:120px;overflow-y:auto;padding:4px 0;">
+                <div style="display:flex;gap:4px;">
+                    <input class="nt-header-key" placeholder="Key" style="flex:1;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+                    <input class="nt-header-value" placeholder="Value" style="flex:1;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+                    <button class="nt-header-remove" style="background:none;border:none;color:#e74c3c;cursor:pointer;">✕</button>
+                </div>
+            </div>
+        </div>
+        <div style="margin-bottom:8px;">
+            <textarea id="nt-body" rows="4" placeholder="请求体（JSON/文本）" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:monospace;resize:vertical;"></textarea>
+        </div>
+        <div style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;font-size:14px;">
+                <span id="nt-status" style="font-weight:500;">状态码：</span>
+                <span id="nt-time" style="color:#888;">耗时：</span>
+            </div>
+            <div style="margin-top:4px;">
+                <div style="font-weight:500;font-size:14px;">响应头</div>
+                <div id="nt-response-headers" style="background:#f5f5f5;border-radius:6px;padding:8px;font-size:12px;font-family:monospace;max-height:80px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border:1px solid #eee;"></div>
+            </div>
+            <div style="margin-top:8px;">
+                <div style="font-weight:500;font-size:14px;">响应体</div>
+                <div id="nt-response-body" style="background:#f5f5f5;border-radius:6px;padding:8px;font-size:13px;font-family:monospace;max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border:1px solid #eee;"></div>
+            </div>
+        </div>
+    `;
+    var overlay = createToolOverlay('🌐 HTTP 请求测试', html);
+
+    overlay.querySelector('#nt-add-header').addEventListener('click', function() {
+        var container = overlay.querySelector('#nt-headers-container');
+        var div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.gap = '4px';
+        div.innerHTML = `
+            <input class="nt-header-key" placeholder="Key" style="flex:1;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+            <input class="nt-header-value" placeholder="Value" style="flex:1;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+            <button class="nt-header-remove" style="background:none;border:none;color:#e74c3c;cursor:pointer;">✕</button>
+        `;
+        container.appendChild(div);
+        div.querySelector('.nt-header-remove').addEventListener('click', function() {
+            if (container.children.length > 1) div.remove();
+            else window.showToast('至少保留一个请求头');
+        });
+    });
+    overlay.querySelectorAll('.nt-header-remove').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            var url = this.dataset.url;
-            if (url) {
-                var a = document.createElement('a');
-                a.href = url;
-                a.target = '_blank';
-                a.download = '';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            }
-        });
-    });
-    list.querySelectorAll('.func-del').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var idx = parseInt(this.dataset.idx);
-            downloads.splice(idx, 1);
-            localStorage.setItem('mybrowser_downloads', JSON.stringify(downloads));
-            window.renderDownloadList();
-            window.showToast('已删除');
-        });
-    });
-};
-
-window.addDownloadItem = function(name, url) {
-    var downloads = [];
-    try {
-        var data = localStorage.getItem('mybrowser_downloads');
-        if (data) downloads = JSON.parse(data);
-    } catch(e) {}
-    downloads.push({ name: name || '下载文件', url: url, time: Date.now() });
-    localStorage.setItem('mybrowser_downloads', JSON.stringify(downloads));
-    if (typeof window.renderDownloadList === 'function') {
-        window.renderDownloadList();
-    }
-    window.showToast('下载已添加到列表');
-};
-
-// ============================================================
-// 初始化事件
-// ============================================================
-function initApp() {
-    setGreeting();
-
-    var refreshBtn = document.getElementById('refreshBtn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', function() {
-            window.location.reload();
-        });
-    }
-
-    var translateBtn = document.getElementById('translateBtn');
-    if (translateBtn) {
-        translateBtn.addEventListener('click', function() {
-            var currentUrl = window.location.href;
-            if (currentUrl && currentUrl !== 'about:blank' && !currentUrl.startsWith('file://')) {
-                var transUrl = 'https://translate.google.com/translate?sl=auto&tl=zh-CN&u=' + encodeURIComponent(currentUrl);
-                window.open(transUrl, '_blank');
+            var parent = this.parentElement;
+            if (parent.parentElement.children.length > 1) {
+                parent.remove();
             } else {
-                window.showToast('无法翻译当前页面');
+                window.showToast('至少保留一个请求头');
             }
         });
-    }
+    });
 
-    var downloadSheet = document.getElementById('downloadSheet');
-    if (downloadSheet) {
-        var observer = new MutationObserver(function() {
-            if (downloadSheet.classList.contains('show')) {
-                if (typeof window.renderDownloadList === 'function') {
-                    window.renderDownloadList();
+    overlay.querySelector('#nt-send').addEventListener('click', function() {
+        var method = overlay.querySelector('#nt-method').value;
+        var url = overlay.querySelector('#nt-url').value.trim();
+        if (!url) {
+            window.showToast('请输入请求URL');
+            return;
+        }
+
+        var headers = {};
+        var headerKeys = overlay.querySelectorAll('.nt-header-key');
+        var headerValues = overlay.querySelectorAll('.nt-header-value');
+        for (var i = 0; i < headerKeys.length; i++) {
+            var key = headerKeys[i].value.trim();
+            var val = headerValues[i].value.trim();
+            if (key && val) headers[key] = val;
+        }
+
+        var body = overlay.querySelector('#nt-body').value;
+        var statusEl = overlay.querySelector('#nt-status');
+        var timeEl = overlay.querySelector('#nt-time');
+        var respBody = overlay.querySelector('#nt-response-body');
+        var respHeaders = overlay.querySelector('#nt-response-headers');
+
+        statusEl.textContent = '状态码：发送中...';
+        timeEl.textContent = '耗时：';
+        respBody.textContent = '等待响应...';
+        respHeaders.textContent = '';
+
+        var startTime = Date.now();
+        var fetchOptions = {
+            method: method,
+            headers: headers,
+            body: (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') ? body : undefined
+        };
+
+        fetch(url, fetchOptions)
+            .then(function(response) {
+                var elapsed = Date.now() - startTime;
+                statusEl.textContent = '状态码：' + response.status + ' ' + response.statusText;
+                timeEl.textContent = '耗时：' + elapsed + 'ms';
+                var headerText = '';
+                response.headers.forEach(function(value, key) {
+                    headerText += key + ': ' + value + '\n';
+                });
+                respHeaders.textContent = headerText;
+                return response.text();
+            })
+            .then(function(data) {
+                try {
+                    var json = JSON.parse(data);
+                    respBody.textContent = JSON.stringify(json, null, 2);
+                } catch(e) {
+                    respBody.textContent = data;
                 }
-            }
-        });
-        observer.observe(downloadSheet, { attributes: true, attributeFilter: ['class'] });
-    }
+            })
+            .catch(function(err) {
+                statusEl.textContent = '状态码：请求失败';
+                timeEl.textContent = '耗时：-';
+                respBody.textContent = '错误：' + err.message;
+            });
+    });
 }
 
-// ============================================================
-// 启动
-// ============================================================
-function startApp() {
-    loadData();
-    updateEngineBtn();
-    renderWindows();
-    setupBackgroundPicker();
-    updateCarouselPreview();
-    if (bgImages && bgImages.length > 0) {
-        if (isCarouselMode && bgImages.length > 1) {
-            startCarousel();
-        }
-    }
-    initApp();
-
-    var searchBtn = document.getElementById('searchBtn');
-    var searchInput = document.getElementById('searchInput');
-    var engineBtn = document.getElementById('engineBtn');
-    var navMenu = document.getElementById('navMenu');
-    var navWindow = document.getElementById('navWindow');
-    var addWindowBtn = document.getElementById('addWindowBtn');
-
-    if (searchBtn) {
-        searchBtn.addEventListener('click', function() {
-            doSearch(searchInput.value);
-        });
-    }
-    if (searchInput) {
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                doSearch(this.value);
-            }
-        });
-    }
-
-    if (engineBtn) {
-        engineBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleEngineDropdown();
-        });
-    }
-
-    document.addEventListener('click', function(e) {
-        var dd = document.getElementById('engineDropdown');
-        var btn = document.getElementById('engineBtn');
-        if (dd && btn && !dd.contains(e.target) && !btn.contains(e.target)) {
-            closeEngineDropdown();
-        }
+// ---------- WHOIS ----------
+function openWhoisTool() {
+    var html = `
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+            <input id="whois-domain" type="text" placeholder="输入域名（如 example.com）" style="flex:3;padding:8px;border-radius:6px;border:1px solid #ddd;font-size:14px;">
+            <button id="whois-query" style="padding:8px 20px;background:#2979ff;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">查询</button>
+        </div>
+        <div id="whois-result" style="background:#f5f5f5;border-radius:6px;padding:12px;font-size:13px;font-family:monospace;max-height:400px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border:1px solid #eee;"></div>
+    `;
+    var overlay = createToolOverlay('📋 WHOIS 查询', html);
+    overlay.querySelector('#whois-query').addEventListener('click', function() {
+        var domain = overlay.querySelector('#whois-domain').value.trim();
+        if (!domain) { window.showToast('请输入域名'); return; }
+        var resultDiv = overlay.querySelector('#whois-result');
+        resultDiv.textContent = '查询中...';
+        fetch('https://api.hackertarget.com/whois/?q=' + encodeURIComponent(domain))
+            .then(function(res) { return res.text(); })
+            .then(function(data) {
+                resultDiv.textContent = data || '未获取到信息';
+            })
+            .catch(function(err) {
+                resultDiv.textContent = '查询失败：' + err.message;
+            });
     });
-
-    if (navMenu) {
-        navMenu.addEventListener('click', function() {
-            if (activePanel === 'menu') { closePanel('menu'); return; }
-            openPanel('menu');
-        });
-    }
-    if (navWindow) {
-        navWindow.addEventListener('click', function() {
-            if (activePanel === 'window') { closePanel('window'); return; }
-            renderWindows();
-            openPanel('window');
-        });
-    }
-
-    document.querySelectorAll('.panel-close').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            closePanel(this.dataset.close);
-        });
-    });
-    document.querySelectorAll('.panel-overlay').forEach(function(overlay) {
-        overlay.addEventListener('click', function() {
-            var name = this.id.replace('Overlay', '');
-            closePanel(name);
-        });
-    });
-
-    document.querySelectorAll('.menu-item').forEach(function(item) {
-        item.addEventListener('click', function() {
-            var action = this.dataset.action;
-            handleMenuAction(action);
-        });
-    });
-
-    if (addWindowBtn) {
-        addWindowBtn.addEventListener('click', function() {
-            var id = 'win_' + Date.now();
-            windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Date.now() });
-            saveWindows();
-            renderWindows();
-            window.showToast('已创建新窗口');
-            window.location.href = 'about:blank';
-        });
-    }
-
-    setTimeout(function() {
-        if (searchInput) searchInput.focus();
-    }, 300);
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startApp);
-} else {
-    startApp();
-}
+// ---------- Ping ----------
+function openPingTool() {
+    var html = `
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+            <input id="ping-host" type="text" placeholder="输入域名或IP（如 google.com）" style="flex:3;padding:8px;border-radius:6px;border:1px solid #ddd;font-size:14px;">
+            <button id="ping-start" style="padding:8px 20px;background:#2979ff;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">Ping</button>
+        </div>
+        <div id="ping-result" style="background:#f5f5f5;border-radius:6px;padding:12px;font-size:13px;font-family:monospace;max-height:400px;overflow-y:auto;white
