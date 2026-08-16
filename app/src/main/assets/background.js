@@ -96,8 +96,7 @@
                     if (label) label.textContent = '选择背景图片（多选）';
                     if (fileInput) {
                         fileInput.setAttribute('multiple', 'multiple');
-                        // 清空已选，避免混淆
-                        fileInput.value = '';
+                        fileInput.value = ''; // 清空已选
                     }
                     if (window.bgImages.length > 1) window.startCarousel();
                 } else {
