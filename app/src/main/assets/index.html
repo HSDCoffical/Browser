@@ -23,49 +23,7 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            transition: background-image 1.2s ease-in-out;
-        }
-
-        /* 夜间模式 */
-        body.night-mode {
-            background-color: #1a1a2e;
-            color: #eee;
-        }
-        body.night-mode .search-box {
-            background: rgba(40, 40, 60, 0.85);
-            border-color: rgba(255,255,255,0.1);
-        }
-        body.night-mode .search-box input {
-            color: #eee;
-        }
-        body.night-mode .search-box input::placeholder {
-            color: #aaa;
-        }
-        body.night-mode .bottom-actions .nav-capsule {
-            background: rgba(40, 40, 60, 0.85);
-            border-color: rgba(255,255,255,0.1);
-        }
-        body.night-mode .panel-sheet {
-            background: rgba(30, 30, 50, 0.92);
-            color: #eee;
-        }
-        body.night-mode .menu-list .menu-item {
-            border-bottom-color: rgba(255,255,255,0.05);
-        }
-        body.night-mode .menu-list .menu-item .mi-label {
-            color: #eee;
-        }
-        body.night-mode .menu-list .menu-item .mi-arrow {
-            color: #888;
-        }
-        body.night-mode .settings-option {
-            border-bottom-color: rgba(255,255,255,0.05);
-        }
-        body.night-mode .settings-option .s-label {
-            color: #eee;
-        }
-        body.night-mode .panel-header .panel-title {
-            color: #eee;
+            transition: background-image 0.5s ease;
         }
 
         .app-container {
@@ -260,7 +218,6 @@
             transform: scale(0.96);
         }
 
-        /* 底部胶囊 */
         .bottom-actions {
             flex-shrink: 0;
             display: flex;
@@ -310,7 +267,6 @@
             flex-shrink: 0;
         }
 
-        /* 面板系统 */
         .panel-overlay {
             position: fixed;
             top: 0;
@@ -393,7 +349,6 @@
             display: none;
         }
 
-        /* 菜单列表 */
         .menu-list {
             display: flex;
             flex-direction: column;
@@ -422,7 +377,6 @@
             font-size: 18px;
         }
 
-        /* 窗口列表 */
         .window-list {
             display: flex;
             flex-direction: column;
@@ -539,11 +493,6 @@
             transform: translate(-50%, -50%) scale(1);
         }
 
-        .hidden {
-            display: none !important;
-        }
-
-        /* 设置选项 */
         .settings-option {
             display: flex;
             align-items: center;
@@ -567,169 +516,52 @@
             display: none;
         }
 
-        /* 功能面板通用列表 */
-        .func-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding-top: 4px;
+        /* 夜间模式 */
+        body.night-mode {
+            background-color: #1a1a2e;
+            color: #eee;
         }
-        .func-list .func-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 6px;
-            background: rgba(255,255,255,0.4);
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
+        body.night-mode .search-box {
+            background: rgba(40,40,60,0.85);
+            border-color: rgba(255,255,255,0.1);
         }
-        .func-list .func-item .func-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            overflow: hidden;
-            flex: 1;
+        body.night-mode .search-box input {
+            color: #eee;
         }
-        .func-list .func-item .func-title {
-            font-size: 14px;
-            font-weight: 500;
-            color: #1a1a2e;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        body.night-mode .search-box input::placeholder {
+            color: #aaa;
         }
-        .func-list .func-item .func-desc {
-            font-size: 12px;
+        body.night-mode .bottom-actions .nav-capsule {
+            background: rgba(40,40,60,0.85);
+            border-color: rgba(255,255,255,0.1);
+        }
+        body.night-mode .panel-sheet {
+            background: rgba(30,30,50,0.92);
+            color: #eee;
+        }
+        body.night-mode .menu-list .menu-item {
+            border-bottom-color: rgba(255,255,255,0.05);
+        }
+        body.night-mode .menu-list .menu-item .mi-label {
+            color: #eee;
+        }
+        body.night-mode .menu-list .menu-item .mi-arrow {
             color: #888;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
-        .func-list .func-item .func-action {
-            padding: 6px 14px;
-            background: #2979ff;
-            color: #fff;
-            border: none;
-            border-radius: 16px;
-            font-size: 12px;
-            cursor: pointer;
+        body.night-mode .settings-option {
+            border-bottom-color: rgba(255,255,255,0.05);
         }
-        .func-list .func-item .func-action:active {
-            background: #1a5fd0;
+        body.night-mode .settings-option .s-label {
+            color: #eee;
         }
-        .func-list .func-item .func-del {
-            color: #e74c3c;
-            font-size: 18px;
-            cursor: pointer;
-            padding: 0 6px;
-        }
-        .func-add {
-            margin-top: 12px;
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .func-add input {
-            flex: 1;
-            min-width: 100px;
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            font-size: 14px;
-            outline: none;
-            background: rgba(255,255,255,0.7);
-        }
-        .func-add input:focus {
-            border-color: #2979ff;
-        }
-        .func-add button {
-            padding: 10px 20px;
-            background: #2979ff;
-            color: #fff;
-            border: none;
-            border-radius: 20px;
-            font-size: 14px;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        .func-add button:active {
-            background: #1a5fd0;
-        }
-
-        /* 轮播设置 */
-        .carousel-setting {
-            margin-top: 12px;
-            border-top: 1px solid rgba(0,0,0,0.04);
-            padding-top: 12px;
-        }
-        .carousel-setting .cs-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 0;
-        }
-        .carousel-setting .cs-row label {
-            font-size: 14px;
-            color: #1a1a2e;
-        }
-        .carousel-setting .cs-row input[type="number"] {
-            width: 80px;
-            padding: 6px 10px;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            font-size: 14px;
-            text-align: center;
-        }
-        .carousel-setting .cs-row input[type="number"]:focus {
-            border-color: #2979ff;
-        }
-        .carousel-setting .cs-preview {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        .carousel-setting .cs-preview .cs-thumb-wrap {
-            position: relative;
-            display: inline-block;
-        }
-        .carousel-setting .cs-preview .cs-thumb {
-            width: 60px;
-            height: 60px;
-            border-radius: 8px;
-            object-fit: cover;
-            border: 2px solid transparent;
-            transition: border 0.2s;
-            cursor: pointer;
-        }
-        .carousel-setting .cs-preview .cs-thumb.active {
-            border-color: #2979ff;
-        }
-        .carousel-setting .cs-preview .cs-thumb-wrap .cs-del {
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            background: rgba(0,0,0,0.5);
-            color: #fff;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            cursor: pointer;
-            border: none;
-        }
-        .carousel-setting .cs-preview .cs-thumb-wrap .cs-del:active {
-            background: #e74c3c;
+        body.night-mode .panel-header .panel-title {
+            color: #eee;
         }
     </style>
 </head>
 <body>
     <div class="app-container">
         <div class="status-bar"></div>
-
         <div class="content-area">
             <div class="search-section">
                 <div class="search-box">
@@ -740,19 +572,9 @@
                 <div class="engine-dropdown" id="engineDropdown"></div>
             </div>
         </div>
-
-        <!-- 底部胶囊 -->
         <div class="bottom-actions">
             <div class="nav-capsule">
-                <button class="action-btn" id="navMenu">☰</button>
-                <div class="divider"></div>
-                <button class="action-btn" id="navWindow">⊞</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== 第一批结束，第二批紧接着下方 ===== -->
-    <!-- ===== 菜单面板 ===== -->
+                <button class="action-btn" id="navMenu">☰</button>    <!-- 菜单面板 -->
     <div class="panel-overlay" id="menuOverlay"></div>
     <div class="panel-sheet" id="menuSheet">
         <div class="panel-header">
@@ -772,7 +594,7 @@
         </div>
     </div>
 
-    <!-- ===== 窗口面板 ===== -->
+    <!-- 窗口面板 -->
     <div class="panel-overlay" id="windowOverlay"></div>
     <div class="panel-sheet" id="windowSheet">
         <div class="panel-header">
@@ -787,7 +609,7 @@
         </div>
     </div>
 
-    <!-- ===== 设置面板 ===== -->
+    <!-- 设置面板 -->
     <div class="panel-overlay" id="settingsOverlay"></div>
     <div class="panel-sheet" id="settingsSheet">
         <div class="panel-header">
@@ -796,83 +618,23 @@
         </div>
         <div class="panel-body">
             <div class="settings-option" id="bgPickerTrigger">
-                <span class="s-label">选择背景图片（多选）</span>
+                <span class="s-label">选择背景图片</span>
                 <span class="s-value">点击选择 ›</span>
-                <input type="file" id="bgFileInput" accept="image/*" multiple>
+                <input type="file" id="bgFileInput" accept="image/*">
             </div>
             <div class="settings-option" id="resetBg">
                 <span class="s-label">恢复默认背景</span>
                 <span class="s-value">点击重置 ›</span>
             </div>
-            <div class="carousel-setting">
-                <div class="cs-row">
-                    <label>轮播间隔（秒）</label>
-                    <input type="number" id="carouselInterval" value="3" min="1" max="60">
-                </div>
-                <div class="cs-preview" id="carouselPreview"></div>
-            </div>
         </div>
     </div>
 
-    <!-- ===== 功能面板：下载管理 ===== -->
-    <div class="panel-overlay" id="downloadOverlay"></div>
-    <div class="panel-sheet" id="downloadSheet">
-        <div class="panel-header">
-            <span class="panel-title">下载管理</span>
-            <button class="panel-close" data-close="download">✕</button>
-        </div>
-        <div class="panel-body">
-            <div class="func-list" id="downloadList"></div>
-            <div class="func-add">
-                <input type="text" id="downloadNameInput" placeholder="文件名">
-                <input type="text" id="downloadUrlInput" placeholder="下载链接">
-                <button id="addDownloadBtn">添加</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== 功能面板：收藏/历史 ===== -->
-    <div class="panel-overlay" id="historyOverlay"></div>
-    <div class="panel-sheet" id="historySheet">
-        <div class="panel-header">
-            <span class="panel-title">收藏 &amp; 历史</span>
-            <button class="panel-close" data-close="history">✕</button>
-        </div>
-        <div class="panel-body">
-            <div style="margin-bottom:10px;display:flex;gap:8px;">
-                <button id="historyTabFav" class="func-action" style="background:#2979ff;">收藏</button>
-                <button id="historyTabHist" class="func-action" style="background:#888;">历史</button>
-            </div>
-            <div class="func-list" id="historyList"></div>
-        </div>
-    </div>
-
-    <!-- ===== 功能面板：工具箱 ===== -->
-    <div class="panel-overlay" id="toolsOverlay"></div>
-    <div class="panel-sheet" id="toolsSheet">
-        <div class="panel-header">
-            <span class="panel-title">工具箱</span>
-            <button class="panel-close" data-close="tools">✕</button>
-        </div>
-        <div class="panel-body">
-            <div class="func-list">
-                <div class="func-item"><span class="func-title">📷 扫一扫</span><button class="func-action" onclick="window.showToast('扫一扫功能开发中')">打开</button></div>
-                <div class="func-item"><span class="func-title">📸 网页截图</span><button class="func-action" onclick="window.showToast('截图功能开发中')">打开</button></div>
-                <div class="func-item"><span class="func-title">🔗 二维码生成</span><button class="func-action" onclick="window.showToast('二维码生成功能开发中')">打开</button></div>
-                <div class="func-item"><span class="func-title">📄 页面翻译</span><button class="func-action" onclick="window.showToast('翻译功能开发中')">打开</button></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== Toast ===== -->
+    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <!-- ========================================================== -->
-    <!-- JavaScript 部分（完整功能）                                 -->
-    <!-- ========================================================== -->
     <script>
         // ============================================================
-        // 全局 Toast（供内联 onclick 调用）
+        // 全局 Toast
         // ============================================================
         window.showToast = function(msg) {
             var el = document.getElementById('toast');
@@ -888,31 +650,20 @@
         // ============================================================
         // 数据层
         // ============================================================
-
         var DEFAULT_ENGINES = [
             { name: '必应', url: 'https://cn.bing.com/search?q={q}&from=vivosearch2025' },
             { name: '百度', url: 'https://www.baidu.com/s?wd={q}' },
             { name: '谷歌', url: 'https://www.google.com/search?q={q}' }
         ];
-
         var currentEngine = { name: '必应', url: 'https://cn.bing.com/search?q={q}&from=vivosearch2025' };
         var customEngines = [];
         var windows = [];
-        var lastVisit = null;
         var isIncognito = false;
-        var bgImages = [];
-        var currentBgIndex = 0;
-        var carouselTimer = null;
-        var carouselInterval = 3;
-
-        var downloads = [];
-        var favorites = [];
-        var history = [];
+        var bgImageData = null;
 
         // ============================================================
         // 存储
         // ============================================================
-
         function loadData() {
             try {
                 var ce = localStorage.getItem('mybrowser_custom_engines');
@@ -921,257 +672,44 @@
                 if (eng) currentEngine = JSON.parse(eng);
                 var ws = localStorage.getItem('mybrowser_windows');
                 if (ws) windows = JSON.parse(ws);
-                var lv = localStorage.getItem('mybrowser_last_visit');
-                if (lv) lastVisit = JSON.parse(lv);
                 var incog = localStorage.getItem('mybrowser_incognito');
                 if (incog) isIncognito = JSON.parse(incog);
-                var bg = localStorage.getItem('mybrowser_bg_images');
-                if (bg) bgImages = JSON.parse(bg);
-                var idx = localStorage.getItem('mybrowser_bg_index');
-                if (idx) currentBgIndex = parseInt(idx) || 0;
-                var interval = localStorage.getItem('mybrowser_carousel_interval');
-                if (interval) carouselInterval = parseInt(interval) || 3;
-
-                var dl = localStorage.getItem('mybrowser_downloads');
-                if (dl) downloads = JSON.parse(dl);
-                var fav = localStorage.getItem('mybrowser_favorites');
-                if (fav) favorites = JSON.parse(fav);
-                var hist = localStorage.getItem('mybrowser_history');
-                if (hist) history = JSON.parse(hist);
-
-                if (bgImages && bgImages.length > 0) {
-                    applyBgImage(currentBgIndex);
+                var bg = localStorage.getItem('mybrowser_bg_image');
+                if (bg) {
+                    bgImageData = bg;
+                    document.body.style.backgroundImage = 'url(' + bg + ')';
                 }
             } catch (e) { /* ignore */ }
         }
-
-        function saveBgImages() {
-            localStorage.setItem('mybrowser_bg_images', JSON.stringify(bgImages));
+        function saveCustomEngines() {
+            localStorage.setItem('mybrowser_custom_engines', JSON.stringify(customEngines));
         }
-        function saveBgIndex() {
-            localStorage.setItem('mybrowser_bg_index', String(currentBgIndex));
+        function saveCurrentEngine() {
+            localStorage.setItem('mybrowser_current_engine', JSON.stringify(currentEngine));
         }
-        function saveCarouselInterval() {
-            localStorage.setItem('mybrowser_carousel_interval', String(carouselInterval));
+        function saveWindows() {
+            localStorage.setItem('mybrowser_windows', JSON.stringify(windows));
         }
-        function saveDownloads() {
-            localStorage.setItem('mybrowser_downloads', JSON.stringify(downloads));
+        function saveIncognito() {
+            localStorage.setItem('mybrowser_incognito', JSON.stringify(isIncognito));
         }
-        function saveFavorites() {
-            localStorage.setItem('mybrowser_favorites', JSON.stringify(favorites));
+        function saveBgImage(data) {
+            bgImageData = data;
+            localStorage.setItem('mybrowser_bg_image', data);
+            document.body.style.backgroundImage = 'url(' + data + ')';
         }
-        function saveHistory() {
-            localStorage.setItem('mybrowser_history', JSON.stringify(history));
-        }
-        // 暴露给 Java 调用
-        window.addHistory = function(title, url) {
-            if (isIncognito) return;
-            history = history.filter(function(item) { return item.url !== url; });
-            history.unshift({ title: title || url, url: url, time: Date.now() });
-            if (history.length > 100) history = history.slice(0, 100);
-            saveHistory();
-        };
-        window.addDownloadItem = function(name, url) {
-            downloads.push({ name: name, url: url, time: Date.now() });
-            saveDownloads();
-            var sheet = document.getElementById('downloadSheet');
-            if (sheet && sheet.classList.contains('show')) {
-                renderDownloads();
-            }
-        };
-
-        // ============================================================
-        // 背景轮播管理
-        // ============================================================
-
-        function applyBgImage(index) {
-            if (!bgImages || bgImages.length === 0) {
-                document.body.style.backgroundImage = '';
-                return;
-            }
-            var img = bgImages[index % bgImages.length];
-            document.body.style.backgroundImage = 'url(' + img + ')';
-            currentBgIndex = index;
-            saveBgIndex();
-            updateCarouselPreview();
-        }
-
-        function startCarousel() {
-            stopCarousel();
-            if (!bgImages || bgImages.length < 2) return;
-            var interval = parseInt(document.getElementById('carouselInterval').value) || 3;
-            carouselInterval = interval;
-            saveCarouselInterval();
-            carouselTimer = setInterval(function() {
-                var next = (currentBgIndex + 1) % bgImages.length;
-                applyBgImage(next);
-            }, carouselInterval * 1000);
-        }
-
-        function stopCarousel() {
-            if (carouselTimer) {
-                clearInterval(carouselTimer);
-                carouselTimer = null;
-            }
-        }
-
-        function updateCarouselPreview() {
-            var container = document.getElementById('carouselPreview');
-            if (!container) return;
-            var html = '';
-            bgImages.forEach(function(img, i) {
-                var active = (i === currentBgIndex) ? 'active' : '';
-                html += '<div class="cs-thumb-wrap">' +
-                        '<img src="' + img + '" class="cs-thumb ' + active + '" data-index="' + i + '">' +
-                        '<button class="cs-del" data-index="' + i + '">✕</button>' +
-                        '</div>';
-            });
-            container.innerHTML = html;
-
-            container.querySelectorAll('.cs-thumb').forEach(function(el) {
-                el.addEventListener('click', function() {
-                    var idx = parseInt(this.dataset.index);
-                    applyBgImage(idx);
-                    startCarousel();
-                });
-            });
-            container.querySelectorAll('.cs-del').forEach(function(el) {
-                el.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    var idx = parseInt(this.dataset.index);
-                    bgImages.splice(idx, 1);
-                    saveBgImages();
-                    if (bgImages.length === 0) {
-                        document.body.style.backgroundImage = '';
-                        stopCarousel();
-                    } else {
-                        if (currentBgIndex >= bgImages.length) currentBgIndex = 0;
-                        applyBgImage(currentBgIndex);
-                        startCarousel();
-                    }
-                    updateCarouselPreview();
-                    window.showToast('已删除');
-                });
-            });
+        function resetBgImage() {
+            bgImageData = null;
+            localStorage.removeItem('mybrowser_bg_image');
+            document.body.style.backgroundImage = '';
         }
 
         // ============================================================
-        // 收藏 / 历史管理
+        // 引擎管理
         // ============================================================
-
-        function addFavorite(title, url) {
-            if (favorites.some(function(item) { return item.url === url; })) {
-                window.showToast('已收藏');
-                return;
-            }
-            favorites.unshift({ title: title || url, url: url, time: Date.now() });
-            saveFavorites();
-            window.showToast('已收藏');
-        }
-
-        function renderHistory(mode) {
-            var list = document.getElementById('historyList');
-            var data = mode === 'fav' ? favorites : history;
-            if (data.length === 0) {
-                list.innerHTML = '<div class="func-item">暂无记录</div>';
-                return;
-            }
-            var html = '';
-            data.forEach(function(item, idx) {
-                html += '<div class="func-item">' +
-                        '<div class="func-info">' +
-                        '<div class="func-title">' + item.title + '</div>' +
-                        '<div class="func-desc">' + item.url + '</div>' +
-                        '</div>' +
-                        '<div style="display:flex;gap:4px;">' +
-                        '<button class="func-action" data-url="' + item.url + '">打开</button>' +
-                        '<button class="func-del" data-idx="' + idx + '" data-mode="' + mode + '">✕</button>' +
-                        '</div>' +
-                        '</div>';
-            });
-            list.innerHTML = html;
-
-            list.querySelectorAll('.func-action').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    var url = this.dataset.url;
-                    if (url) window.location.href = url;
-                });
-            });
-            list.querySelectorAll('.func-del').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    var idx = parseInt(this.dataset.idx);
-                    var mode = this.dataset.mode;
-                    if (mode === 'fav') {
-                        favorites.splice(idx, 1);
-                        saveFavorites();
-                    } else {
-                        history.splice(idx, 1);
-                        saveHistory();
-                    }
-                    renderHistory(mode);
-                    window.showToast('已删除');
-                });
-            });
-        }
-
-        // ============================================================
-        // 下载管理
-        // ============================================================
-
-        function renderDownloads() {
-            var list = document.getElementById('downloadList');
-            if (downloads.length === 0) {
-                list.innerHTML = '<div class="func-item">暂无下载记录</div>';
-                return;
-            }
-            var html = '';
-            downloads.forEach(function(item, idx) {
-                html += '<div class="func-item">' +
-                        '<div class="func-info">' +
-                        '<div class="func-title">' + item.name + '</div>' +
-                        '<div class="func-desc">' + item.url + '</div>' +
-                        '</div>' +
-                        '<div style="display:flex;gap:4px;">' +
-                        '<button class="func-action" data-url="' + item.url + '">下载</button>' +
-                        '<button class="func-del" data-idx="' + idx + '">✕</button>' +
-                        '</div>' +
-                        '</div>';
-            });
-            list.innerHTML = html;
-
-            list.querySelectorAll('.func-action').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    var url = this.dataset.url;
-                    if (url) {
-                        var a = document.createElement('a');
-                        a.href = url;
-                        a.target = '_blank';
-                        a.download = '';
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                    }
-                });
-            });
-            list.querySelectorAll('.func-del').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    var idx = parseInt(this.dataset.idx);
-                    downloads.splice(idx, 1);
-                    saveDownloads();
-                    renderDownloads();
-                    window.showToast('已删除');
-                });
-            });
-        }
-
-        // ============================================================
-        // 引擎管理（下拉菜单）
-        // ============================================================
-
         function getAllEngines() {
             return DEFAULT_ENGINES.concat(customEngines);
         }
-
         function renderEngineDropdown() {
             var container = document.getElementById('engineDropdown');
             var all = getAllEngines();
@@ -1234,11 +772,9 @@
                 renderEngineDropdown();
             }
         }
-
         function closeEngineDropdown() {
             document.getElementById('engineDropdown').classList.remove('open');
         }
-
         function updateEngineBtn() {
             document.getElementById('engineBtn').textContent = currentEngine.name + ' ▾';
         }
@@ -1246,7 +782,6 @@
         // ============================================================
         // 搜索
         // ============================================================
-
         function doSearch(query) {
             if (!query || !query.trim()) return;
             var q = query.trim();
@@ -1258,7 +793,7 @@
             } else {
                 url = currentEngine.url.replace(/\{q\}/g, encodeURIComponent(q));
             }
-            addHistory(q, url);
+            // 记录窗口（简化版，不加历史）
             addWindow(q, url);
             window.location.href = url;
         }
@@ -1266,7 +801,6 @@
         // ============================================================
         // 窗口管理
         // ============================================================
-
         function addWindow(title, url) {
             var id = Date.now() + '_' + Math.random().toString(36).slice(2, 6);
             windows.unshift({ id: id, title: title || url, url: url || 'about:blank', time: Date.now() });
@@ -1274,13 +808,11 @@
             saveWindows();
             renderWindows();
         }
-
         function deleteWindow(id) {
             windows = windows.filter(function(w) { return w.id !== id; });
             saveWindows();
             renderWindows();
         }
-
         function renderWindows() {
             var container = document.getElementById('windowList');
             if (windows.length === 0) {
@@ -1307,7 +839,6 @@
                     var id = this.dataset.id;
                     var w = windows.find(function(win) { return win.id === id; });
                     if (w && w.url) {
-                        addHistory(w.title, w.url);
                         window.location.href = w.url;
                     } else {
                         window.showToast('该窗口没有有效地址');
@@ -1328,9 +859,7 @@
         // ============================================================
         // 面板控制
         // ============================================================
-
         var activePanel = null;
-
         function openPanel(name) {
             closeAllPanels();
             activePanel = name;
@@ -1339,7 +868,6 @@
             if (overlay) overlay.classList.add('show');
             if (sheet) sheet.classList.add('show');
         }
-
         function closePanel(name) {
             var overlay = document.getElementById(name + 'Overlay');
             var sheet = document.getElementById(name + 'Sheet');
@@ -1347,9 +875,8 @@
             if (sheet) sheet.classList.remove('show');
             if (activePanel === name) activePanel = null;
         }
-
         function closeAllPanels() {
-            ['menu', 'window', 'settings', 'download', 'history', 'tools'].forEach(function(name) {
+            ['menu', 'window', 'settings'].forEach(function(name) {
                 var overlay = document.getElementById(name + 'Overlay');
                 var sheet = document.getElementById(name + 'Sheet');
                 if (overlay) overlay.classList.remove('show');
@@ -1359,9 +886,8 @@
         }
 
         // ============================================================
-        // 菜单功能
+        // 菜单功能（基础版）
         // ============================================================
-
         function handleMenuAction(action) {
             switch (action) {
                 case 'settings':
@@ -1369,22 +895,20 @@
                     openPanel('settings');
                     break;
                 case 'download':
+                    window.showToast('下载管理功能开发中');
                     closePanel('menu');
-                    renderDownloads();
-                    openPanel('download');
                     break;
                 case 'history':
+                    window.showToast('收藏/历史功能开发中');
                     closePanel('menu');
-                    renderHistory('fav');
-                    openPanel('history');
                     break;
                 case 'tools':
+                    window.showToast('工具箱功能开发中');
                     closePanel('menu');
-                    openPanel('tools');
                     break;
                 case 'fav':
                     if (window.location.href && window.location.href !== 'about:blank') {
-                        addFavorite(document.title || window.location.href, window.location.href);
+                        window.showToast('已收藏当前页面（演示）');
                     } else {
                         window.showToast('无法收藏空白页');
                     }
@@ -1411,9 +935,8 @@
         }
 
         // ============================================================
-        // 背景图片设置
+        // 背景图片设置（单图）
         // ============================================================
-
         function setupBackgroundPicker() {
             var fileInput = document.getElementById('bgFileInput');
             var trigger = document.getElementById('bgPickerTrigger');
@@ -1425,24 +948,108 @@
             });
 
             fileInput.addEventListener('change', function(e) {
-                var files = e.target.files;
-                if (!files || files.length === 0) return;
-                var total = bgImages.length + files.length;
-                if (total > 9) {
-                    window.showToast('最多选择9张图片');
-                    this.value = '';
-                    return;
+                var file = e.target.files[0];
+                if (!file) return;
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    var dataUrl = ev.target.result;
+                    saveBgImage(dataUrl);
+                    window.showToast('背景图片已更新');
+                    closePanel('settings');
+                };
+                reader.readAsDataURL(file);
+                this.value = '';
+            });
+
+            reset.addEventListener('click', function() {
+                resetBgImage();
+                window.showToast('已恢复默认背景');
+                closePanel('settings');
+            });
+        }
+
+        // ============================================================
+        // 初始化
+        // ============================================================
+        function init() {
+            loadData();
+            updateEngineBtn();
+            renderWindows();
+            setupBackgroundPicker();
+
+            // ---- 事件绑定 ----
+            document.getElementById('searchBtn').addEventListener('click', function() {
+                doSearch(document.getElementById('searchInput').value);
+            });
+            document.getElementById('searchInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    doSearch(this.value);
                 }
-                var loaded = 0;
-                for (var i = 0; i < files.length; i++) {
-                    (function(file) {
-                        var reader = new FileReader();
-                        reader.onload = function(ev) {
-                            bgImages.push(ev.target.result);
-                            loaded++;
-                            if (loaded === files.length) {
-                                saveBgImages();
-                                if (bgImages.length === 1) {
-                                    applyBgImage(0);
-                                } else {
-                                    startCarousel()
+            });
+
+            document.getElementById('engineBtn').addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleEngineDropdown();
+            });
+
+            document.addEventListener('click', function(e) {
+                var dd = document.getElementById('engineDropdown');
+                var btn = document.getElementById('engineBtn');
+                if (!dd.contains(e.target) && !btn.contains(e.target)) {
+                    closeEngineDropdown();
+                }
+            });
+
+            document.getElementById('navMenu').addEventListener('click', function() {
+                if (activePanel === 'menu') { closePanel('menu'); return; }
+                openPanel('menu');
+            });
+            document.getElementById('navWindow').addEventListener('click', function() {
+                if (activePanel === 'window') { closePanel('window'); return; }
+                renderWindows();
+                openPanel('window');
+            });
+
+            document.querySelectorAll('.panel-close').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    closePanel(this.dataset.close);
+                });
+            });
+            document.querySelectorAll('.panel-overlay').forEach(function(overlay) {
+                overlay.addEventListener('click', function() {
+                    var name = this.id.replace('Overlay', '');
+                    closePanel(name);
+                });
+            });
+
+            document.querySelectorAll('.menu-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    var action = this.dataset.action;
+                    handleMenuAction(action);
+                });
+            });
+
+            document.getElementById('addWindowBtn').addEventListener('click', function() {
+                var id = 'win_' + Date.now();
+                windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Date.now() });
+                saveWindows();
+                renderWindows();
+                window.showToast('已创建新窗口');
+                window.location.href = 'about:blank';
+            });
+
+            setTimeout(function() {
+                document.getElementById('searchInput').focus();
+            }, 300);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
+    <!-- ===== 第一批结束，第二批紧接 ===== -->
