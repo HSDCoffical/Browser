@@ -30,7 +30,7 @@ function setGreeting() {
 }
 
 // ============================================================
-// 数据
+// 数据层
 // ============================================================
 var DEFAULT_ENGINES = [
     { name: '必应', url: 'https://cn.bing.com/search?q={q}&from=vivosearch2025' },
@@ -554,72 +554,195 @@ window.updateTopBar = function(title, url) {
 };
 
 // ============================================================
-// 下载管理
+// 下载管理（核心）
 // ============================================================
-window.renderDownloadList = function() {
-    var container = document.getElementById('downloadListContainer');
-    if (!container) return;
-    var downloads = [];
-    try {
-        var data = localStorage.getItem('mybrowser_downloads');
-        if (data) downloads = JSON.parse(data);
-    } catch(e) {}
-    if (downloads.length === 0) {
-        container.innerHTML = '<div class="func-item" style="text-align:center;color:#999;">暂无下载记录</div>';
-        return;
-    }
-    var html = '';
-    downloads.forEach(function(item, idx) {
-        html += '<div class="func-item">' +
-                '<div class="func-info">' +
-                '<div class="func-title">' + (item.name || '未知文件') + '</div>' +
-                '<div class="func-desc">' + (item.url || '') + '</div>' +
-                '</div>' +
-                '<div style="display:flex;gap:4px;">' +
-                '<button class="func-action" data-url="' + item.url + '">打开</button>' +
-                '<button class="func-del" data-idx="' + idx + '">✕</button>' +
-                '</div>' +
-                '</div>';
-    });
-    container.innerHTML = html;
+window.DownloadManager = {
+    tasks: {},
 
-    container.querySelectorAll('.func-action').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var url = this.dataset.url;
-            if (url) {
-                var a = document.createElement('a');
-                a.href = url;
-                a.target = '_blank';
-                a.download = '';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+    addTask: function(id, name, totalSize) {
+        this.tasks[id] = {
+            id: id,
+            name: name,
+            totalSize: totalSize || 0,
+            downloadedSize: 0,
+            speed: 0,
+            status: 'downloading',
+            progress: 0,
+            startTime: Date.now(),
+            filePath: null  // 完成后存储文件路径
+        };
+        this.render();
+    },
+
+    updateProgress: function(id, downloaded, total, speed) {
+        var task = this.tasks[id];
+        if (!task) return;
+        task.downloadedSize = downloaded;
+        if (total) task.totalSize = total;
+        task.speed = speed || 0;
+        task.progress = task.totalSize > 0 ? (downloaded / task.totalSize) * 100 : 0;
+        if (task.progress >= 100) {
+            task.status = 'done';
+        }
+        this.render();
+    },
+
+    complete: function(id, filePath) {
+        var task = this.tasks[id];
+        if (!task) return;
+        task.status = 'done';
+        task.progress = 100;
+        task.downloadedSize = task.totalSize;
+        task.filePath = filePath;
+        this.render();
+        // 通知栏已由系统显示，这里不再重复
+    },
+
+    togglePause: function(id) {
+        var task = this.tasks[id];
+        if (!task || task.status === 'done') return;
+        var newStatus = task.status === 'paused' ? 'downloading' : 'paused';
+        task.status = newStatus;
+        if (window._nativeDownload) {
+            window._nativeDownload.togglePause(id, newStatus === 'downloading');
+        }
+        this.render();
+    },
+
+    cancel: function(id) {
+        var task = this.tasks[id];
+        if (!task) return;
+        if (window._nativeDownload) {
+            window._nativeDownload.cancel(id);
+        }
+        delete this.tasks[id];
+        this.render();
+    },
+
+    install: function(id) {
+        var task = this.tasks[id];
+        if (!task || task.status !== 'done' || !task.filePath) {
+            window.showToast('文件不存在');
+            return;
+        }
+        if (window._nativeDownload) {
+            window._nativeDownload.install(task.filePath);
+        }
+    },
+
+    render: function() {
+        var container = document.getElementById('downloadListContainer');
+        if (!container) return;
+        var ids = Object.keys(this.tasks);
+        if (ids.length === 0) {
+            container.innerHTML = '<div class="func-item" style="text-align:center;color:#999;">暂无下载记录</div>';
+            return;
+        }
+        var html = '';
+        var self = this;
+        ids.forEach(function(id) {
+            var task = self.tasks[id];
+            var statusText = { downloading: '下载中', paused: '已暂停', done: '已完成', error: '错误' }[task.status] || '';
+            var progress = Math.round(task.progress);
+            var sizeText = self._formatSize(task.downloadedSize) + ' / ' + self._formatSize(task.totalSize);
+            var speedText = task.speed ? self._formatSize(task.speed) + '/s' : '0B/s';
+            var isDone = task.status === 'done';
+            var isPaused = task.status === 'paused';
+            var statusClass = isDone ? 'done' : (isPaused ? 'paused' : '');
+
+            html += '<div class="download-item ' + statusClass + '" data-id="' + id + '">';
+            html += '  <div class="di-header">';
+            html += '    <span class="di-name">' + task.name + '</span>';
+            html += '    <span class="di-status">' + statusText + '</span>';
+            html += '  </div>';
+            html += '  <div class="di-progress-track"><div class="di-progress-fill" style="width:' + progress + '%;"></div></div>';
+            html += '  <div class="di-info">';
+            html += '    <span>' + sizeText + '</span>';
+            html += '    <span>' + speedText + '</span>';
+            html += '  </div>';
+            html += '  <div class="di-actions">';
+            if (!isDone) {
+                html += '    <button class="di-pause" data-id="' + id + '">' + (isPaused ? '继续' : '暂停') + '</button>';
+                html += '    <button class="di-cancel" data-id="' + id + '">取消</button>';
+            } else {
+                html += '    <button class="di-install" data-id="' + id + '">安装</button>';
+                html += '    <button class="di-cancel" data-id="' + id + '">删除</button>';
             }
+            html += '  </div>';
+            html += '</div>';
         });
-    });
-    container.querySelectorAll('.func-del').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var idx = parseInt(this.dataset.idx);
-            downloads.splice(idx, 1);
-            localStorage.setItem('mybrowser_downloads', JSON.stringify(downloads));
-            window.renderDownloadList();
-            window.showToast('已删除');
+        container.innerHTML = html;
+
+        // 绑定事件（使用委托方式避免重复绑定）
+        container.querySelectorAll('.di-pause').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var id = this.dataset.id;
+                window.DownloadManager.togglePause(id);
+            });
         });
-    });
+        container.querySelectorAll('.di-cancel').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var id = this.dataset.id;
+                var task = window.DownloadManager.tasks[id];
+                if (task && task.status === 'done') {
+                    if (confirm('确定删除此下载记录吗？')) {
+                        window.DownloadManager.cancel(id);
+                    }
+                } else {
+                    if (confirm('确定取消下载吗？')) {
+                        window.DownloadManager.cancel(id);
+                    }
+                }
+            });
+        });
+        container.querySelectorAll('.di-install').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var id = this.dataset.id;
+                window.DownloadManager.install(id);
+            });
+        });
+
+        // 长按删除（通过 touch 事件）
+        var longPressTimer = null;
+        container.querySelectorAll('.download-item').forEach(function(item) {
+            item.addEventListener('touchstart', function(e) {
+                var id = this.dataset.id;
+                longPressTimer = setTimeout(function() {
+                    if (confirm('确定删除此下载记录吗？')) {
+                        window.DownloadManager.cancel(id);
+                    }
+                }, 600);
+            });
+            item.addEventListener('touchend', function() {
+                clearTimeout(longPressTimer);
+            });
+            item.addEventListener('touchmove', function() {
+                clearTimeout(longPressTimer);
+            });
+        });
+    },
+
+    _formatSize: function(bytes) {
+        if (!bytes) return '0B';
+        var units = ['B', 'KB', 'MB', 'GB'];
+        var i = 0;
+        while (bytes >= 1024 && i < units.length - 1) { bytes /= 1024; i++; }
+        return (i === 0 ? bytes : bytes.toFixed(1)) + units[i];
+    }
 };
 
-window.addDownloadItem = function(name, url) {
-    var downloads = [];
-    try {
-        var data = localStorage.getItem('mybrowser_downloads');
-        if (data) downloads = JSON.parse(data);
-    } catch(e) {}
-    downloads.push({ name: name || '下载文件', url: url, time: Date.now() });
-    localStorage.setItem('mybrowser_downloads', JSON.stringify(downloads));
-    if (typeof window.renderDownloadList === 'function') {
-        window.renderDownloadList();
-    }
-    window.showToast('下载已添加到列表');
+// 暴露给 Java 调用
+window._addDownloadTask = function(id, name, totalSize) {
+    window.DownloadManager.addTask(id, name, totalSize);
+};
+window._updateDownloadProgress = function(id, downloaded, total, speed) {
+    window.DownloadManager.updateProgress(id, downloaded, total, speed);
+};
+window._downloadComplete = function(id, filePath) {
+    window.DownloadManager.complete(id, filePath);
 };
 
 // ============================================================
@@ -650,9 +773,7 @@ function initApp() {
     if (downloadSheet) {
         var observer = new MutationObserver(function() {
             if (downloadSheet.classList.contains('show')) {
-                if (typeof window.renderDownloadList === 'function') {
-                    window.renderDownloadList();
-                }
+                window.DownloadManager.render();
             }
         });
         observer.observe(downloadSheet, { attributes: true, attributeFilter: ['class'] });
@@ -702,45 +823,4 @@ function startApp() {
     });
     document.getElementById('navWindow').addEventListener('click', function() {
         if (activePanel === 'window') { closePanel('window'); return; }
-        renderWindows();
-        openPanel('window');
-    });
-
-    document.querySelectorAll('.panel-close').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            closePanel(this.dataset.close);
-        });
-    });
-    document.querySelectorAll('.panel-overlay').forEach(function(overlay) {
-        overlay.addEventListener('click', function() {
-            var name = this.id.replace('Overlay', '');
-            closePanel(name);
-        });
-    });
-
-    document.querySelectorAll('.menu-item').forEach(function(item) {
-        item.addEventListener('click', function() {
-            var action = this.dataset.action;
-            handleMenuAction(action);
-        });
-    });
-
-    document.getElementById('addWindowBtn').addEventListener('click', function() {
-        var id = 'win_' + Date.now();
-        windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Date.now() });
-        saveWindows();
-        renderWindows();
-        window.showToast('已创建新窗口');
-        window.location.href = 'about:blank';
-    });
-
-    setTimeout(function() {
-        document.getElementById('searchInput').focus();
-    }, 300);
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startApp);
-} else {
-    startApp();
-}
+  
