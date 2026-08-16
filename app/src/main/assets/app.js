@@ -30,7 +30,7 @@ function setGreeting() {
 }
 
 // ============================================================
-// 引擎数据
+// 数据层
 // ============================================================
 var DEFAULT_ENGINES = [
     { name: '必应', url: 'https://cn.bing.com/search?q={q}&from=vivosearch2025' },
@@ -40,23 +40,73 @@ var DEFAULT_ENGINES = [
 var currentEngine = { name: '必应', url: 'https://cn.bing.com/search?q={q}&from=vivosearch2025' };
 var customEngines = [];
 var windows = [];
-var bgImageData = null;
+var bgImages = [];
+var currentBgIndex = 0;
+var carouselTimer = null;
+var carouselInterval = 3;
+var isCarouselMode = false;
+var favorites = [];
+var history = [];
 
 // ============================================================
 // 存储
 // ============================================================
 function loadData() {
     try {
+        var ce = localStorage.getItem('mybrowser_custom_engines');
+        if (ce) customEngines = JSON.parse(ce);
         var eng = localStorage.getItem('mybrowser_current_engine');
         if (eng) currentEngine = JSON.parse(eng);
         var ws = localStorage.getItem('mybrowser_windows');
         if (ws) windows = JSON.parse(ws);
-        var bg = localStorage.getItem('mybrowser_bg_image');
-        if (bg) {
-            bgImageData = bg;
-            document.body.style.backgroundImage = 'url(' + bg + ')';
+        var bg = localStorage.getItem('mybrowser_bg_images');
+        if (bg) bgImages = JSON.parse(bg);
+        var idx = localStorage.getItem('mybrowser_bg_index');
+        if (idx) currentBgIndex = parseInt(idx) || 0;
+        var interval = localStorage.getItem('mybrowser_carousel_interval');
+        if (interval) carouselInterval = parseInt(interval) || 3;
+        var mode = localStorage.getItem('mybrowser_carousel_mode');
+        isCarouselMode = (mode === 'true');
+        var fav = localStorage.getItem('mybrowser_favorites');
+        if (fav) favorites = JSON.parse(fav);
+        var hist = localStorage.getItem('mybrowser_history');
+        if (hist) history = JSON.parse(hist);
+
+        if (bgImages && bgImages.length > 0) {
+            applyBgImage(currentBgIndex);
         }
+        var toggle = document.getElementById('carouselToggle');
+        if (toggle) {
+            if (isCarouselMode) toggle.classList.add('active');
+            else toggle.classList.remove('active');
+        }
+        var settings = document.getElementById('carouselSettings');
+        if (settings) {
+            settings.style.display = isCarouselMode ? 'block' : 'none';
+        }
+        var label = document.getElementById('pickerLabel');
+        if (label) {
+            label.textContent = isCarouselMode ? '选择背景图片（多选）' : '选择背景图片';
+        }
+        var el = document.getElementById('carouselInterval');
+        if (el) el.value = carouselInterval;
     } catch(e) {}
+}
+
+function saveBgImages() {
+    localStorage.setItem('mybrowser_bg_images', JSON.stringify(bgImages));
+}
+function saveBgIndex() {
+    localStorage.setItem('mybrowser_bg_index', String(currentBgIndex));
+}
+function saveCarouselInterval() {
+    localStorage.setItem('mybrowser_carousel_interval', String(carouselInterval));
+}
+function saveCarouselMode() {
+    localStorage.setItem('mybrowser_carousel_mode', String(isCarouselMode));
+}
+function saveCustomEngines() {
+    localStorage.setItem('mybrowser_custom_engines', JSON.stringify(customEngines));
 }
 function saveCurrentEngine() {
     localStorage.setItem('mybrowser_current_engine', JSON.stringify(currentEngine));
@@ -64,23 +114,96 @@ function saveCurrentEngine() {
 function saveWindows() {
     localStorage.setItem('mybrowser_windows', JSON.stringify(windows));
 }
-function saveBgImage(data) {
-    bgImageData = data;
-    localStorage.setItem('mybrowser_bg_image', data);
-    document.body.style.backgroundImage = 'url(' + data + ')';
+function saveFavorites() {
+    localStorage.setItem('mybrowser_favorites', JSON.stringify(favorites));
 }
-function resetBgImage() {
-    bgImageData = null;
-    localStorage.removeItem('mybrowser_bg_image');
-    document.body.style.backgroundImage = '';
+function saveHistory() {
+    localStorage.setItem('mybrowser_history', JSON.stringify(history));
 }
 
 // ============================================================
-// 引擎下拉菜单
+// 背景管理
 // ============================================================
+function applyBgImage(index) {
+    if (!bgImages || bgImages.length === 0) {
+        document.body.style.backgroundImage = '';
+        return;
+    }
+    var img = bgImages[index % bgImages.length];
+    document.body.style.backgroundImage = 'url(' + img + ')';
+    currentBgIndex = index;
+    saveBgIndex();
+    updateCarouselPreview();
+}
+
+function startCarousel() {
+    stopCarousel();
+    if (!isCarouselMode || !bgImages || bgImages.length < 2) return;
+    var interval = parseInt(document.getElementById('carouselInterval').value) || 3;
+    carouselInterval = interval;
+    saveCarouselInterval();
+    carouselTimer = setInterval(function() {
+        var next = (currentBgIndex + 1) % bgImages.length;
+        applyBgImage(next);
+    }, carouselInterval * 1000);
+}
+
+function stopCarousel() {
+    if (carouselTimer) {
+        clearInterval(carouselTimer);
+        carouselTimer = null;
+    }
+}
+
+function updateCarouselPreview() {
+    var container = document.getElementById('carouselPreview');
+    if (!container) return;
+    var html = '';
+    bgImages.forEach(function(img, i) {
+        var active = (i === currentBgIndex) ? 'active' : '';
+        html += '<div class="cs-thumb-wrap">' +
+                '<img src="' + img + '" class="cs-thumb ' + active + '" data-index="' + i + '">' +
+                '<button class="cs-del" data-index="' + i + '">✕</button>' +
+                '</div>';
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll('.cs-thumb').forEach(function(el) {
+        el.addEventListener('click', function() {
+            var idx = parseInt(this.dataset.index);
+            applyBgImage(idx);
+            if (isCarouselMode && bgImages.length > 1) startCarousel();
+        });
+    });
+    container.querySelectorAll('.cs-del').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var idx = parseInt(this.dataset.index);
+            bgImages.splice(idx, 1);
+            saveBgImages();
+            if (bgImages.length === 0) {
+                document.body.style.backgroundImage = '';
+                stopCarousel();
+            } else {
+                if (currentBgIndex >= bgImages.length) currentBgIndex = 0;
+                applyBgImage(currentBgIndex);
+                if (isCarouselMode && bgImages.length > 1) startCarousel();
+            }
+            updateCarouselPreview();
+            window.showToast('已删除');
+        });
+    });
+}
+
+// ============================================================
+// 引擎管理
+// ============================================================
+function getAllEngines() {
+    return DEFAULT_ENGINES.concat(customEngines);
+}
 function renderEngineDropdown() {
     var container = document.getElementById('engineDropdown');
-    var all = DEFAULT_ENGINES.concat(customEngines);
+    var all = getAllEngines();
     var currentName = currentEngine.name;
     var html = '';
     all.forEach(function(eng) {
@@ -120,12 +243,12 @@ function renderEngineDropdown() {
             window.showToast('URL中请包含 {q}');
             return;
         }
-        if (DEFAULT_ENGINES.concat(customEngines).some(function(e) { return e.name === name; })) {
+        if (getAllEngines().some(function(e) { return e.name === name; })) {
             window.showToast('引擎已存在');
             return;
         }
         customEngines.push({ name: name, url: url });
-        localStorage.setItem('mybrowser_custom_engines', JSON.stringify(customEngines));
+        saveCustomEngines();
         document.getElementById('customEngineName').value = '';
         document.getElementById('customEngineUrl').value = '';
         renderEngineDropdown();
@@ -161,8 +284,72 @@ function doSearch(query) {
     } else {
         url = currentEngine.url.replace(/\{q\}/g, encodeURIComponent(q));
     }
+    addHistory(q, url);
     addWindow(q, url);
     window.location.href = url;
+}
+
+// ============================================================
+// 历史/收藏
+// ============================================================
+function addHistory(title, url) {
+    history = history.filter(function(item) { return item.url !== url; });
+    history.unshift({ title: title || url, url: url, time: Date.now() });
+    if (history.length > 100) history = history.slice(0, 100);
+    saveHistory();
+}
+function addFavorite(title, url) {
+    if (favorites.some(function(item) { return item.url === url; })) {
+        window.showToast('已收藏');
+        return;
+    }
+    favorites.unshift({ title: title || url, url: url, time: Date.now() });
+    saveFavorites();
+    window.showToast('已收藏');
+}
+function renderHistory(mode) {
+    var list = document.getElementById('historyList');
+    var data = mode === 'fav' ? favorites : history;
+    if (data.length === 0) {
+        list.innerHTML = '<div class="func-item">暂无记录</div>';
+        return;
+    }
+    var html = '';
+    data.forEach(function(item, idx) {
+        html += '<div class="func-item">' +
+                '<div class="func-info">' +
+                '<div class="func-title">' + item.title + '</div>' +
+                '<div class="func-desc">' + item.url + '</div>' +
+                '</div>' +
+                '<div style="display:flex;gap:4px;">' +
+                '<button class="func-action" data-url="' + item.url + '">打开</button>' +
+                '<button class="func-del" data-idx="' + idx + '" data-mode="' + mode + '">✕</button>' +
+                '</div>' +
+                '</div>';
+    });
+    list.innerHTML = html;
+
+    list.querySelectorAll('.func-action').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var url = this.dataset.url;
+            if (url) window.location.href = url;
+        });
+    });
+    list.querySelectorAll('.func-del').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var idx = parseInt(this.dataset.idx);
+            var mode = this.dataset.mode;
+            if (mode === 'fav') {
+                favorites.splice(idx, 1);
+                saveFavorites();
+            } else {
+                history.splice(idx, 1);
+                saveHistory();
+            }
+            renderHistory(mode);
+            window.showToast('已删除');
+        });
+    });
 }
 
 // ============================================================
@@ -206,6 +393,7 @@ function renderWindows() {
             var id = this.dataset.id;
             var w = windows.find(function(win) { return win.id === id; });
             if (w && w.url) {
+                addHistory(w.title, w.url);
                 window.location.href = w.url;
             } else {
                 window.showToast('该窗口没有有效地址');
@@ -243,7 +431,7 @@ function closePanel(name) {
     if (activePanel === name) activePanel = null;
 }
 function closeAllPanels() {
-    ['menu', 'window', 'settings', 'download'].forEach(function(name) {
+    ['menu', 'window', 'settings', 'download', 'history', 'tools'].forEach(function(name) {
         var overlay = document.getElementById(name + 'Overlay');
         var sheet = document.getElementById(name + 'Sheet');
         if (overlay) overlay.classList.remove('show');
@@ -264,6 +452,38 @@ function handleMenuAction(action) {
         case 'download':
             closePanel('menu');
             openPanel('download');
+            window.DownloadManager.render();
+            break;
+        case 'history':
+            closePanel('menu');
+            renderHistory('fav');
+            openPanel('history');
+            break;
+        case 'tools':
+            closePanel('menu');
+            openPanel('tools');
+            break;
+        case 'fav':
+            if (window.location.href && window.location.href !== 'about:blank') {
+                addFavorite(document.title || window.location.href, window.location.href);
+            } else {
+                window.showToast('无法收藏空白页');
+            }
+            closePanel('menu');
+            break;
+        case 'night':
+            document.body.classList.toggle('night-mode');
+            closePanel('menu');
+            window.showToast(document.body.classList.contains('night-mode') ? '夜间模式已开启' : '夜间模式已关闭');
+            break;
+        case 'exit':
+            if (confirm('确定退出应用吗？')) {
+                window.showToast('正在退出...');
+                setTimeout(function() {
+                    window.location.href = 'about:blank';
+                }, 500);
+            }
+            closePanel('menu');
             break;
         default:
             window.showToast('功能开发中');
@@ -278,6 +498,36 @@ function setupBackgroundPicker() {
     var fileInput = document.getElementById('bgFileInput');
     var trigger = document.getElementById('bgPickerTrigger');
     var reset = document.getElementById('resetBg');
+    var toggle = document.getElementById('carouselToggle');
+
+    toggle.addEventListener('click', function() {
+        isCarouselMode = !isCarouselMode;
+        this.classList.toggle('active');
+        saveCarouselMode();
+        var settings = document.getElementById('carouselSettings');
+        if (isCarouselMode) {
+            settings.style.display = 'block';
+            document.getElementById('pickerLabel').textContent = '选择背景图片（多选）';
+            fileInput.setAttribute('multiple', 'multiple');
+            if (bgImages.length > 1) {
+                startCarousel();
+            }
+        } else {
+            settings.style.display = 'none';
+            document.getElementById('pickerLabel').textContent = '选择背景图片';
+            fileInput.removeAttribute('multiple');
+            stopCarousel();
+            if (bgImages.length > 1) {
+                var first = bgImages[0];
+                bgImages = [first];
+                saveBgImages();
+                currentBgIndex = 0;
+                applyBgImage(0);
+                updateCarouselPreview();
+                window.showToast('已切换为单图模式');
+            }
+        }
+    });
 
     trigger.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -285,22 +535,73 @@ function setupBackgroundPicker() {
     });
 
     fileInput.addEventListener('change', function(e) {
-        var file = e.target.files[0];
-        if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function(ev) {
-            saveBgImage(ev.target.result);
-            window.showToast('背景已更新');
-            closePanel('settings');
-        };
-        reader.readAsDataURL(file);
+        var files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        if (isCarouselMode) {
+            var total = bgImages.length + files.length;
+            if (total > 9) {
+                window.showToast('最多选择9张图片');
+                this.value = '';
+                return;
+            }
+            var loaded = 0;
+            for (var i = 0; i < files.length; i++) {
+                (function(file) {
+                    var reader = new FileReader();
+                    reader.onload = function(ev) {
+                        bgImages.push(ev.target.result);
+                        loaded++;
+                        if (loaded === files.length) {
+                            saveBgImages();
+                            if (bgImages.length === 1) {
+                                applyBgImage(0);
+                            } else {
+                                startCarousel();
+                            }
+                            updateCarouselPreview();
+                            window.showToast('已添加 ' + files.length + ' 张图片');
+                            closePanel('settings');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                })(files[i]);
+            }
+        } else {
+            var file = files[0];
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                var dataUrl = ev.target.result;
+                bgImages = [dataUrl];
+                saveBgImages();
+                currentBgIndex = 0;
+                applyBgImage(0);
+                updateCarouselPreview();
+                window.showToast('背景已更新');
+                closePanel('settings');
+            };
+            reader.readAsDataURL(file);
+        }
         this.value = '';
     });
 
     reset.addEventListener('click', function() {
-        resetBgImage();
-        window.showToast('已恢复默认');
+        bgImages = [];
+        saveBgImages();
+        stopCarousel();
+        document.body.style.backgroundImage = '';
+        updateCarouselPreview();
+        window.showToast('已恢复默认背景');
         closePanel('settings');
+    });
+
+    document.getElementById('carouselInterval').addEventListener('change', function() {
+        var val = parseInt(this.value) || 3;
+        carouselInterval = val;
+        saveCarouselInterval();
+        if (isCarouselMode && bgImages.length > 1) {
+            startCarousel();
+        }
     });
 }
 
@@ -321,12 +622,12 @@ window.updateTopBar = function(title, url) {
 };
 
 // ============================================================
-// 下载管理（占位）
+// 下载管理（完整）
 // ============================================================
 window.DownloadManager = {
     tasks: {},
     addTask: function(id, name, totalSize) {
-        this.tasks[id] = { id: id, name: name, totalSize: totalSize || 0, downloadedSize: 0, speed: 0, status: 'downloading', progress: 0 };
+        this.tasks[id] = { id: id, name: name, totalSize: totalSize || 0, downloadedSize: 0, speed: 0, status: 'downloading', progress: 0, filePath: null };
         this.render();
     },
     updateProgress: function(id, downloaded, total, speed) {
@@ -339,12 +640,13 @@ window.DownloadManager = {
         if (task.progress >= 100) task.status = 'done';
         this.render();
     },
-    complete: function(id) {
+    complete: function(id, filePath) {
         var task = this.tasks[id];
         if (!task) return;
         task.status = 'done';
         task.progress = 100;
         task.downloadedSize = task.totalSize;
+        task.filePath = filePath;
         this.render();
     },
     togglePause: function(id) {
@@ -364,7 +666,14 @@ window.DownloadManager = {
         this.render();
     },
     install: function(id) {
-        window.showToast('安装功能开发中');
+        var task = this.tasks[id];
+        if (!task || task.status !== 'done' || !task.filePath) {
+            window.showToast('文件不存在');
+            return;
+        }
+        if (window._nativeDownload) {
+            window._nativeDownload.install(task.filePath);
+        }
     },
     render: function() {
         var container = document.getElementById('downloadListContainer');
@@ -378,18 +687,20 @@ window.DownloadManager = {
         var self = this;
         ids.forEach(function(id) {
             var task = self.tasks[id];
-            var statusText = { downloading: '下载中', paused: '已暂停', done: '已完成' }[task.status] || '';
+            var statusText = { downloading: '下载中', paused: '已暂停', done: '已完成', error: '错误' }[task.status] || '';
             var progress = Math.round(task.progress);
             var sizeText = self._formatSize(task.downloadedSize) + ' / ' + self._formatSize(task.totalSize);
             var speedText = task.speed ? self._formatSize(task.speed) + '/s' : '0B/s';
             var isDone = task.status === 'done';
-            html += '<div class="download-item" data-id="' + id + '">';
+            var isPaused = task.status === 'paused';
+            var statusClass = isDone ? 'done' : (isPaused ? 'paused' : '');
+            html += '<div class="download-item ' + statusClass + '" data-id="' + id + '">';
             html += '  <div class="di-header"><span class="di-name">' + task.name + '</span><span class="di-status">' + statusText + '</span></div>';
             html += '  <div class="di-progress-track"><div class="di-progress-fill" style="width:' + progress + '%;"></div></div>';
             html += '  <div class="di-info"><span>' + sizeText + '</span><span>' + speedText + '</span></div>';
             html += '  <div class="di-actions">';
             if (!isDone) {
-                html += '    <button class="di-pause" data-id="' + id + '">' + (task.status === 'paused' ? '继续' : '暂停') + '</button>';
+                html += '    <button class="di-pause" data-id="' + id + '">' + (isPaused ? '继续' : '暂停') + '</button>';
                 html += '    <button class="di-cancel" data-id="' + id + '">取消</button>';
             } else {
                 html += '    <button class="di-install" data-id="' + id + '">安装</button>';
@@ -410,8 +721,15 @@ window.DownloadManager = {
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 var id = this.dataset.id;
-                if (confirm('确定取消/删除此下载吗？')) {
-                    window.DownloadManager.cancel(id);
+                var task = window.DownloadManager.tasks[id];
+                if (task && task.status === 'done') {
+                    if (confirm('确定删除此下载记录吗？')) {
+                        window.DownloadManager.cancel(id);
+                    }
+                } else {
+                    if (confirm('确定取消下载吗？')) {
+                        window.DownloadManager.cancel(id);
+                    }
                 }
             });
         });
@@ -420,6 +738,25 @@ window.DownloadManager = {
                 e.stopPropagation();
                 var id = this.dataset.id;
                 window.DownloadManager.install(id);
+            });
+        });
+
+        // 长按删除（触屏）
+        var longPressTimer = null;
+        container.querySelectorAll('.download-item').forEach(function(item) {
+            item.addEventListener('touchstart', function(e) {
+                var id = this.dataset.id;
+                longPressTimer = setTimeout(function() {
+                    if (confirm('确定删除此下载记录吗？')) {
+                        window.DownloadManager.cancel(id);
+                    }
+                }, 600);
+            });
+            item.addEventListener('touchend', function() {
+                clearTimeout(longPressTimer);
+            });
+            item.addEventListener('touchmove', function() {
+                clearTimeout(longPressTimer);
             });
         });
     },
@@ -438,8 +775,8 @@ window._addDownloadTask = function(id, name, totalSize) {
 window._updateDownloadProgress = function(id, downloaded, total, speed) {
     window.DownloadManager.updateProgress(id, downloaded, total, speed);
 };
-window._downloadComplete = function(id) {
-    window.DownloadManager.complete(id);
+window._downloadComplete = function(id, filePath) {
+    window.DownloadManager.complete(id, filePath);
 };
 
 // ============================================================
@@ -460,92 +797,4 @@ function initApp() {
         }
     });
 
-    var downloadSheet = document.getElementById('downloadSheet');
-    if (downloadSheet) {
-        var observer = new MutationObserver(function() {
-            if (downloadSheet.classList.contains('show')) {
-                window.DownloadManager.render();
-            }
-        });
-        observer.observe(downloadSheet, { attributes: true, attributeFilter: ['class'] });
-    }
-}
-
-function startApp() {
-    loadData();
-    updateEngineBtn();
-    renderWindows();
-    setupBackgroundPicker();
-    initApp();
-
-    document.getElementById('searchBtn').addEventListener('click', function() {
-        doSearch(document.getElementById('searchInput').value);
-    });
-    document.getElementById('searchInput').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            doSearch(this.value);
-        }
-    });
-
-    document.getElementById('engineBtn').addEventListener('click', function(e) {
-        e.stopPropagation();
-        toggleEngineDropdown();
-    });
-
-    document.addEventListener('click', function(e) {
-        var dd = document.getElementById('engineDropdown');
-        var btn = document.getElementById('engineBtn');
-        if (!dd.contains(e.target) && !btn.contains(e.target)) {
-            closeEngineDropdown();
-        }
-    });
-
-    document.getElementById('navMenu').addEventListener('click', function() {
-        if (activePanel === 'menu') { closePanel('menu'); return; }
-        openPanel('menu');
-    });
-    document.getElementById('navWindow').addEventListener('click', function() {
-        if (activePanel === 'window') { closePanel('window'); return; }
-        renderWindows();
-        openPanel('window');
-    });
-
-    document.querySelectorAll('.panel-close').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            closePanel(this.dataset.close);
-        });
-    });
-    document.querySelectorAll('.panel-overlay').forEach(function(overlay) {
-        overlay.addEventListener('click', function() {
-            var name = this.id.replace('Overlay', '');
-            closePanel(name);
-        });
-    });
-
-    document.querySelectorAll('.menu-item').forEach(function(item) {
-        item.addEventListener('click', function() {
-            var action = this.dataset.action;
-            handleMenuAction(action);
-        });
-    });
-
-    document.getElementById('addWindowBtn').addEventListener('click', function() {
-        var id = 'win_' + Date.now();
-        windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Date.now() });
-        saveWindows();
-        renderWindows();
-        window.showToast('已创建新窗口');
-        window.location.href = 'about:blank';
-    });
-
-    setTimeout(function() {
-        document.getElementById('searchInput').focus();
-    }, 300);
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startApp);
-} else {
-    startApp();
-}
+    var downloadSheet = document.ge
