@@ -40,7 +40,7 @@
             flex-shrink: 0;
         }
 
-        /* ===== 内容区（可滚动） ===== */
+        /* ===== 内容区 ===== */
         .content-area {
             flex: 1;
             overflow-y: auto;
@@ -51,7 +51,7 @@
             display: none;
         }
 
-        /* ===== 搜索框区域 ===== */
+        /* ===== 搜索框 ===== */
         .search-section {
             padding-top: 10px;
             padding-bottom: 18px;
@@ -71,7 +71,6 @@
             border-color: #2979ff;
         }
 
-        /* 引擎切换按钮 */
         .engine-btn {
             flex-shrink: 0;
             padding: 0 10px 0 16px;
@@ -85,7 +84,6 @@
             display: flex;
             align-items: center;
             gap: 4px;
-            position: relative;
             white-space: nowrap;
         }
         .engine-btn::after {
@@ -98,7 +96,6 @@
             opacity: 0.6;
         }
 
-        /* 搜索输入框 */
         .search-box input {
             flex: 1;
             border: none;
@@ -115,7 +112,6 @@
             font-size: 15px;
         }
 
-        /* 搜索按钮 */
         .search-btn {
             flex-shrink: 0;
             background: #2979ff;
@@ -135,7 +131,7 @@
             transform: scale(0.96);
         }
 
-        /* ===== 继续浏览卡片 ===== */
+        /* ===== 继续浏览 ===== */
         .continue-section {
             margin-top: 4px;
             margin-bottom: 18px;
@@ -237,7 +233,6 @@
             transition: color 0.2s;
             border-radius: 12px;
             padding: 4px 0;
-            position: relative;
         }
         .bottom-nav .nav-item:active {
             background: #f5f7fa;
@@ -245,7 +240,6 @@
         .bottom-nav .nav-item .nav-icon {
             font-size: 22px;
             line-height: 1.2;
-            transition: transform 0.2s;
         }
         .bottom-nav .nav-item .nav-label {
             font-size: 11px;
@@ -255,9 +249,6 @@
         }
         .bottom-nav .nav-item.active {
             color: #2979ff;
-        }
-        .bottom-nav .nav-item.active .nav-icon {
-            transform: scale(1.05);
         }
 
         /* ===== 面板通用 ===== */
@@ -276,12 +267,8 @@
             display: block;
         }
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .panel-sheet {
@@ -341,10 +328,10 @@
             display: none;
         }
 
-        /* ===== 菜单面板 ===== */
+        /* ===== 菜单网格（3列） ===== */
         .menu-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 12px 8px;
             padding-top: 8px;
         }
@@ -375,7 +362,7 @@
             font-weight: 400;
         }
 
-        /* ===== 窗口面板 ===== */
+        /* ===== 窗口列表 ===== */
         .window-list {
             display: flex;
             flex-direction: column;
@@ -469,7 +456,7 @@
             transform: scale(0.97);
         }
 
-        /* ===== 设置面板 ===== */
+        /* ===== 设置列表 ===== */
         .settings-list {
             display: flex;
             flex-direction: column;
@@ -508,7 +495,7 @@
             font-size: 16px;
         }
 
-        /* ===== 引擎下拉（自定义弹窗） ===== */
+        /* ===== 引擎弹窗 ===== */
         .engine-popup-overlay {
             position: fixed;
             top: 0;
@@ -604,7 +591,7 @@
             background: #1a5fd0;
         }
 
-        /* ===== Toast 提示 ===== */
+        /* ===== Toast ===== */
         .toast {
             position: fixed;
             top: 50%;
@@ -628,7 +615,6 @@
             transform: translate(-50%, -50%) scale(1);
         }
 
-        /* ===== 工具类 ===== */
         .hidden {
             display: none !important;
         }
@@ -642,10 +628,8 @@
     <!-- ===== 主容器 ===== -->
     <div class="app-container" id="app">
 
-        <!-- 状态栏占位 -->
         <div class="status-bar"></div>
 
-        <!-- 内容区 -->
         <div class="content-area" id="contentArea">
             <!-- 搜索区域 -->
             <div class="search-section">
@@ -657,11 +641,8 @@
             </div>
 
             <!-- 继续浏览 -->
-            <div class="continue-section" id="continueSection">
-                <!-- 动态由 JS 渲染 -->
-            </div>
+            <div class="continue-section" id="continueSection"></div>
 
-            <!-- 底部留白 -->
             <div style="height: 8px;"></div>
         </div>
 
@@ -699,14 +680,6 @@
                     <span class="mi-icon">⭐</span>
                     <span class="mi-label">收藏/历史</span>
                 </button>
-                <button class="menu-item" data-action="video">
-                    <span class="mi-icon">🎬</span>
-                    <span class="mi-label">我的视频</span>
-                </button>
-                <button class="menu-item" data-action="novel">
-                    <span class="mi-icon">📖</span>
-                    <span class="mi-label">免费小说</span>
-                </button>
                 <button class="menu-item" data-action="tools">
                     <span class="mi-icon">🧰</span>
                     <span class="mi-label">工具箱</span>
@@ -723,9 +696,7 @@
             <button class="panel-close" data-close="window">✕</button>
         </div>
         <div class="panel-body">
-            <div class="window-list" id="windowList">
-                <!-- 动态由 JS 渲染 -->
-            </div>
+            <div class="window-list" id="windowList"></div>
             <div class="window-add">
                 <button id="addWindowBtn">+ 新建窗口</button>
             </div>
@@ -765,13 +736,11 @@
         </div>
     </div>
 
-    <!-- ===== 引擎切换下拉 ===== -->
+    <!-- ===== 引擎切换弹窗 ===== -->
     <div class="engine-popup-overlay" id="enginePopup">
         <div class="engine-popup">
             <div class="ep-title">切换搜索引擎</div>
-            <div id="engineList">
-                <!-- 动态由 JS 渲染 -->
-            </div>
+            <div id="engineList"></div>
             <div class="ep-custom">
                 <input type="text" id="customEngineName" placeholder="引擎名称">
                 <input type="text" id="customEngineUrl" placeholder="搜索URL（{q}代表关键词）">
@@ -783,6 +752,10 @@
     <!-- ===== Toast ===== -->
     <div class="toast" id="toast"></div>
 
+    <!-- ========================================================== -->
+    <!-- JavaScript 在第二批（下半部分）                             -->
+    <!-- ========================================================== -->
+    <!-- ===== JavaScript 开始 ===== -->
     <script>
         // ============================================================
         // 数据层
@@ -795,16 +768,9 @@
             { name: '谷歌', url: 'https://www.google.com/search?q={q}' },
         ];
 
-        // 当前引擎（默认必应）
         let currentEngine = { name: '必应', url: 'https://www.bing.com/search?q={q}' };
-
-        // 自定义引擎列表
         let customEngines = [];
-
-        // 窗口列表
         let windows = [];
-
-        // 上次访问
         let lastVisit = null;
 
         // ============================================================
@@ -815,13 +781,10 @@
             try {
                 const ce = localStorage.getItem('mybrowser_custom_engines');
                 if (ce) customEngines = JSON.parse(ce);
-
                 const eng = localStorage.getItem('mybrowser_current_engine');
                 if (eng) currentEngine = JSON.parse(eng);
-
                 const ws = localStorage.getItem('mybrowser_windows');
                 if (ws) windows = JSON.parse(ws);
-
                 const lv = localStorage.getItem('mybrowser_last_visit');
                 if (lv) lastVisit = JSON.parse(lv);
             } catch (e) { /* ignore */ }
@@ -866,7 +829,6 @@
                     </div>
                 `;
             });
-            // 自定义-Bing（用户自定义入口）
             html += `
                 <div class="ep-item" style="border-bottom:none;margin-top:4px;color:#2979ff;" id="customBingEntry">
                     <span class="ep-name">✏️ 自定义引擎</span>
@@ -874,7 +836,6 @@
             `;
             container.innerHTML = html;
 
-            // 绑定点击
             container.querySelectorAll('.ep-item[data-engine]').forEach(el => {
                 el.addEventListener('click', function() {
                     const eng = JSON.parse(this.dataset.engine);
@@ -887,7 +848,6 @@
             });
 
             document.getElementById('customBingEntry').addEventListener('click', function() {
-                // 聚焦到自定义输入框
                 document.getElementById('customEngineName').focus();
             });
         }
@@ -911,11 +871,8 @@
             } else {
                 url = currentEngine.url.replace(/\{q\}/g, encodeURIComponent(q));
             }
-            // 记录上次访问
             saveLastVisit(q, url);
-            // 添加到窗口列表（如果当前窗口不存在则新建）
             addWindow(q, url);
-            // 跳转
             window.location.href = url;
         }
 
@@ -925,7 +882,7 @@
 
         function addWindow(title, url) {
             const id = Date.now() + '_' + Math.random().toString(36).slice(2, 6);
-            windows.unshift({ id, title: title || url, url: url, time: Date.now() });
+            windows.unshift({ id, title: title || url, url: url || 'about:blank', time: Date.now() });
             if (windows.length > 50) windows = windows.slice(0, 50);
             saveWindows();
             renderWindows();
@@ -953,4 +910,257 @@
                             <div class="w-title">${w.title || '未命名'}</div>
                             <div class="w-url">${w.url || ''}</div>
                         </div>
-                        <button class="w-del" data-id="${w.id}">✕</butt
+                        <button class="w-del" data-id="${w.id}">✕</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            container.querySelectorAll('.window-item').forEach(el => {
+                el.addEventListener('click', function(e) {
+                    if (e.target.closest('.w-del')) return;
+                    const id = this.dataset.id;
+                    const w = windows.find(win => win.id === id);
+                    if (w && w.url) {
+                        saveLastVisit(w.title, w.url);
+                        window.location.href = w.url;
+                    } else {
+                        showToast('该窗口没有有效地址');
+                    }
+                });
+            });
+
+            container.querySelectorAll('.w-del').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const id = this.dataset.id;
+                    deleteWindow(id);
+                    showToast('已删除窗口');
+                });
+            });
+        }
+
+        // ============================================================
+        // 继续浏览
+        // ============================================================
+
+        function renderContinue() {
+            const section = document.getElementById('continueSection');
+            if (lastVisit && lastVisit.url) {
+                const initial = (lastVisit.title || '网')[0].toUpperCase();
+                section.innerHTML = `
+                    <div class="continue-card" id="continueCard">
+                        <div class="left">
+                            <div class="icon-wrap">${initial}</div>
+                            <div class="info">
+                                <div class="title">${lastVisit.title || '上次访问'}</div>
+                                <div class="url">${lastVisit.url}</div>
+                            </div>
+                        </div>
+                        <div class="arrow">›</div>
+                    </div>
+                `;
+                document.getElementById('continueCard').addEventListener('click', function() {
+                    if (lastVisit && lastVisit.url) {
+                        window.location.href = lastVisit.url;
+                    }
+                });
+            } else {
+                section.innerHTML = `
+                    <div class="continue-empty">暂无浏览记录</div>
+                `;
+            }
+        }
+
+        // ============================================================
+        // 面板控制
+        // ============================================================
+
+        let activePanel = null;
+
+        function openPanel(name) {
+            closeAllPanels();
+            activePanel = name;
+            const overlay = document.getElementById(name + 'Overlay');
+            const sheet = document.getElementById(name + 'Sheet');
+            if (overlay) overlay.classList.add('show');
+            if (sheet) sheet.classList.add('show');
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.panel === name);
+            });
+        }
+
+        function closePanel(name) {
+            const overlay = document.getElementById(name + 'Overlay');
+            const sheet = document.getElementById(name + 'Sheet');
+            if (overlay) overlay.classList.remove('show');
+            if (sheet) sheet.classList.remove('show');
+            if (activePanel === name) activePanel = null;
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        }
+
+        function closeAllPanels() {
+            ['menu', 'window', 'settings'].forEach(name => {
+                const overlay = document.getElementById(name + 'Overlay');
+                const sheet = document.getElementById(name + 'Sheet');
+                if (overlay) overlay.classList.remove('show');
+                if (sheet) sheet.classList.remove('show');
+            });
+            activePanel = null;
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        }
+
+        // ============================================================
+        // 引擎弹窗
+        // ============================================================
+
+        function openEnginePopup() {
+            renderEnginePopup();
+            document.getElementById('enginePopup').classList.add('show');
+        }
+
+        function closeEnginePopup() {
+            document.getElementById('enginePopup').classList.remove('show');
+        }
+
+        // ============================================================
+        // Toast
+        // ============================================================
+
+        let toastTimer = null;
+
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                el.classList.remove('show');
+            }, 1800);
+        }
+
+        // ============================================================
+        // 初始化
+        // ============================================================
+
+        function init() {
+            loadData();
+            updateEngineBtn();
+            renderContinue();
+            renderWindows();
+
+            document.getElementById('searchBtn').addEventListener('click', function() {
+                doSearch(document.getElementById('searchInput').value);
+            });
+            document.getElementById('searchInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    doSearch(this.value);
+                }
+            });
+
+            document.getElementById('engineBtn').addEventListener('click', function(e) {
+                e.stopPropagation();
+                openEnginePopup();
+            });
+
+            document.getElementById('addCustomEngine').addEventListener('click', function() {
+                const name = document.getElementById('customEngineName').value.trim();
+                const url = document.getElementById('customEngineUrl').value.trim();
+                if (!name || !url) {
+                    showToast('请填写名称和URL');
+                    return;
+                }
+                if (!url.includes('{q}')) {
+                    showToast('URL中请包含 {q} 作为关键词占位');
+                    return;
+                }
+                if (getAllEngines().some(e => e.name === name)) {
+                    showToast('引擎名称已存在');
+                    return;
+                }
+                customEngines.push({ name, url });
+                saveCustomEngines();
+                document.getElementById('customEngineName').value = '';
+                document.getElementById('customEngineUrl').value = '';
+                renderEnginePopup();
+                showToast('已添加：' + name);
+            });
+
+            document.getElementById('enginePopup').addEventListener('click', function(e) {
+                if (e.target === this) closeEnginePopup();
+            });
+
+            document.getElementById('navMenu').addEventListener('click', function() {
+                if (activePanel === 'menu') { closePanel('menu'); return; }
+                openPanel('menu');
+            });
+            document.getElementById('navWindow').addEventListener('click', function() {
+                if (activePanel === 'window') { closePanel('window'); return; }
+                renderWindows();
+                openPanel('window');
+            });
+            document.getElementById('navSettings').addEventListener('click', function() {
+                if (activePanel === 'settings') { closePanel('settings'); return; }
+                openPanel('settings');
+            });
+
+            document.querySelectorAll('.panel-close').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    closePanel(this.dataset.close);
+                });
+            });
+            document.querySelectorAll('.panel-overlay').forEach(overlay => {
+                overlay.addEventListener('click', function() {
+                    const name = this.id.replace('Overlay', '');
+                    closePanel(name);
+                });
+            });
+
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const action = this.dataset.action;
+                    const labels = {
+                        download: '下载管理',
+                        history: '收藏/历史',
+                        tools: '工具箱'
+                    };
+                    showToast('「' + (labels[action] || action) + '」功能开发中');
+                    closePanel('menu');
+                });
+            });
+
+            document.querySelectorAll('.settings-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const label = this.querySelector('.s-label')?.textContent || '设置';
+                    showToast('「' + label + '」功能开发中');
+                });
+            });
+
+            document.getElementById('addWindowBtn').addEventListener('click', function() {
+                const id = 'win_' + Date.now();
+                windows.unshift({ id, title: '新窗口', url: 'about:blank', time: Date.now() });
+                saveWindows();
+                renderWindows();
+                showToast('已创建新窗口');
+                window.location.href = 'about:blank';
+            });
+
+            setTimeout(() => {
+                document.getElementById('searchInput').focus();
+            }, 300);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+
+        window.addEventListener('pageshow', function(e) {
+            if (e.persisted) {
+                loadData();
+                renderContinue();
+                renderWindows();
+                updateEngineBtn();
+            }
+        });
+    </script>
+</body>
+</html>
