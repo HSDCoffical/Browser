@@ -1,5 +1,5 @@
 // ============================================================
-// 引擎管理模块（切换后立即生效，保存并刷新下拉）
+// 引擎管理模块（切换后立即保存并刷新下拉）
 // ============================================================
 (function() {
     'use strict';
@@ -28,24 +28,20 @@
                 '</div>';
         container.innerHTML = html;
 
-        // 绑定引擎切换事件
+        // 点击引擎切换
         container.querySelectorAll('.ed-item[data-engine]').forEach(function(el) {
             el.addEventListener('click', function() {
                 var eng = JSON.parse(this.dataset.engine);
-                // 更新当前引擎
                 window.currentEngine = eng;
-                window.saveCurrentEngine(); // 立即保存到 localStorage
-                // 更新按钮文字
-                window.updateEngineBtn();
-                // 重新渲染下拉列表（使勾选标记立即更新）
-                window.renderEngineDropdown();
-                // 关闭下拉（可选）
+                window.saveCurrentEngine();          // 立即保存
+                window.updateEngineBtn();            // 更新按钮文字
+                window.renderEngineDropdown();       // 重新渲染下拉（更新✓）
                 window.closeEngineDropdown();
                 window.showToast('已切换到：' + eng.name);
             });
         });
 
-        // 绑定自定义引擎添加按钮
+        // 添加自定义引擎
         var addBtn = document.getElementById('addCustomEngineBtn');
         if (addBtn) {
             addBtn.addEventListener('click', function(e) {
@@ -77,7 +73,6 @@
     window.toggleEngineDropdown = function() {
         var dd = document.getElementById('engineDropdown');
         if (!dd) return;
-        // 如果已打开，则关闭；否则打开并渲染
         if (dd.classList.contains('open')) {
             dd.classList.remove('open');
         } else {
