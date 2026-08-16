@@ -1,5 +1,5 @@
 // ============================================================
-// 核心数据与存储（修复引擎加载覆盖问题）
+// 核心数据与存储
 // ============================================================
 (function() {
     'use strict';
@@ -14,14 +14,14 @@
         window.toastTimer = setTimeout(function() { el.classList.remove('show'); }, 1800);
     };
 
-    // 默认引擎列表
+    // 默认引擎
     window.DEFAULT_ENGINES = [
         { name: '必应', url: 'https://cn.bing.com/search?q={q}&from=vivosearch2025' },
         { name: '百度', url: 'https://www.baidu.com/s?wd={q}' },
         { name: '谷歌', url: 'https://www.google.com/search?q={q}' }
     ];
 
-    // 初始化数据（先给默认值，loadData 会覆盖）
+    // 初始化数据（使用 var 避免被覆盖）
     window.currentEngine = { name: '必应', url: 'https://cn.bing.com/search?q={q}&from=vivosearch2025' };
     window.customEngines = [];
     window.windows = [];
@@ -44,18 +44,15 @@
     window.saveFavorites = function() { localStorage.setItem('mybrowser_favorites', JSON.stringify(window.favorites)); };
     window.saveHistory = function() { localStorage.setItem('mybrowser_history', JSON.stringify(window.history)); };
 
-    // 加载数据（优先使用保存的引擎，如果没有则用默认）
+    // 加载数据
     window.loadData = function() {
         try {
-            // 加载自定义引擎
             var ce = localStorage.getItem('mybrowser_custom_engines');
             if (ce) window.customEngines = JSON.parse(ce);
-            // 加载当前引擎（如果保存过则使用，否则保留默认）
             var eng = localStorage.getItem('mybrowser_current_engine');
             if (eng) {
                 window.currentEngine = JSON.parse(eng);
             } else {
-                // 保留默认的必应
                 window.currentEngine = { name: '必应', url: 'https://cn.bing.com/search?q={q}&from=vivosearch2025' };
             }
             var ws = localStorage.getItem('mybrowser_windows');
@@ -73,36 +70,23 @@
             var hist = localStorage.getItem('mybrowser_history');
             if (hist) window.history = JSON.parse(hist);
 
-            // 恢复UI状态
+            // 恢复UI
             var toggle = document.getElementById('carouselToggle');
             if (toggle) {
                 if (window.isCarouselMode) toggle.classList.add('active');
                 else toggle.classList.remove('active');
             }
             var settings = document.getElementById('carouselSettings');
-            if (settings) {
-                settings.style.display = window.isCarouselMode ? 'block' : 'none';
-            }
+            if (settings) settings.style.display = window.isCarouselMode ? 'block' : 'none';
             var label = document.getElementById('pickerLabel');
-            if (label) {
-                label.textContent = window.isCarouselMode ? '选择背景图片（多选）' : '选择背景图片';
-            }
+            if (label) label.textContent = window.isCarouselMode ? '选择背景图片（多选）' : '选择背景图片';
             var el = document.getElementById('carouselInterval');
             if (el) el.value = window.carouselInterval;
 
-            // 应用背景
             if (window.bgImages && window.bgImages.length > 0) {
-                if (typeof window.applyBgImage === 'function') {
-                    window.applyBgImage(window.currentBgIndex);
-                }
+                if (typeof window.applyBgImage === 'function') window.applyBgImage(window.currentBgIndex);
             }
-
-            // 更新引擎按钮文字
-            if (typeof window.updateEngineBtn === 'function') {
-                window.updateEngineBtn();
-            }
-        } catch(e) {
-            console.warn('loadData 出错', e);
-        }
+            if (typeof window.updateEngineBtn === 'function') window.updateEngineBtn();
+        } catch(e) { console.warn('loadData error', e); }
     };
 })();
