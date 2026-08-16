@@ -45,9 +45,7 @@
                 var id = this.dataset.id;
                 var w = window.windows.find(function(win) { return win.id === id; });
                 if (w && w.url) {
-                    if (typeof window.addHistory === 'function') {
-                        window.addHistory(w.title, w.url);
-                    }
+                    if (typeof window.addHistory === 'function') window.addHistory(w.title, w.url);
                     window.location.href = w.url;
                 } else {
                     window.showToast('该窗口没有有效地址');
