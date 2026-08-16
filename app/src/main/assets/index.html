@@ -35,8 +35,6 @@
             position: relative;
             overflow: hidden;
             background: rgba(255, 255, 255, 0.10);
-            backdrop-filter: blur(2px);
-            -webkit-backdrop-filter: blur(2px);
         }
 
         .status-bar {
@@ -64,18 +62,16 @@
         .search-box {
             display: flex;
             align-items: center;
-            background: rgba(255, 255, 255, 0.55);
-            backdrop-filter: blur(16px) saturate(180%);
-            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            background: rgba(255, 255, 255, 0.85);
             border-radius: 28px;
-            box-shadow: 0 2px 20px rgba(41, 121, 255, 0.15), 0 1px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
             padding: 0 4px 0 0;
             transition: box-shadow 0.3s ease, background 0.3s ease;
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
         .search-box:focus-within {
-            box-shadow: 0 4px 30px rgba(41, 121, 255, 0.30), 0 1px 10px rgba(0,0,0,0.08);
-            background: rgba(255, 255, 255, 0.75);
+            box-shadow: 0 4px 20px rgba(41, 121, 255, 0.25);
+            background: rgba(255, 255, 255, 0.95);
         }
 
         .engine-btn {
@@ -110,9 +106,7 @@
             top: calc(100% + 6px);
             left: 0;
             width: 200px;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 16px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
             padding: 8px 0;
@@ -224,7 +218,7 @@
             transform: scale(0.96);
         }
 
-        /* 底部胶囊变窄 */
+        /* 底部胶囊 */
         .bottom-actions {
             flex-shrink: 0;
             display: flex;
@@ -238,9 +232,7 @@
             display: flex;
             align-items: center;
             justify-content: space-around;
-            background: rgba(255, 255, 255, 0.45);
-            backdrop-filter: blur(16px) saturate(180%);
-            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            background: rgba(255, 255, 255, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 30px;
             padding: 2px 6px;
@@ -275,7 +267,7 @@
             flex-shrink: 0;
         }
 
-        /* 面板毛玻璃 */
+        /* 面板 */
         .panel-overlay {
             position: fixed;
             top: 0;
@@ -286,8 +278,6 @@
             z-index: 100;
             display: none;
             animation: fadeIn 0.25s ease;
-            backdrop-filter: blur(2px);
-            -webkit-backdrop-filter: blur(2px);
         }
         .panel-overlay.show {
             display: block;
@@ -304,9 +294,7 @@
             right: 0;
             max-width: 480px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(24px) saturate(180%);
-            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            background: rgba(255, 255, 255, 0.92);
             border-radius: 28px 28px 0 0;
             z-index: 101;
             transform: translateY(100%);
@@ -397,9 +385,7 @@
             display: flex;
             align-items: center;
             gap: 14px;
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+            background: rgba(255, 255, 255, 0.6);
             border-radius: 14px;
             padding: 12px 14px;
             cursor: pointer;
@@ -477,8 +463,6 @@
             cursor: pointer;
             transition: background 0.2s, transform 0.1s;
             width: 100%;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
         }
         .window-add button:active {
             background: #1a5fd0;
@@ -491,8 +475,6 @@
             left: 50%;
             transform: translate(-50%, -50%) scale(0.9);
             background: rgba(0, 0, 0, 0.72);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             color: #fff;
             padding: 16px 30px;
             border-radius: 14px;
@@ -623,7 +605,7 @@
     <div class="toast" id="toast"></div>
 
     <!-- ========================================================== -->
-    <!-- 第二批：JavaScript 从这里开始                                -->
+    <!-- JavaScript 部分                                            -->
     <!-- ========================================================== -->
     <script>
         // ============================================================
