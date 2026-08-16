@@ -13,6 +13,23 @@ window.showToast = function(msg) {
 };
 
 // ============================================================
+// 问候语设置
+// ============================================================
+function setGreeting() {
+    var el = document.getElementById('greeting');
+    if (!el) return;
+    var hour = new Date().getHours();
+    var msg = '';
+    if (hour >= 5 && hour < 9) msg = '早上好 ☀️';
+    else if (hour >= 9 && hour < 12) msg = '上午好 🌤️';
+    else if (hour >= 12 && hour < 14) msg = '中午好 ☀️';
+    else if (hour >= 14 && hour < 18) msg = '下午好 🌤️';
+    else if (hour >= 18 && hour < 21) msg = '傍晚好 🌅';
+    else msg = '晚上好 🌙';
+    el.textContent = msg;
+}
+
+// ============================================================
 // 数据层
 // ============================================================
 var DEFAULT_ENGINES = [
@@ -245,7 +262,7 @@ function closeEngineDropdown() {
     document.getElementById('engineDropdown').classList.remove('open');
 }
 function updateEngineBtn() {
-    document.getElementById('engineBtn').textContent = currentEngine.name + ' ▾';
+    document.getElementById('engineBtn').textContent = currentEngine.name + ' ›';
 }
 
 // ============================================================
@@ -527,18 +544,13 @@ window.updateTopBar = function(title, url) {
     var titleEl = document.getElementById('topTitle');
     if (!topBar || !titleEl) return;
 
-    // 判断是否为本地页面或空白页
     var isLocal = (url && (url.indexOf('file://') === 0 || url === 'about:blank'));
     if (isLocal || !url || url === '') {
         topBar.style.display = 'none';
-        // 调整内容区域边距
-        document.getElementById('contentArea').style.marginTop = '0';
     } else {
         topBar.style.display = 'flex';
         titleEl.textContent = title || url;
         titleEl.title = url;
-        // 内容区域适当下移
-        document.getElementById('contentArea').style.marginTop = '0';
     }
 };
 
@@ -611,13 +623,16 @@ window.addDownloadItem = function(name, url) {
     if (typeof window.renderDownloadList === 'function') {
         window.renderDownloadList();
     }
-    window.showToast('下载已添加');
+    window.showToast('下载已添加到列表');
 };
 
 // ============================================================
-// 初始化事件（整合所有初始化逻辑）
+// 初始化事件
 // ============================================================
 function initApp() {
+    // 问候语
+    setGreeting();
+
     // 刷新按钮
     var refreshBtn = document.getElementById('refreshBtn');
     if (refreshBtn) {
@@ -652,16 +667,10 @@ function initApp() {
         });
         observer.observe(downloadSheet, { attributes: true, attributeFilter: ['class'] });
     }
-
-    // 初始化时隐藏顶部栏（本地页面）
-    var topBar = document.getElementById('topBar');
-    if (topBar) {
-        topBar.style.display = 'none';
-    }
 }
 
 // ============================================================
-// 启动（确保所有加载完成）
+// 启动
 // ============================================================
 function startApp() {
     loadData();
@@ -743,7 +752,6 @@ function startApp() {
     }, 300);
 }
 
-// 确定 DOM 加载完成后再执行
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', startApp);
 } else {
