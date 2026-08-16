@@ -8,7 +8,19 @@
 </head>
 <body>
     <div class="app-container">
+        <!-- 顶部状态栏占位 -->
         <div class="status-bar"></div>
+
+        <!-- ===== 新增顶部地址栏 ===== -->
+        <div class="top-bar" id="topBar">
+            <div class="top-title" id="topTitle">MyBrowser</div>
+            <div class="top-actions">
+                <button class="top-btn" id="refreshBtn">⟳</button>
+                <button class="top-btn" id="translateBtn">🌐</button>
+            </div>
+        </div>
+
+        <!-- 搜索框 -->
         <div class="content-area">
             <div class="search-section">
                 <div class="search-box">
@@ -19,6 +31,8 @@
                 <div class="engine-dropdown" id="engineDropdown"></div>
             </div>
         </div>
+
+        <!-- 底部胶囊 -->
         <div class="bottom-actions">
             <div class="nav-capsule">
                 <button class="action-btn" id="navMenu">☰</button>
@@ -95,6 +109,18 @@
                 </div>
                 <div class="cs-preview" id="carouselPreview"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- 下载管理面板（独立） -->
+    <div class="panel-overlay" id="downloadOverlay"></div>
+    <div class="panel-sheet" id="downloadSheet">
+        <div class="panel-header">
+            <span class="panel-title">下载管理</span>
+            <button class="panel-close" data-close="download">✕</button>
+        </div>
+        <div class="panel-body">
+            <div class="func-list" id="downloadList"></div>
         </div>
     </div>
 
