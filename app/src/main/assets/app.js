@@ -198,6 +198,7 @@ function getAllEngines() {
 }
 function renderEngineDropdown() {
     var container = document.getElementById('engineDropdown');
+    if (!container) return;
     var all = getAllEngines();
     var currentName = currentEngine.name;
     var html = '';
@@ -253,16 +254,22 @@ function renderEngineDropdown() {
 
 function toggleEngineDropdown() {
     var dd = document.getElementById('engineDropdown');
+    if (!dd) return;
     dd.classList.toggle('open');
     if (dd.classList.contains('open')) {
         renderEngineDropdown();
     }
 }
 function closeEngineDropdown() {
-    document.getElementById('engineDropdown').classList.remove('open');
+    var dd = document.getElementById('engineDropdown');
+    if (dd) dd.classList.remove('open');
 }
 function updateEngineBtn() {
-    document.getElementById('engineBtn').textContent = currentEngine.name + ' ›';
+    var btn = document.getElementById('engineBtn');
+    if (btn) {
+        // 只显示引擎名称，不加箭头
+        btn.textContent = currentEngine.name;
+    }
 }
 
 // ============================================================
@@ -300,6 +307,7 @@ function deleteWindow(id) {
 }
 function renderWindows() {
     var container = document.getElementById('windowList');
+    if (!container) return;
     if (windows.length === 0) {
         container.innerHTML = '<div class="window-empty">暂无窗口</div>';
         return;
@@ -382,8 +390,11 @@ function handleMenuAction(action) {
         case 'download':
             closePanel('menu');
             openPanel('download');
+            // 调用下载渲染函数（若已定义）
             if (typeof window.renderDownloadList === 'function') {
                 window.renderDownloadList();
+            } else if (typeof window.DownloadManager !== 'undefined' && window.DownloadManager.render) {
+                window.DownloadManager.render();
             }
             break;
         case 'history':
@@ -431,6 +442,7 @@ function setupBackgroundPicker() {
     var reset = document.getElementById('resetBg');
     var toggle = document.getElementById('carouselToggle');
 
+    if (!toggle) return;
     toggle.addEventListener('click', function() {
         isCarouselMode = !isCarouselMode;
         this.classList.toggle('active');
@@ -555,10 +567,14 @@ window.updateTopBar = function(title, url) {
 };
 
 // ============================================================
-// 下载管理
+// 下载管理（简单版，用于演示）
 // ============================================================
 window.renderDownloadList = function() {
     var list = document.getElementById('downloadList');
+    if (!list) {
+        // 如果下载面板没有专门的列表容器，尝试查找通用容器
+        list = document.getElementById('downloadListContainer');
+    }
     if (!list) return;
     var downloads = [];
     try {
@@ -566,7 +582,7 @@ window.renderDownloadList = function() {
         if (data) downloads = JSON.parse(data);
     } catch(e) {}
     if (downloads.length === 0) {
-        list.innerHTML = '<div class="func-item">暂无下载记录</div>';
+        list.innerHTML = '<div class="func-item" style="text-align:center;color:#999;">暂无下载记录</div>';
         return;
     }
     var html = '';
@@ -686,38 +702,55 @@ function startApp() {
     initApp();
 
     // ---- 事件绑定 ----
-    document.getElementById('searchBtn').addEventListener('click', function() {
-        doSearch(document.getElementById('searchInput').value);
-    });
-    document.getElementById('searchInput').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            doSearch(this.value);
-        }
-    });
+    var searchBtn = document.getElementById('searchBtn');
+    var searchInput = document.getElementById('searchInput');
+    var engineBtn = document.getElementById('engineBtn');
+    var navMenu = document.getElementById('navMenu');
+    var navWindow = document.getElementById('navWindow');
+    var addWindowBtn = document.getElementById('addWindowBtn');
 
-    document.getElementById('engineBtn').addEventListener('click', function(e) {
-        e.stopPropagation();
-        toggleEngineDropdown();
-    });
+    if (searchBtn) {
+        searchBtn.addEventListener('click', function() {
+            doSearch(searchInput.value);
+        });
+    }
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                doSearch(this.value);
+            }
+        });
+    }
+
+    if (engineBtn) {
+        engineBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleEngineDropdown();
+        });
+    }
 
     document.addEventListener('click', function(e) {
         var dd = document.getElementById('engineDropdown');
         var btn = document.getElementById('engineBtn');
-        if (!dd.contains(e.target) && !btn.contains(e.target)) {
+        if (dd && btn && !dd.contains(e.target) && !btn.contains(e.target)) {
             closeEngineDropdown();
         }
     });
 
-    document.getElementById('navMenu').addEventListener('click', function() {
-        if (activePanel === 'menu') { closePanel('menu'); return; }
-        openPanel('menu');
-    });
-    document.getElementById('navWindow').addEventListener('click', function() {
-        if (activePanel === 'window') { closePanel('window'); return; }
-        renderWindows();
-        openPanel('window');
-    });
+    if (navMenu) {
+        navMenu.addEventListener('click', function() {
+            if (activePanel === 'menu') { closePanel('menu'); return; }
+            openPanel('menu');
+        });
+    }
+    if (navWindow) {
+        navWindow.addEventListener('click', function() {
+            if (activePanel === 'window') { closePanel('window'); return; }
+            renderWindows();
+            openPanel('window');
+        });
+    }
 
     document.querySelectorAll('.panel-close').forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -738,17 +771,19 @@ function startApp() {
         });
     });
 
-    document.getElementById('addWindowBtn').addEventListener('click', function() {
-        var id = 'win_' + Date.now();
-        windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Date.now() });
-        saveWindows();
-        renderWindows();
-        window.showToast('已创建新窗口');
-        window.location.href = 'about:blank';
-    });
+    if (addWindowBtn) {
+        addWindowBtn.addEventListener('click', function() {
+            var id = 'win_' + Date.now();
+            windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Date.now() });
+            saveWindows();
+            renderWindows();
+            window.showToast('已创建新窗口');
+            window.location.href = 'about:blank';
+        });
+    }
 
     setTimeout(function() {
-        document.getElementById('searchInput').focus();
+        if (searchInput) searchInput.focus();
     }, 300);
 }
 
