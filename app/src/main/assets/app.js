@@ -388,7 +388,7 @@ function closeAllPanels() {
 }
 
 // ============================================================
-// 菜单功能（已修改 history 分支）
+// 菜单功能（已修改 history 分支，并捕获错误）
 // ============================================================
 function handleMenuAction(action) {
     switch (action) {
@@ -405,7 +405,12 @@ function handleMenuAction(action) {
             break;
         case 'history':
             closePanel('menu');
-            loadHistoryModule();  // 动态加载历史模块
+            try {
+                loadHistoryModule();
+            } catch(e) {
+                window.showToast('加载历史模块失败，请重试');
+                console.error('history load error:', e);
+            }
             break;
         case 'tools':
             closePanel('menu');
@@ -464,7 +469,7 @@ function loadToolsModule() {
 }
 
 // ============================================================
-// 动态加载历史/收藏模块（新增）
+// 动态加载历史/收藏模块（安全版）
 // ============================================================
 var historyLoaded = false;
 function loadHistoryModule() {
@@ -476,20 +481,30 @@ function loadHistoryModule() {
         }
         return;
     }
-    var script = document.createElement('script');
-    script.src = 'history.js';
-    script.onload = function() {
-        historyLoaded = true;
-        if (typeof window.openHistoryPanel === 'function') {
-            window.openHistoryPanel();
-        } else {
-            window.showToast('历史模块加载成功，但初始化函数缺失');
-        }
-    };
-    script.onerror = function() {
-        window.showToast('历史模块加载失败，请检查 history.js 文件是否存在');
-    };
-    document.head.appendChild(script);
+    try {
+        var script = document.createElement('script');
+        script.src = 'history.js';
+        script.onload = function() {
+            try {
+                historyLoaded = true;
+                if (typeof window.openHistoryPanel === 'function') {
+                    window.openHistoryPanel();
+                } else {
+                    window.showToast('历史模块加载成功，但初始化函数缺失');
+                }
+            } catch(e) {
+                window.showToast('历史模块初始化出错');
+                console.error('history init error:', e);
+            }
+        };
+        script.onerror = function() {
+            window.showToast('历史模块加载失败，请检查 history.js 文件是否存在');
+        };
+        document.head.appendChild(script);
+    } catch(e) {
+        window.showToast('加载历史模块出错');
+        console.error('loadHistoryModule error:', e);
+    }
 }
 
 // ============================================================
@@ -831,19 +846,4 @@ function startApp() {
     });
     document.querySelectorAll('.panel-overlay').forEach(function(overlay) {
         overlay.addEventListener('click', function() {
-            var name = this.id.replace('Overlay', '');
-            closePanel(name);
-        });
-    });
-
-    document.querySelectorAll('.menu-item').forEach(function(item) {
-        item.addEventListener('click', function() {
-            var action = this.dataset.action;
-            handleMenuAction(action);
-        });
-    });
-
-    if (addWindowBtn) {
-        addWindowBtn.addEventListener('click', function() {
-            var id = 'win_' + Date.now();
-            windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Date.
+            v
