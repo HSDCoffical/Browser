@@ -7,144 +7,151 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
-        <!-- 状态栏占位（适配刘海屏） -->
-        <div class="status-bar" id="statusBar"></div>
-
-        <!-- 顶部地址栏（默认隐藏） -->
-        <div class="top-bar" id="topBar" style="display:none;">
-            <div class="top-title" id="topTitle">MyBrowser</div>
-            <div class="top-actions">
-                <button class="top-btn" id="refreshBtn">⟳</button>
-            </div>
-        </div>
-
-        <!-- 主内容区 -->
-        <div class="content-area">
-            <div class="greeting" id="greeting">下午好</div>
-            <div class="search-section">
-                <div class="search-box">
-                    <button class="engine-btn" id="engineBtn">必应</button>
-                    <input type="text" id="searchInput" placeholder="搜索或输入网址" autofocus>
-                    <button class="search-btn" id="searchBtn">搜索</button>
-                </div>
-                <div class="engine-dropdown" id="engineDropdown"></div>
-            </div>
-        </div>
-
-        <!-- 底部胶囊（始终最前） -->
-        <div class="bottom-actions">
-            <div class="nav-capsule">
-                <button class="action-btn" id="navMenu">☰</button>
-                <div class="divider"></div>
-                <button class="action-btn" id="navWindow">⊞</button>
-            </div>
-        </div>
+    <!-- ===== WebView 容器（网页内容） ===== -->
+    <div id="webview-container">
+        <!-- 此容器由 Java 层注入 WebView，z-index 较低 -->
     </div>
 
-    <!-- 面板：菜单 -->
-    <div class="panel-overlay" id="menuOverlay"></div>
-    <div class="panel-sheet" id="menuSheet">
-        <div class="panel-header">
-            <span class="panel-title">菜单</span>
-            <button class="panel-close" data-close="menu">✕</button>
+    <!-- ===== 主容器（UI 界面，始终在 WebView 之上） ===== -->
+    <div id="main-container">
+        <div class="app-container">
+            <div class="status-bar" id="statusBar"></div>
+
+            <!-- 顶部地址栏（默认隐藏） -->
+            <div class="top-bar" id="topBar" style="display:none;">
+                <div class="top-title" id="topTitle">MyBrowser</div>
+                <div class="top-actions">
+                    <button class="top-btn" id="refreshBtn">⟳</button>
+                </div>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="content-area">
+                <div class="greeting" id="greeting">下午好</div>
+                <div class="search-section">
+                    <div class="search-box">
+                        <button class="engine-btn" id="engineBtn">必应</button>
+                        <input type="text" id="searchInput" placeholder="搜索或输入网址" autofocus>
+                        <button class="search-btn" id="searchBtn">搜索</button>
+                    </div>
+                    <div class="engine-dropdown" id="engineDropdown"></div>
+                </div>
+            </div>
+
+            <!-- 底部胶囊（始终最前） -->
+            <div class="bottom-actions">
+                <div class="nav-capsule">
+                    <button class="action-btn" id="navMenu">☰</button>
+                    <div class="divider"></div>
+                    <button class="action-btn" id="navWindow">⊞</button>
+                </div>
+            </div>
         </div>
-        <div class="panel-body">
-            <div class="menu-list">
-                <div class="menu-item" data-action="settings"><span class="mi-label">设置</span><span class="mi-arrow">›</span></div>
-                <div class="menu-item" data-action="download"><span class="mi-label">下载管理</span><span class="mi-arrow">›</span></div>
-                <div class="menu-item" data-action="favorites"><span class="mi-label">收藏</span><span class="mi-arrow">›</span></div>
-                <div class="menu-item" data-action="tools"><span class="mi-label">工具箱</span><span class="mi-arrow">›</span></div>
-                <div class="menu-item" data-action="fav"><span class="mi-label">收藏网址</span><span class="mi-arrow">›</span></div>
-                <div class="menu-item" style="display:flex;justify-content:space-between;padding:16px 4px;">
-                    <span class="mi-label">夜间模式</span>
+
+        <!-- 面板：菜单 -->
+        <div class="panel-overlay" id="menuOverlay"></div>
+        <div class="panel-sheet" id="menuSheet">
+            <div class="panel-header">
+                <span class="panel-title">菜单</span>
+                <button class="panel-close" data-close="menu">✕</button>
+            </div>
+            <div class="panel-body">
+                <div class="menu-list">
+                    <div class="menu-item" data-action="settings"><span class="mi-label">设置</span><span class="mi-arrow">›</span></div>
+                    <div class="menu-item" data-action="download"><span class="mi-label">下载管理</span><span class="mi-arrow">›</span></div>
+                    <div class="menu-item" data-action="favorites"><span class="mi-label">收藏</span><span class="mi-arrow">›</span></div>
+                    <div class="menu-item" data-action="tools"><span class="mi-label">工具箱</span><span class="mi-arrow">›</span></div>
+                    <div class="menu-item" data-action="fav"><span class="mi-label">收藏网址</span><span class="mi-arrow">›</span></div>
+                    <div class="menu-item" style="display:flex;justify-content:space-between;padding:16px 4px;">
+                        <span class="mi-label">夜间模式</span>
+                        <div class="mode-switch">
+                            <div class="switch-track" id="nightModeToggleMenu">
+                                <div class="switch-thumb"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menu-item" data-action="exit"><span class="mi-label">退出</span><span class="mi-arrow">›</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 面板：窗口 -->
+        <div class="panel-overlay" id="windowOverlay"></div>
+        <div class="panel-sheet" id="windowSheet">
+            <div class="panel-header">
+                <span class="panel-title">窗口管理</span>
+                <button class="panel-close" data-close="window">✕</button>
+            </div>
+            <div class="panel-body">
+                <div class="window-list" id="windowList"></div>
+                <div class="window-add">
+                    <button id="addWindowBtn">+ 新建窗口</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 面板：收藏 -->
+        <div class="panel-overlay" id="favoritesOverlay"></div>
+        <div class="panel-sheet" id="favoritesSheet">
+            <div class="panel-header">
+                <span class="panel-title">收藏</span>
+                <button class="panel-close" data-close="favorites">✕</button>
+            </div>
+            <div class="panel-body">
+                <div class="window-list" id="favoritesList"></div>
+            </div>
+        </div>
+
+        <!-- 面板：设置 -->
+        <div class="panel-overlay" id="settingsOverlay"></div>
+        <div class="panel-sheet" id="settingsSheet">
+            <div class="panel-header">
+                <span class="panel-title">设置</span>
+                <button class="panel-close" data-close="settings">✕</button>
+            </div>
+            <div class="panel-body">
+                <div class="settings-option" style="border-bottom:1px solid rgba(0,0,0,0.04);">
+                    <span class="s-label">轮播模式</span>
                     <div class="mode-switch">
-                        <div class="switch-track" id="nightModeToggleMenu">
+                        <div class="switch-track" id="carouselToggle">
                             <div class="switch-thumb"></div>
                         </div>
                     </div>
                 </div>
-                <div class="menu-item" data-action="exit"><span class="mi-label">退出</span><span class="mi-arrow">›</span></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 面板：窗口 -->
-    <div class="panel-overlay" id="windowOverlay"></div>
-    <div class="panel-sheet" id="windowSheet">
-        <div class="panel-header">
-            <span class="panel-title">窗口管理</span>
-            <button class="panel-close" data-close="window">✕</button>
-        </div>
-        <div class="panel-body">
-            <div class="window-list" id="windowList"></div>
-            <div class="window-add">
-                <button id="addWindowBtn">+ 新建窗口</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 面板：收藏（仅收藏，无历史） -->
-    <div class="panel-overlay" id="favoritesOverlay"></div>
-    <div class="panel-sheet" id="favoritesSheet">
-        <div class="panel-header">
-            <span class="panel-title">收藏</span>
-            <button class="panel-close" data-close="favorites">✕</button>
-        </div>
-        <div class="panel-body">
-            <div class="window-list" id="favoritesList"></div>
-        </div>
-    </div>
-
-    <!-- 面板：设置（不含夜间模式） -->
-    <div class="panel-overlay" id="settingsOverlay"></div>
-    <div class="panel-sheet" id="settingsSheet">
-        <div class="panel-header">
-            <span class="panel-title">设置</span>
-            <button class="panel-close" data-close="settings">✕</button>
-        </div>
-        <div class="panel-body">
-            <div class="settings-option" style="border-bottom:1px solid rgba(0,0,0,0.04);">
-                <span class="s-label">轮播模式</span>
-                <div class="mode-switch">
-                    <div class="switch-track" id="carouselToggle">
-                        <div class="switch-thumb"></div>
+                <div class="settings-option" id="bgPickerTrigger">
+                    <span class="s-label" id="pickerLabel">选择背景图片</span>
+                    <span class="s-value">点击选择 ›</span>
+                    <input type="file" id="bgFileInput" accept="image/*" multiple>
+                </div>
+                <div class="settings-option" id="resetBg">
+                    <span class="s-label">恢复默认背景</span>
+                    <span class="s-value">点击重置 ›</span>
+                </div>
+                <div class="carousel-setting" id="carouselSettings" style="display:none;">
+                    <div class="cs-row">
+                        <label>轮播间隔（秒）</label>
+                        <input type="number" id="carouselInterval" value="3" min="1" max="60">
                     </div>
+                    <div class="cs-preview" id="carouselPreview"></div>
                 </div>
             </div>
-            <div class="settings-option" id="bgPickerTrigger">
-                <span class="s-label" id="pickerLabel">选择背景图片</span>
-                <span class="s-value">点击选择 ›</span>
-                <input type="file" id="bgFileInput" accept="image/*" multiple>
-            </div>
-            <div class="settings-option" id="resetBg">
-                <span class="s-label">恢复默认背景</span>
-                <span class="s-value">点击重置 ›</span>
-            </div>
-            <div class="carousel-setting" id="carouselSettings" style="display:none;">
-                <div class="cs-row">
-                    <label>轮播间隔（秒）</label>
-                    <input type="number" id="carouselInterval" value="3" min="1" max="60">
-                </div>
-                <div class="cs-preview" id="carouselPreview"></div>
-            </div>
         </div>
-    </div>
 
-    <!-- 面板：下载管理 -->
-    <div class="panel-overlay" id="downloadOverlay"></div>
-    <div class="panel-sheet" id="downloadSheet">
-        <div class="panel-header">
-            <span class="panel-title">下载管理</span>
-            <button class="panel-close" data-close="download">✕</button>
+        <!-- 面板：下载管理 -->
+        <div class="panel-overlay" id="downloadOverlay"></div>
+        <div class="panel-sheet" id="downloadSheet">
+            <div class="panel-header">
+                <span class="panel-title">下载管理</span>
+                <button class="panel-close" data-close="download">✕</button>
+            </div>
+            <div class="panel-body">
+                <div id="downloadListContainer"></div>
+            </div>
         </div>
-        <div class="panel-body">
-            <div id="downloadListContainer"></div>
-        </div>
-    </div>
 
-    <!-- Toast -->
-    <div class="toast" id="toast"></div>
+        <!-- Toast -->
+        <div class="toast" id="toast"></div>
+    </div>
 
     <script src="app.js"></script>
 </body>
