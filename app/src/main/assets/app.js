@@ -388,7 +388,7 @@ function closeAllPanels() {
 }
 
 // ============================================================
-// 菜单功能（已修改 history 分支，并捕获错误）
+// 菜单功能
 // ============================================================
 function handleMenuAction(action) {
     switch (action) {
@@ -405,12 +405,7 @@ function handleMenuAction(action) {
             break;
         case 'history':
             closePanel('menu');
-            try {
-                loadHistoryModule();
-            } catch(e) {
-                window.showToast('加载历史模块失败，请重试');
-                console.error('history load error:', e);
-            }
+            openHistoryPanel();
             break;
         case 'tools':
             closePanel('menu');
@@ -466,45 +461,6 @@ function loadToolsModule() {
         window.showToast('工具箱加载失败，请检查 tools.js 文件是否存在');
     };
     document.head.appendChild(script);
-}
-
-// ============================================================
-// 动态加载历史/收藏模块（安全版）
-// ============================================================
-var historyLoaded = false;
-function loadHistoryModule() {
-    if (historyLoaded) {
-        if (typeof window.openHistoryPanel === 'function') {
-            window.openHistoryPanel();
-        } else {
-            window.showToast('历史模块已加载，但初始化失败');
-        }
-        return;
-    }
-    try {
-        var script = document.createElement('script');
-        script.src = 'history.js';
-        script.onload = function() {
-            try {
-                historyLoaded = true;
-                if (typeof window.openHistoryPanel === 'function') {
-                    window.openHistoryPanel();
-                } else {
-                    window.showToast('历史模块加载成功，但初始化函数缺失');
-                }
-            } catch(e) {
-                window.showToast('历史模块初始化出错');
-                console.error('history init error:', e);
-            }
-        };
-        script.onerror = function() {
-            window.showToast('历史模块加载失败，请检查 history.js 文件是否存在');
-        };
-        document.head.appendChild(script);
-    } catch(e) {
-        window.showToast('加载历史模块出错');
-        console.error('loadHistoryModule error:', e);
-    }
 }
 
 // ============================================================
@@ -726,124 +682,126 @@ window.addDownloadItem = function(name, url) {
 };
 
 // ============================================================
-// 初始化事件
+// 历史/收藏模块（内联稳定版）
 // ============================================================
-function initApp() {
-    setGreeting();
+(function() {
+    'use strict';
 
-    var refreshBtn = document.getElementById('refreshBtn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', function() {
-            window.location.reload();
-        });
+    var favoritesData = [];
+    var historyData = [];
+    var currentHistoryMode = 'fav';
+
+    function loadHistoryData() {
+        try {
+            var fav = localStorage.getItem('mybrowser_favorites');
+            if (fav) favoritesData = JSON.parse(fav);
+            var hist = localStorage.getItem('mybrowser_history');
+            if (hist) historyData = JSON.parse(hist);
+        } catch(e) { /* ignore */ }
     }
 
-    var translateBtn = document.getElementById('translateBtn');
-    if (translateBtn) {
-        translateBtn.addEventListener('click', function() {
-            var currentUrl = window.location.href;
-            if (currentUrl && currentUrl !== 'about:blank' && !currentUrl.startsWith('file://')) {
-                var transUrl = 'https://translate.google.com/translate?sl=auto&tl=zh-CN&u=' + encodeURIComponent(currentUrl);
-                window.open(transUrl, '_blank');
+    function saveFavoritesData() {
+        localStorage.setItem('mybrowser_favorites', JSON.stringify(favoritesData));
+    }
+    function saveHistoryData() {
+        localStorage.setItem('mybrowser_history', JSON.stringify(historyData));
+    }
+
+    function renderHistoryList(mode) {
+        var container = document.getElementById('historyListContainer');
+        if (!container) {
+            // 如果容器不存在，尝试创建
+            var panelBody = document.querySelector('#historySheet .panel-body');
+            if (panelBody) {
+                var div = document.createElement('div');
+                div.id = 'historyListContainer';
+                panelBody.appendChild(div);
+                container = div;
             } else {
-                window.showToast('无法翻译当前页面');
+                return;
             }
+        }
+        var data = mode === 'fav' ? favoritesData : historyData;
+        if (data.length === 0) {
+            container.innerHTML = '<div style="text-align:center;color:#999;padding:20px 0;">暂无记录</div>';
+            return;
+        }
+        var html = '';
+        data.forEach(function(item, idx) {
+            var title = item.title || '未命名';
+            var url = item.url || '';
+            html += '<div class="func-item" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(0,0,0,0.05);">' +
+                    '<div style="flex:1;overflow:hidden;">' +
+                    '<div style="font-size:15px;font-weight:500;color:#1a1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + title.replace(/'/g, "\\'") + '</div>' +
+                    '<div style="font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + url.replace(/'/g, "\\'") + '</div>' +
+                    '</div>' +
+                    '<div style="display:flex;gap:8px;flex-shrink:0;">' +
+                    '<button class="func-action" data-url="' + url.replace(/'/g, "\\'") + '" style="padding:4px 12px;background:#2979ff;color:#fff;border:none;border-radius:16px;font-size:12px;cursor:pointer;">打开</button>' +
+                    '<button class="func-del" data-idx="' + idx + '" data-mode="' + mode + '" style="background:none;border:none;color:#e74c3c;font-size:18px;cursor:pointer;">✕</button>' +
+                    '</div>' +
+                    '</div>';
         });
-    }
+        container.innerHTML = html;
 
-    var downloadSheet = document.getElementById('downloadSheet');
-    if (downloadSheet) {
-        var observer = new MutationObserver(function() {
-            if (downloadSheet.classList.contains('show')) {
-                if (typeof window.renderDownloadList === 'function') {
-                    window.renderDownloadList();
+        container.querySelectorAll('.func-action').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var url = this.dataset.url;
+                if (url) window.location.href = url;
+            });
+        });
+        container.querySelectorAll('.func-del').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var idx = parseInt(this.dataset.idx);
+                var mode = this.dataset.mode;
+                if (mode === 'fav') {
+                    favoritesData.splice(idx, 1);
+                    saveFavoritesData();
+                } else {
+                    historyData.splice(idx, 1);
+                    saveHistoryData();
                 }
-            }
-        });
-        observer.observe(downloadSheet, { attributes: true, attributeFilter: ['class'] });
-    }
-    
-    // 夜间模式开关（菜单中）
-    var nightToggle = document.getElementById('nightModeToggleMenu');
-    if (nightToggle) {
-        nightToggle.addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleNightMode();
+                renderHistoryList(mode);
+                window.showToast('已删除');
+            });
         });
     }
-}
 
-// ============================================================
-// 启动
-// ============================================================
-function startApp() {
-    loadData();
-    updateEngineBtn();
-    renderWindows();
-    setupBackgroundPicker();
-    updateCarouselPreview();
-    if (bgImages && bgImages.length > 0) {
-        if (isCarouselMode && bgImages.length > 1) {
-            startCarousel();
+    // 将 addHistory 暴露给全局，供搜索时调用
+    window.addHistory = function(title, url) {
+        if (isIncognito) return;
+        historyData = historyData.filter(function(item) { return item.url !== url; });
+        historyData.unshift({ title: title || url, url: url, time: Date.now() });
+        if (historyData.length > 100) historyData = historyData.slice(0, 100);
+        saveHistoryData();
+    };
+
+    // 将 addFavorite 暴露给全局
+    window.addFavorite = function(title, url) {
+        if (favoritesData.some(function(item) { return item.url === url; })) {
+            window.showToast('已收藏');
+            return;
         }
-    }
-    initApp();
+        favoritesData.unshift({ title: title || url, url: url, time: Date.now() });
+        saveFavoritesData();
+        window.showToast('已收藏');
+    };
 
-    var searchBtn = document.getElementById('searchBtn');
-    var searchInput = document.getElementById('searchInput');
-    var engineBtn = document.getElementById('engineBtn');
-    var navMenu = document.getElementById('navMenu');
-    var navWindow = document.getElementById('navWindow');
-    var addWindowBtn = document.getElementById('addWindowBtn');
+    // 打开历史面板
+    window.openHistoryPanel = function() {
+        try {
+            loadHistoryData();
 
-    if (searchBtn) {
-        searchBtn.addEventListener('click', function() {
-            doSearch(searchInput.value);
-        });
-    }
-    if (searchInput) {
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                doSearch(this.value);
+            // 如果已有历史面板打开，先移除
+            var existing = document.getElementById('historyPanelOverlay');
+            if (existing) {
+                existing.remove();
             }
-        });
-    }
 
-    if (engineBtn) {
-        engineBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleEngineDropdown();
-        });
-    }
+            var overlay = document.createElement('div');
+            overlay.id = 'historyPanelOverlay';
+            overlay.className = 'panel-overlay';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.25);z-index:100;display:block;animation:fadeIn 0.25s ease;';
 
-    document.addEventListener('click', function(e) {
-        var dd = document.getElementById('engineDropdown');
-        var btn = document.getElementById('engineBtn');
-        if (dd && btn && !dd.contains(e.target) && !btn.contains(e.target)) {
-            closeEngineDropdown();
-        }
-    });
-
-    if (navMenu) {
-        navMenu.addEventListener('click', function() {
-            if (activePanel === 'menu') { closePanel('menu'); return; }
-            openPanel('menu');
-        });
-    }
-    if (navWindow) {
-        navWindow.addEventListener('click', function() {
-            if (activePanel === 'window') { closePanel('window'); return; }
-            renderWindows();
-            openPanel('window');
-        });
-    }
-
-    document.querySelectorAll('.panel-close').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            closePanel(this.dataset.close);
-        });
-    });
-    document.querySelectorAll('.panel-overlay').forEach(function(overlay) {
-        overlay.addEventListener('click', function() {
-            v
+            var sheet = document.createElement('div');
+            sheet.className = 'panel-sheet';
+            sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(255,255,255,0.92);border-radius:28px 28px 0 0;z-index:101;display:flex;flex-direction:colu
