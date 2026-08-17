@@ -1,5 +1,5 @@
 // ============================================================
-// 独立历史/收藏模块（自带异常保护）
+// 独立历史/收藏模块（点击整行跳转 + 删除按钮）
 // ============================================================
 (function() {
     'use strict';
@@ -63,9 +63,14 @@
                     el.addEventListener('click', function(e) {
                         if (e.target.closest('.func-del')) return;
                         var url = this.dataset.url;
-                        if (url) window.location.href = url;
+                        if (url) {
+                            window.location.href = url;
+                        } else {
+                            window.showToast('无效地址');
+                        }
                     });
                 });
+                // 删除按钮
                 container.querySelectorAll('.func-del').forEach(function(btn) {
                     btn.addEventListener('click', function(e) {
                         e.stopPropagation();
