@@ -388,7 +388,7 @@ function closeAllPanels() {
 }
 
 // ============================================================
-// 菜单功能（仅修改 history 分支）
+// 菜单功能（history 分支直接调用）
 // ============================================================
 function handleMenuAction(action) {
     switch (action) {
@@ -405,7 +405,11 @@ function handleMenuAction(action) {
             break;
         case 'history':
             closePanel('menu');
-            loadHistoryModule();  // ← 改为加载独立模块
+            if (typeof window.openHistoryPanel === 'function') {
+                window.openHistoryPanel();
+            } else {
+                window.showToast('历史功能加载中，请稍后...');
+            }
             break;
         case 'tools':
             closePanel('menu');
@@ -459,35 +463,6 @@ function loadToolsModule() {
     };
     script.onerror = function() {
         window.showToast('工具箱加载失败，请检查 tools.js 文件是否存在');
-    };
-    document.head.appendChild(script);
-}
-
-// ============================================================
-// 动态加载历史/收藏模块（新增）
-// ============================================================
-var historyLoaded = false;
-function loadHistoryModule() {
-    if (historyLoaded) {
-        if (typeof window.openHistoryPanel === 'function') {
-            window.openHistoryPanel();
-        } else {
-            window.showToast('历史模块已加载，但初始化失败');
-        }
-        return;
-    }
-    var script = document.createElement('script');
-    script.src = 'history.js';
-    script.onload = function() {
-        historyLoaded = true;
-        if (typeof window.openHistoryPanel === 'function') {
-            window.openHistoryPanel();
-        } else {
-            window.showToast('历史模块加载成功，但初始化函数缺失');
-        }
-    };
-    script.onerror = function() {
-        window.showToast('历史模块加载失败，请检查 history.js 文件是否存在');
     };
     document.head.appendChild(script);
 }
@@ -846,4 +821,21 @@ function startApp() {
     if (addWindowBtn) {
         addWindowBtn.addEventListener('click', function() {
             var id = 'win_' + Date.now();
-            windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Dat
+            windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Date.now() });
+            saveWindows();
+            renderWindows();
+            window.showToast('已创建新窗口');
+            window.location.href = 'about:blank';
+        });
+    }
+
+    setTimeout(function() {
+        if (searchInput) searchInput.focus();
+    }, 300);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startApp);
+} else {
+    startApp();
+}
