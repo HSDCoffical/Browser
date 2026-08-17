@@ -46,6 +46,7 @@ var currentBgIndex = 0;
 var carouselTimer = null;
 var carouselInterval = 3;
 var isCarouselMode = false;
+var favoritesData = [];
 
 // ============================================================
 // 存储
@@ -68,6 +69,8 @@ function loadData() {
         if (interval) carouselInterval = parseInt(interval) || 3;
         var mode = localStorage.getItem('mybrowser_carousel_mode');
         isCarouselMode = (mode === 'true');
+        var fav = localStorage.getItem('mybrowser_favorites');
+        if (fav) favoritesData = JSON.parse(fav);
 
         if (bgImages && bgImages.length > 0) {
             applyBgImage(currentBgIndex);
@@ -104,6 +107,346 @@ function saveBgIndex() {
     localStorage.setItem('mybrowser_bg_index', String(currentBgIndex));
 }
 function saveCarouselInterval() {
+    localStorage.setItem('mybrowser_carousel_interval', String(carouselInterval));
+}
+function saveCarouselMode() {
+    localStorage.setItem('mybrowser_carousel_mode', String(isCarouselMode));
+}
+function saveCustomEngines() {
+    localStorage.setItem('mybrowser_custom_engines', JSON.stringify(customEngines));
+}
+function saveCurrentEngine() {
+    localStorage.setItem('mybrowser_current_engine', JSON.stringify(currentEngine));
+}
+function saveWindows() {
+    localStorage.setItem('mybrowser_windows', JSON.stringify(windows));
+}
+function saveIncognito() {
+    localStorage.setItem('mybrowser_incognito', JSON.stringify(isIncognito));
+}
+function saveNightMode() {
+    localStorage.setItem('mybrowser_night_mode', String(document.body.classList.contains('night-mode')));
+}
+function saveFavorites() {
+    localStorage.setItem('mybrowser_favorites', JSON.stringify(favoritesData));
+}
+
+// ============================================================
+// 背景管理
+// ============================================================
+function applyBgImage(index) {
+    if (!bgImages || bgImages.length === 0) {
+        document.body.style.backgroundImage = '';
+        return;
+    }
+    var img = bgImages[index % bgImages.length];
+    document.body.style.backgroundImage = 'url(' + img + ')';
+    currentBgIndex = index;
+    saveBgIndex();
+    updateCarouselPreview();
+}
+
+function startCarousel() {
+    stopCarousel();
+    if (!isCarouselMode || !bgImages || bgImages.length < 2) return;
+    var interval = parseInt(document.getElementById('carouselInterval').value) || 3;
+    carouselInterval = interval;
+    saveCarouselInterval();
+    carouselTimer = setInterval(function() {
+        var next = (currentBgIndex + 1) % bgImages.length;
+        applyBgImage(next);
+    }, carouselInterval * 1000);
+}
+
+function stopCarousel() {
+    if (carouselTimer) {
+        clearInterval(carouselTimer);
+        carouselTimer = null;
+    }
+}
+
+function updateCarouselPreview() {
+    var container = document.getElementById('carouselPreview');
+    if (!container) return;
+    var html = '';
+    bgImages.forEach(function(img, i) {
+        var active = (i === currentBgIndex) ? 'active' : '';
+        html += '<div class="cs-thumb-wrap">' +
+                '<img src="' + img + '" class="cs-thumb ' + active + '" data-index="' + i + '">' +
+                '<button class="cs-del" data-index="' + i + '">✕</button>' +
+                '</div>';
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll('.cs-thumb').forEach(function(el) {
+        el.addEventListener('click', function() {
+            var idx = parseInt(this.dataset.index);
+            applyBgImage(idx);
+            if (isCarouselMode && bgImages.length > 1) startCarousel();
+        });
+    });
+    container.querySelectorAll('.cs-del').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var idx = parseInt(this.dataset.index);
+            bgImages.splice(idx, 1);
+            saveBgImages();
+            if (bgImages.length === 0) {
+                document.body.style.backgroundImage = '';
+                stopCarousel();
+            } else {
+                if (currentBgIndex >= bgImages.length) currentBgIndex = 0;
+                applyBgImage(currentBgIndex);
+                if (isCarouselMode && bgImages.length > 1) startCarousel();
+            }
+            updateCarouselPreview();
+            window.showToast('已删除');
+        });
+    });
+}
+
+// ============================================================
+// 引擎管理
+// ============================================================
+function getAllEngines() {
+    return DEFAULT_ENGINES.concat(customEngines);
+}
+function renderEngineDropdown() {
+    var container = document.getElementById('engineDropdown');
+    if (!container) return;
+    var all = getAllEngines();
+    var currentName = currentEngine.name;
+    var html = '';
+    all.forEach(function(eng) {
+        var checked = eng.name === currentName ? '✓' : '';
+        html += '<div class="ed-item" data-engine=\'' + JSON.stringify(eng).replace(/'/g, "&#39;") + '\'>' +
+                '<span>' + eng.name + '</span>' +
+                (checked ? '<span class="ed-check">✓</span>' : '') +
+                '</div>';
+    });
+    html += '<div class="ed-custom">' +
+            '<input type="text" id="customEngineName" placeholder="引擎名称">' +
+            '<input type="text" id="customEngineUrl" placeholder="URL（{q}）">' +
+            '<button id="addCustomEngineBtn">添加</button>' +
+            '</div>';
+    container.innerHTML = html;
+
+    container.querySelectorAll('.ed-item[data-engine]').forEach(function(el) {
+        el.addEventListener('click', function() {
+            var eng = JSON.parse(this.dataset.engine);
+            currentEngine = eng;
+            saveCurrentEngine();
+            updateEngineBtn();
+            closeEngineDropdown();
+            window.showToast('已切换到：' + eng.name);
+        });
+    });
+    document.getElementById('addCustomEngineBtn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        var name = document.getElementById('customEngineName').value.trim();
+        var url = document.getElementById('customEngineUrl').value.trim();
+        if (!name || !url) {
+            window.showToast('请填写名称和URL');
+            return;
+        }
+        if (url.indexOf('{q}') === -1) {
+            window.showToast('URL中请包含 {q} 作为关键词占位');
+            return;
+        }
+        if (getAllEngines().some(function(e) { return e.name === name; })) {
+            window.showToast('引擎名称已存在');
+            return;
+        }
+        customEngines.push({ name: name, url: url });
+        saveCustomEngines();
+        document.getElementById('customEngineName').value = '';
+        document.getElementById('customEngineUrl').value = '';
+        renderEngineDropdown();
+        window.showToast('已添加：' + name);
+    });
+}
+
+function toggleEngineDropdown() {
+    var dd = document.getElementById('engineDropdown');
+    if (!dd) return;
+    dd.classList.toggle('open');
+    if (dd.classList.contains('open')) {
+        renderEngineDropdown();
+    }
+}
+function closeEngineDropdown() {
+    var dd = document.getElementById('engineDropdown');
+    if (dd) dd.classList.remove('open');
+}
+function updateEngineBtn() {
+    var btn = document.getElementById('engineBtn');
+    if (btn) {
+        btn.textContent = currentEngine.name;
+    }
+}
+
+// ============================================================
+// 搜索
+// ============================================================
+function doSearch(query) {
+    if (!query || !query.trim()) return;
+    var q = query.trim();
+    var url = '';
+    if (q.indexOf('http://') === 0 || q.indexOf('https://') === 0) {
+        url = q;
+    } else if (q.indexOf('.') !== -1 && q.indexOf(' ') === -1) {
+        url = 'https://' + q;
+    } else {
+        url = currentEngine.url.replace(/\{q\}/g, encodeURIComponent(q));
+    }
+    addWindow(q, url);
+    window.location.href = url;
+}
+
+// ============================================================
+// 窗口管理
+// ============================================================
+function addWindow(title, url) {
+    var id = Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    windows.unshift({ id: id, title: title || url, url: url || 'about:blank', time: Date.now() });
+    if (windows.length > 50) windows = windows.slice(0, 50);
+    saveWindows();
+    renderWindows();
+}
+function deleteWindow(id) {
+    windows = windows.filter(function(w) { return w.id !== id; });
+    saveWindows();
+    renderWindows();
+}
+function renderWindows() {
+    var container = document.getElementById('windowList');
+    if (!container) return;
+    if (windows.length === 0) {
+        container.innerHTML = '<div class="window-empty">暂无窗口</div>';
+        return;
+    }
+    var html = '';
+    windows.forEach(function(w) {
+        var initial = (w.title || '网')[0].toUpperCase();
+        html += '<div class="window-item" data-id="' + w.id + '">' +
+                '<div class="w-icon">' + initial + '</div>' +
+                '<div class="w-info">' +
+                '<div class="w-title">' + (w.title || '未命名') + '</div>' +
+                '<div class="w-url">' + (w.url || '') + '</div>' +
+                '</div>' +
+                '<button class="w-del" data-id="' + w.id + '">✕</button>' +
+                '</div>';
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll('.window-item').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+            if (e.target.closest('.w-del')) return;
+            var id = this.dataset.id;
+            var w = windows.find(function(win) { return win.id === id; });
+            if (w && w.url) {
+                window.location.href = w.url;
+            } else {
+                window.showToast('该窗口没有有效地址');
+            }
+        });
+    });
+
+    container.querySelectorAll('.w-del').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var id = this.dataset.id;
+            deleteWindow(id);
+            window.showToast('已删除窗口');
+        });
+    });
+}
+
+// ============================================================
+// 收藏管理
+// ============================================================
+function renderFavorites() {
+    var container = document.getElementById('favoritesList');
+    if (!container) return;
+    if (favoritesData.length === 0) {
+        container.innerHTML = '<div class="window-empty">暂无收藏</div>';
+        return;
+    }
+    var html = '';
+    favoritesData.forEach(function(item, idx) {
+        var initial = (item.title || '网')[0].toUpperCase();
+        html += '<div class="window-item" data-url="' + item.url.replace(/'/g, "\\'") + '" style="cursor:pointer;">' +
+                '<div class="w-icon">' + initial + '</div>' +
+                '<div class="w-info">' +
+                '<div class="w-title">' + (item.title || '未命名') + '</div>' +
+                '<div class="w-url">' + (item.url || '') + '</div>' +
+                '</div>' +
+                '<button class="w-del" data-idx="' + idx + '" style="background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;padding:4px 6px;">✕</button>' +
+                '</div>';
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll('.window-item').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+            if (e.target.closest('.w-del')) return;
+            var url = this.dataset.url;
+            if (url) window.location.href = url;
+        });
+    });
+    container.querySelectorAll('.w-del').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var idx = parseInt(this.dataset.idx);
+            favoritesData.splice(idx, 1);
+            saveFavorites();
+            renderFavorites();
+            window.showToast('已删除');
+        });
+    });
+}
+
+function addFavorite(title, url) {
+    if (favoritesData.some(function(item) { return item.url === url; })) {
+        window.showToast('已收藏');
+        return;
+    }
+    favoritesData.unshift({ title: title || url, url: url, time: Date.now() });
+    saveFavorites();
+    renderFavorites();
+    window.showToast('已收藏');
+}
+// ============================================================
+// 面板控制
+// ============================================================
+var activePanel = null;
+function openPanel(name) {
+    closeAllPanels();
+    activePanel = name;
+    var overlay = document.getElementById(name + 'Overlay');
+    var sheet = document.getElementById(name + 'Sheet');
+    if (overlay) overlay.classList.add('show');
+    if (sheet) sheet.classList.add('show');
+    if (name === 'favorites') {
+        renderFavorites();
+    }
+}
+function closePanel(name) {
+    var overlay = document.getElementById(name + 'Overlay');
+    var sheet = document.getElementById(name + 'Sheet');
+    if (overlay) overlay.classList.remove('show');
+    if (sheet) sheet.classList.remove('show');
+    if (activePanel === name) activePanel = null;
+}
+function closeAllPanels() {
+    ['menu', 'window', 'settings', 'download', 'favorites'].forEach(function(name) {
+        var overlay = document.getElementById(name + 'Overlay');
+        var sheet = document.getElementById(name + 'Sheet');
+        if (overlay) overlay.classList.remove('show');
+        if (sheet) sheet.classList.remove('show');
+    });
+    activePanel = null;
+}
+
 // ============================================================
 // 菜单功能
 // ============================================================
@@ -120,13 +463,9 @@ function handleMenuAction(action) {
                 window.renderDownloadList();
             }
             break;
-        case 'history':
+        case 'favorites':
             closePanel('menu');
-            if (typeof window.openHistoryPanel === 'function') {
-                window.openHistoryPanel();
-            } else {
-                window.showToast('历史功能加载中，请稍后...');
-            }
+            openPanel('favorites');
             break;
         case 'tools':
             closePanel('menu');
@@ -134,11 +473,7 @@ function handleMenuAction(action) {
             break;
         case 'fav':
             if (window.location.href && window.location.href !== 'about:blank') {
-                if (typeof window.addFavorite === 'function') {
-                    window.addFavorite(document.title || window.location.href, window.location.href);
-                } else {
-                    window.showToast('已收藏当前页面（演示）');
-                }
+                addFavorite(document.title || window.location.href, window.location.href);
             } else {
                 window.showToast('无法收藏空白页');
             }
@@ -416,19 +751,6 @@ function initApp() {
     if (refreshBtn) {
         refreshBtn.addEventListener('click', function() {
             window.location.reload();
-        });
-    }
-
-    var translateBtn = document.getElementById('translateBtn');
-    if (translateBtn) {
-        translateBtn.addEventListener('click', function() {
-            var currentUrl = window.location.href;
-            if (currentUrl && currentUrl !== 'about:blank' && !currentUrl.startsWith('file://')) {
-                var transUrl = 'https://translate.google.com/translate?sl=auto&tl=zh-CN&u=' + encodeURIComponent(currentUrl);
-                window.open(transUrl, '_blank');
-            } else {
-                window.showToast('无法翻译当前页面');
-            }
         });
     }
 
