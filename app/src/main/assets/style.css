@@ -832,3 +832,24 @@ body.night-mode .greeting {
     cursor: pointer;
     padding: 0 6px;
 }
+/* 在原有样式末尾添加以下内容 */
+
+/* 状态栏适配刘海屏 */
+.status-bar {
+    height: env(safe-area-inset-top, 32px);
+    height: constant(safe-area-inset-top, 32px);
+    flex-shrink: 0;
+    background: transparent;
+}
+
+/* 顶部地址栏增强 */
+.top-bar {
+    padding-top: 4px;
+    padding-left: env(safe-area-inset-left, 16px);
+    padding-right: env(safe-area-inset-right, 16px);
+}
+
+/* 底部胶囊始终最前 */
+.bottom-actions {
+    z-index: 999 !important;
+}
