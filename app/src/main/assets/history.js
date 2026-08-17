@@ -48,27 +48,27 @@
                 data.forEach(function(item, idx) {
                     var title = item.title || '未命名';
                     var url = item.url || '';
-                    html += '<div class="func-item" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(0,0,0,0.05);">' +
+                    html += '<div class="func-item" data-url="' + url.replace(/'/g, "\\'") + '" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(0,0,0,0.05);cursor:pointer;">' +
                             '<div style="flex:1;overflow:hidden;">' +
                             '<div style="font-size:15px;font-weight:500;color:#1a1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + title.replace(/'/g, "\\'") + '</div>' +
                             '<div style="font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + url.replace(/'/g, "\\'") + '</div>' +
                             '</div>' +
-                            '<div style="display:flex;gap:8px;flex-shrink:0;">' +
-                            '<button class="func-action" data-url="' + url.replace(/'/g, "\\'") + '" style="padding:4px 12px;background:#2979ff;color:#fff;border:none;border-radius:16px;font-size:12px;cursor:pointer;">打开</button>' +
-                            '<button class="func-del" data-idx="' + idx + '" data-mode="' + mode + '" style="background:none;border:none;color:#e74c3c;font-size:18px;cursor:pointer;">✕</button>' +
-                            '</div>' +
+                            '<button class="func-del" data-idx="' + idx + '" data-mode="' + mode + '" style="background:none;border:none;color:#e74c3c;font-size:18px;cursor:pointer;flex-shrink:0;padding:4px 8px;">✕</button>' +
                             '</div>';
                 });
                 container.innerHTML = html;
 
-                container.querySelectorAll('.func-action').forEach(function(btn) {
-                    btn.addEventListener('click', function() {
+                // 点击整行跳转（与窗口列表一致）
+                container.querySelectorAll('.func-item').forEach(function(el) {
+                    el.addEventListener('click', function(e) {
+                        if (e.target.closest('.func-del')) return;
                         var url = this.dataset.url;
                         if (url) window.location.href = url;
                     });
                 });
                 container.querySelectorAll('.func-del').forEach(function(btn) {
-                    btn.addEventListener('click', function() {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
                         var idx = parseInt(this.dataset.idx);
                         var mode = this.dataset.mode;
                         if (mode === 'fav') {
