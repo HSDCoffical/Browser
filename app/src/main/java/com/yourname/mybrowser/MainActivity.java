@@ -1,10 +1,9 @@
-package com.yourname.mybrowser; // 请改为你的实际包名
+package com.yourname.mybrowser;
 
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -15,6 +14,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -22,6 +22,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -41,12 +42,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private EditText urlEdit;
+    private FrameLayout webviewContainer;
+    private FrameLayout uiContainer;
 
     private ValueCallback<Uri[]> mFilePathCallback;
     private static final int FILE_CHOOSER_REQUEST_CODE = 1;
     private static final int PERMISSION_REQUEST_CODE = 100;
 
-    // 下载任务管理
     private ConcurrentHashMap<String, DownloadTask> downloadTasks = new ConcurrentHashMap<>();
     private Handler uiHandler = new Handler(Looper.getMainLooper());
 
@@ -55,8 +57,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        webView = findViewById(R.id.webView);
-        urlEdit = findViewById(R.id.urlEdit);
+        webviewContainer = findViewById(R.id.webview_container);
+        uiContainer = findViewById(R.id.ui_container);
+
+        // 创建 WebView 并添加到 webview_container
+        webView = new WebView(this);
+        webView.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+        webviewContainer.addView(webView);
+
+        // 将 UI 容器的点击事件穿透（让 WebView 可交互）
+        uiContainer.setClickable(false);
+        uiContainer.setFocusable(false);
 
         // 请求权限
         requestAllPermissions();
@@ -108,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 自定义下载拦截（弹出确认框）
+        // 自定义下载拦截
         webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
             new AlertDialog.Builder(MainActivity.this)
                     .setTitle("下载文件")
@@ -120,28 +134,16 @@ public class MainActivity extends AppCompatActivity {
                     .show();
         });
 
+        // 加载本地 HTML 到 WebView
         webView.loadUrl("file:///android_asset/index.html");
 
-        urlEdit.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_GO) {
-                String input = urlEdit.getText().toString().trim();
-                if (input.isEmpty()) return true;
-                if (input.startsWith("http://") || input.startsWith("https://")) {
-                    webView.loadUrl(input);
-                } else if (input.contains(".")) {
-                    webView.loadUrl("https://" + input);
-                } else {
-                    webView.loadUrl("https://www.bing.com/search?q=" + input);
-                }
-                return true;
-            }
-            return false;
-        });
+        // 注意：urlEdit 在 UI 容器中，但已隐藏，保留逻辑
+        // 如果需要真正地址栏，可将其移到 UI 容器并取消隐藏
 
-        // 注册JS接口（供前端控制下载）
+        // 注册 JS 接口
         setupJSInterface();
 
-        // 创建通知渠道（Android 8+）
+        // 创建通知渠道
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     "download_channel",
@@ -223,7 +225,6 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        // 用户处理结果，可忽略
     }
 
     // ============================================================
@@ -257,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ============================================================
-    // JS 接口（下载控制）
+    // JS 接口
     // ============================================================
     private class NativeDownloadBridge {
         @android.webkit.JavascriptInterface
@@ -278,7 +279,6 @@ public class MainActivity extends AppCompatActivity {
 
         @android.webkit.JavascriptInterface
         public void install(String filePath) {
-            // 打开安装界面
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setDataAndType(Uri.parse("file://" + filePath), "application/vnd.android.package-archive");
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -302,7 +302,6 @@ public class MainActivity extends AppCompatActivity {
         DownloadTask task = new DownloadTask(id, fileName, url, contentDisposition);
         downloadTasks.put(id, task);
         task.execute();
-        // 通知前端添加任务
         webView.evaluateJavascript("window._addDownloadTask('" + id + "', '" + fileName.replace("'", "\\'") + "', 0);", null);
         Toast.makeText(this, "开始下载: " + fileName, Toast.LENGTH_SHORT).show();
     }
@@ -346,7 +345,6 @@ public class MainActivity extends AppCompatActivity {
                     return null;
                 }
                 totalSize = connection.getContentLength();
-                // 更新总大小
                 runOnUiThread(() -> {
                     String js = "window._updateDownloadProgress('" + id + "', 0, " + totalSize + ", 0);";
                     webView.evaluateJavascript(js, null);
@@ -404,14 +402,12 @@ public class MainActivity extends AppCompatActivity {
                             String js = "window._updateDownloadProgress('" + id + "', " + finalDownloaded + ", " + totalSize + ", " + finalSpeed + ");";
                             webView.evaluateJavascript(js, null);
                         });
-                        // 更新通知
                         updateNotification(fileName, downloaded, totalSize);
                     }
                 }
                 output.close();
                 input.close();
                 connection.disconnect();
-                // 完成
                 runOnUiThread(() -> {
                     webView.evaluateJavascript("window._downloadComplete('" + id + "', '" + outputFile.getAbsolutePath() + "');", null);
                     Toast.makeText(MainActivity.this, "下载完成: " + outputFile.getName(), Toast.LENGTH_LONG).show();
@@ -445,7 +441,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // 通知栏
         private void showNotification(String title, String content, long progress, long max) {
             NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (manager == null) return;
