@@ -1,0 +1,110 @@
+// ============================================================
+// 数据存储模块
+// ============================================================
+(function() {
+    'use strict';
+    try {
+        // 数据变量
+        window.DEFAULT_ENGINES = [
+            { name: '必应', url: 'https://cn.bing.com/search?q={q}&from=vivosearch2025' },
+            { name: '百度', url: 'https://www.baidu.com/s?wd={q}' },
+            { name: '谷歌', url: 'https://www.google.com/search?q={q}' }
+        ];
+        window.currentEngine = { name: '必应', url: 'https://cn.bing.com/search?q={q}&from=vivosearch2025' };
+        window.customEngines = [];
+        window.windows = [];
+        window.isIncognito = false;
+        window.bgImages = [];
+        window.currentBgIndex = 0;
+        window.carouselTimer = null;
+        window.carouselInterval = 3;
+        window.isCarouselMode = false;
+        window.favoritesData = [];
+
+        window.saveBgImages = function() {
+            try { localStorage.setItem('mybrowser_bg_images', JSON.stringify(window.bgImages)); } catch(e) {}
+        };
+        window.saveBgIndex = function() {
+            try { localStorage.setItem('mybrowser_bg_index', String(window.currentBgIndex)); } catch(e) {}
+        };
+        window.saveCarouselInterval = function() {
+            try { localStorage.setItem('mybrowser_carousel_interval', String(window.carouselInterval)); } catch(e) {}
+        };
+        window.saveCarouselMode = function() {
+            try { localStorage.setItem('mybrowser_carousel_mode', String(window.isCarouselMode)); } catch(e) {}
+        };
+        window.saveCustomEngines = function() {
+            try { localStorage.setItem('mybrowser_custom_engines', JSON.stringify(window.customEngines)); } catch(e) {}
+        };
+        window.saveCurrentEngine = function() {
+            try { localStorage.setItem('mybrowser_current_engine', JSON.stringify(window.currentEngine)); } catch(e) {}
+        };
+        window.saveWindows = function() {
+            try { localStorage.setItem('mybrowser_windows', JSON.stringify(window.windows)); } catch(e) {}
+        };
+        window.saveIncognito = function() {
+            try { localStorage.setItem('mybrowser_incognito', JSON.stringify(window.isIncognito)); } catch(e) {}
+        };
+        window.saveNightMode = function() {
+            try { localStorage.setItem('mybrowser_night_mode', String(document.body.classList.contains('night-mode'))); } catch(e) {}
+        };
+        window.saveFavorites = function() {
+            try { localStorage.setItem('mybrowser_favorites', JSON.stringify(window.favoritesData)); } catch(e) {}
+        };
+
+        window.loadData = function() {
+            try {
+                var ce = localStorage.getItem('mybrowser_custom_engines');
+                if (ce) window.customEngines = JSON.parse(ce);
+                var eng = localStorage.getItem('mybrowser_current_engine');
+                if (eng) window.currentEngine = JSON.parse(eng);
+                var ws = localStorage.getItem('mybrowser_windows');
+                if (ws) window.windows = JSON.parse(ws);
+                var incog = localStorage.getItem('mybrowser_incognito');
+                if (incog) window.isIncognito = JSON.parse(incog);
+                var bg = localStorage.getItem('mybrowser_bg_images');
+                if (bg) window.bgImages = JSON.parse(bg);
+                var idx = localStorage.getItem('mybrowser_bg_index');
+                if (idx) window.currentBgIndex = parseInt(idx) || 0;
+                var interval = localStorage.getItem('mybrowser_carousel_interval');
+                if (interval) window.carouselInterval = parseInt(interval) || 3;
+                var mode = localStorage.getItem('mybrowser_carousel_mode');
+                window.isCarouselMode = (mode === 'true');
+                var fav = localStorage.getItem('mybrowser_favorites');
+                if (fav) window.favoritesData = JSON.parse(fav);
+
+                if (window.bgImages && window.bgImages.length > 0) {
+                    if (typeof window.applyBgImage === 'function') {
+                        window.applyBgImage(window.currentBgIndex);
+                    }
+                }
+                var toggle = document.getElementById('carouselToggle');
+                if (toggle) {
+                    if (window.isCarouselMode) toggle.classList.add('active');
+                    else toggle.classList.remove('active');
+                }
+                var settings = document.getElementById('carouselSettings');
+                if (settings) {
+                    settings.style.display = window.isCarouselMode ? 'block' : 'none';
+                }
+                var label = document.getElementById('pickerLabel');
+                if (label) {
+                    label.textContent = window.isCarouselMode ? '选择背景图片（多选）' : '选择背景图片';
+                }
+                var el = document.getElementById('carouselInterval');
+                if (el) el.value = window.carouselInterval;
+                
+                var nightMode = localStorage.getItem('mybrowser_night_mode');
+                if (nightMode === 'true') {
+                    document.body.classList.add('night-mode');
+                    var nightToggle = document.getElementById('nightModeToggleMenu');
+                    if (nightToggle) nightToggle.classList.add('active');
+                }
+            } catch(e) { /* ignore */ }
+        };
+
+        console.log('✅ 存储模块加载成功');
+    } catch(e) {
+        console.error('❌ 存储模块加载失败:', e);
+    }
+})();
