@@ -46,6 +46,8 @@ var currentBgIndex = 0;
 var carouselTimer = null;
 var carouselInterval = 3;
 var isCarouselMode = false;
+var favorites = [];
+var history = [];
 
 // ============================================================
 // 存储
@@ -68,6 +70,12 @@ function loadData() {
         if (interval) carouselInterval = parseInt(interval) || 3;
         var mode = localStorage.getItem('mybrowser_carousel_mode');
         isCarouselMode = (mode === 'true');
+
+        // 加载收藏和历史
+        var fav = localStorage.getItem('mybrowser_favorites');
+        if (fav) favorites = JSON.parse(fav);
+        var hist = localStorage.getItem('mybrowser_history');
+        if (hist) history = JSON.parse(hist);
 
         if (bgImages && bgImages.length > 0) {
             applyBgImage(currentBgIndex);
@@ -124,6 +132,12 @@ function saveIncognito() {
 }
 function saveNightMode() {
     localStorage.setItem('mybrowser_night_mode', String(document.body.classList.contains('night-mode')));
+}
+function saveFavorites() {
+    localStorage.setItem('mybrowser_favorites', JSON.stringify(favorites));
+}
+function saveHistory() {
+    localStorage.setItem('mybrowser_history', JSON.stringify(history));
 }
 
 // ============================================================
@@ -295,6 +309,10 @@ function doSearch(query) {
     } else {
         url = currentEngine.url.replace(/\{q\}/g, encodeURIComponent(q));
     }
+    // 记录历史（无痕模式下不记录）
+    if (!isIncognito) {
+        addHistory(q, url);
+    }
     addWindow(q, url);
     window.location.href = url;
 }
@@ -378,7 +396,7 @@ function closePanel(name) {
     if (activePanel === name) activePanel = null;
 }
 function closeAllPanels() {
-    ['menu', 'window', 'settings', 'download'].forEach(function(name) {
+    ['menu', 'window', 'settings', 'download', 'history'].forEach(function(name) {
         var overlay = document.getElementById(name + 'Overlay');
         var sheet = document.getElementById(name + 'Sheet');
         if (overlay) overlay.classList.remove('show');
@@ -388,7 +406,74 @@ function closeAllPanels() {
 }
 
 // ============================================================
-// 菜单功能（夜间模式已移至菜单开关）
+// 收藏/历史功能
+// ============================================================
+function addHistory(title, url) {
+    // 去重（相同URL只保留最新的）
+    history = history.filter(function(item) { return item.url !== url; });
+    history.unshift({ title: title || url, url: url, time: Date.now() });
+    if (history.length > 100) history = history.slice(0, 100);
+    saveHistory();
+}
+
+function addFavorite(title, url) {
+    if (favorites.some(function(item) { return item.url === url; })) {
+        window.showToast('已收藏');
+        return;
+    }
+    favorites.unshift({ title: title || url, url: url, time: Date.now() });
+    saveFavorites();
+    window.showToast('已收藏');
+}
+
+function renderHistory(mode) {
+    var list = document.getElementById('historyList');
+    if (!list) return;
+    var data = mode === 'fav' ? favorites : history;
+    if (data.length === 0) {
+        list.innerHTML = '<div class="func-item">暂无记录</div>';
+        return;
+    }
+    var html = '';
+    data.forEach(function(item, idx) {
+        html += '<div class="func-item">' +
+                '<div class="func-info">' +
+                '<div class="func-title">' + item.title + '</div>' +
+                '<div class="func-desc">' + item.url + '</div>' +
+                '</div>' +
+                '<div style="display:flex;gap:4px;">' +
+                '<button class="func-action" data-url="' + item.url + '">打开</button>' +
+                '<button class="func-del" data-idx="' + idx + '" data-mode="' + mode + '">✕</button>' +
+                '</div>' +
+                '</div>';
+    });
+    list.innerHTML = html;
+
+    list.querySelectorAll('.func-action').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var url = this.dataset.url;
+            if (url) window.location.href = url;
+        });
+    });
+    list.querySelectorAll('.func-del').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var idx = parseInt(this.dataset.idx);
+            var mode = this.dataset.mode;
+            if (mode === 'fav') {
+                favorites.splice(idx, 1);
+                saveFavorites();
+            } else {
+                history.splice(idx, 1);
+                saveHistory();
+            }
+            renderHistory(mode);
+            window.showToast('已删除');
+        });
+    });
+}
+
+// ============================================================
+// 菜单功能
 // ============================================================
 function handleMenuAction(action) {
     switch (action) {
@@ -404,8 +489,9 @@ function handleMenuAction(action) {
             }
             break;
         case 'history':
-            window.showToast('收藏/历史功能开发中');
             closePanel('menu');
+            renderHistory('fav');
+            openPanel('history');
             break;
         case 'tools':
             closePanel('menu');
@@ -413,7 +499,7 @@ function handleMenuAction(action) {
             break;
         case 'fav':
             if (window.location.href && window.location.href !== 'about:blank') {
-                window.showToast('已收藏当前页面（演示）');
+                addFavorite(document.title || window.location.href, window.location.href);
             } else {
                 window.showToast('无法收藏空白页');
             }
@@ -718,7 +804,7 @@ function initApp() {
         });
         observer.observe(downloadSheet, { attributes: true, attributeFilter: ['class'] });
     }
-    
+
     // 夜间模式开关（菜单中）
     var nightToggle = document.getElementById('nightModeToggleMenu');
     if (nightToggle) {
@@ -727,111 +813,25 @@ function initApp() {
             toggleNightMode();
         });
     }
-}
 
-// ============================================================
-// 启动
-// ============================================================
-function startApp() {
-    loadData();
-    updateEngineBtn();
-    renderWindows();
-    setupBackgroundPicker();
-    updateCarouselPreview();
-    if (bgImages && bgImages.length > 0) {
-        if (isCarouselMode && bgImages.length > 1) {
-            startCarousel();
-        }
-    }
-    initApp();
-
-    var searchBtn = document.getElementById('searchBtn');
-    var searchInput = document.getElementById('searchInput');
-    var engineBtn = document.getElementById('engineBtn');
-    var navMenu = document.getElementById('navMenu');
-    var navWindow = document.getElementById('navWindow');
-    var addWindowBtn = document.getElementById('addWindowBtn');
-
-    if (searchBtn) {
-        searchBtn.addEventListener('click', function() {
-            doSearch(searchInput.value);
+    // 收藏/历史标签切换
+    var favTab = document.getElementById('historyTabFav');
+    var histTab = document.getElementById('historyTabHist');
+    if (favTab && histTab) {
+        favTab.addEventListener('click', function() {
+            renderHistory('fav');
+            this.style.background = '#2979ff';
+            histTab.style.background = '#888';
         });
-    }
-    if (searchInput) {
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                doSearch(this.value);
-            }
+        histTab.addEventListener('click', function() {
+            renderHistory('hist');
+            this.style.background = '#2979ff';
+            favTab.style.background = '#888';
         });
     }
 
-    if (engineBtn) {
-        engineBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleEngineDropdown();
-        });
-    }
-
-    document.addEventListener('click', function(e) {
-        var dd = document.getElementById('engineDropdown');
-        var btn = document.getElementById('engineBtn');
-        if (dd && btn && !dd.contains(e.target) && !btn.contains(e.target)) {
-            closeEngineDropdown();
-        }
-    });
-
-    if (navMenu) {
-        navMenu.addEventListener('click', function() {
-            if (activePanel === 'menu') { closePanel('menu'); return; }
-            openPanel('menu');
-        });
-    }
-    if (navWindow) {
-        navWindow.addEventListener('click', function() {
-            if (activePanel === 'window') { closePanel('window'); return; }
-            renderWindows();
-            openPanel('window');
-        });
-    }
-
-    document.querySelectorAll('.panel-close').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            closePanel(this.dataset.close);
-        });
-    });
-    document.querySelectorAll('.panel-overlay').forEach(function(overlay) {
-        overlay.addEventListener('click', function() {
-            var name = this.id.replace('Overlay', '');
-            closePanel(name);
-        });
-    });
-
-    document.querySelectorAll('.menu-item').forEach(function(item) {
-        item.addEventListener('click', function() {
-            var action = this.dataset.action;
-            handleMenuAction(action);
-        });
-    });
-
-    if (addWindowBtn) {
-        addWindowBtn.addEventListener('click', function() {
-            var id = 'win_' + Date.now();
-            windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Date.now() });
-            saveWindows();
-            renderWindows();
-            window.showToast('已创建新窗口');
-            window.location.href = 'about:blank';
-        });
-    }
-
-    setTimeout(function() {
-        if (searchInput) searchInput.focus();
-    }, 300);
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startApp);
-} else {
-    startApp();
-}
+    // 检测当前打开的history面板，默认显示收藏
+    var historySheet = document.getElementById('historySheet');
+    if (historySheet) {
+        var histObserver = new MutationObserver(function() {
+            if (historySheet.classList.contains('show')) {
