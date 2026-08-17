@@ -14,7 +14,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -22,7 +21,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -42,8 +40,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private EditText urlEdit;
-    private FrameLayout webviewContainer;
-    private FrameLayout uiContainer;
 
     private ValueCallback<Uri[]> mFilePathCallback;
     private static final int FILE_CHOOSER_REQUEST_CODE = 1;
@@ -57,23 +53,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        webviewContainer = findViewById(R.id.webview_container);
-        uiContainer = findViewById(R.id.ui_container);
+        webView = findViewById(R.id.webView);
+        urlEdit = findViewById(R.id.urlEdit);
 
-        // 创建 WebView 并添加到 webview_container
-        webView = new WebView(this);
-        webView.setLayoutParams(new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-        ));
-        webviewContainer.addView(webView);
-
-        // UI 容器穿透点击
-        uiContainer.setClickable(false);
-        uiContainer.setFocusable(false);
-        uiContainer.setFocusableInTouchMode(false);
-
-        // 请求权限
         requestAllPermissions();
 
         WebSettings webSettings = webView.getSettings();
@@ -87,7 +69,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                // 注入 Eruda
                 String erudaJs = "javascript:(function(){" +
                         "var s=document.createElement('script');" +
                         "s.src='https://cdn.jsdelivr.net/npm/eruda';" +
@@ -96,7 +77,6 @@ public class MainActivity extends AppCompatActivity {
                         "})();";
                 view.evaluateJavascript(erudaJs, null);
 
-                // 更新顶部栏
                 String title = view.getTitle();
                 if (title == null || title.isEmpty()) title = url;
                 String safeTitle = title.replace("'", "\\'");
@@ -123,7 +103,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 自定义下载拦截
         webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
             new AlertDialog.Builder(MainActivity.this)
                     .setTitle("下载文件")
@@ -137,10 +116,24 @@ public class MainActivity extends AppCompatActivity {
 
         webView.loadUrl("file:///android_asset/index.html");
 
-        // 注册 JS 接口
+        urlEdit.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_GO) {
+                String input = urlEdit.getText().toString().trim();
+                if (input.isEmpty()) return true;
+                if (input.startsWith("http://") || input.startsWith("https://")) {
+                    webView.loadUrl(input);
+                } else if (input.contains(".")) {
+                    webView.loadUrl("https://" + input);
+                } else {
+                    webView.loadUrl("https://www.bing.com/search?q=" + input);
+                }
+                return true;
+            }
+            return false;
+        });
+
         setupJSInterface();
 
-        // 创建通知渠道
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     "download_channel",
