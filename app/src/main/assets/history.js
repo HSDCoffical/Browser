@@ -108,4 +108,81 @@
                         <button class="panel-close" style="font-size:26px;color:#999;background:none;border:none;cursor:pointer;padding:0 4px;line-height:1;">✕</button>
                     </div>
                     <div class="panel-body" style="flex:1;overflow-y:auto;padding:12px 18px 28px 18px;">
-                        <div style
+                        <div style="margin-bottom:10px;display:flex;gap:8px;">
+                            <button id="historyTabFav" class="func-action" style="padding:6px 14px;background:#2979ff;color:#fff;border:none;border-radius:16px;font-size:12px;cursor:pointer;">收藏</button>
+                            <button id="historyTabHist" class="func-action" style="padding:6px 14px;background:#888;color:#fff;border:none;border-radius:16px;font-size:12px;cursor:pointer;">历史</button>
+                        </div>
+                        <div id="historyListContainer"></div>
+                    </div>
+                `;
+                overlay.appendChild(sheet);
+                document.body.appendChild(overlay);
+
+                overlay.querySelector('.panel-close').addEventListener('click', function() {
+                    overlay.remove();
+                });
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) overlay.remove();
+                });
+
+                var favTab = overlay.querySelector('#historyTabFav');
+                var histTab = overlay.querySelector('#historyTabHist');
+                favTab.addEventListener('click', function() {
+                    currentHistoryMode = 'fav';
+                    renderHistoryList('fav');
+                    this.style.background = '#2979ff';
+                    histTab.style.background = '#888';
+                });
+                histTab.addEventListener('click', function() {
+                    currentHistoryMode = 'hist';
+                    renderHistoryList('hist');
+                    this.style.background = '#2979ff';
+                    favTab.style.background = '#888';
+                });
+
+                renderHistoryList('fav');
+            } catch(e) {
+                console.error('openHistoryPanel 错误:', e);
+                window.showToast('打开历史面板失败，请重试');
+            }
+        };
+
+        // 暴露 addHistory 供搜索调用
+        window.addHistory = function(title, url) {
+            try {
+                if (window.isIncognito) return;
+                historyData = historyData.filter(function(item) { return item.url !== url; });
+                historyData.unshift({ title: title || url, url: url, time: Date.now() });
+                if (historyData.length > 100) historyData = historyData.slice(0, 100);
+                saveHistoryData();
+            } catch(e) {
+                console.error('addHistory 错误:', e);
+            }
+        };
+
+        window.addFavorite = function(title, url) {
+            try {
+                if (favoritesData.some(function(item) { return item.url === url; })) {
+                    window.showToast('已收藏');
+                    return;
+                }
+                favoritesData.unshift({ title: title || url, url: url, time: Date.now() });
+                saveFavoritesData();
+                window.showToast('已收藏');
+            } catch(e) {
+                console.error('addFavorite 错误:', e);
+            }
+        };
+
+        console.log('历史/收藏模块加载成功');
+
+    } catch(e) {
+        console.error('历史/收藏模块加载失败:', e);
+        // 提供空函数防止主应用崩溃
+        window.openHistoryPanel = function() {
+            window.showToast('历史功能暂时不可用，请重试');
+        };
+        window.addHistory = function() {};
+        window.addFavorite = function() {};
+    }
+})();
