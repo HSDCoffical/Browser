@@ -1,10 +1,9 @@
 // ============================================================
-// 独立历史/收藏模块（UI/布局/动画与设置面板一致）
+// 独立历史/收藏模块
 // ============================================================
 (function() {
     'use strict';
 
-    // ---------- 数据（从 localStorage 读取） ----------
     var favorites = [];
     var history = [];
     var currentMode = 'fav';
@@ -66,7 +65,7 @@
                     saveHistory();
                 }
                 renderList(mode);
-                window.showToast('已删除');
+                if (typeof window.showToast === 'function') window.showToast('已删除');
             });
         });
     }
@@ -74,7 +73,6 @@
     function openHistoryPanel() {
         loadData();
 
-        // 创建面板浮层（与设置面板相同的结构和样式）
         var overlay = document.createElement('div');
         overlay.className = 'panel-overlay';
         overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.25);z-index:100;display:block;animation:fadeIn 0.25s ease;';
@@ -98,7 +96,6 @@
         overlay.appendChild(sheet);
         document.body.appendChild(overlay);
 
-        // 关闭事件
         overlay.querySelector('.panel-close').addEventListener('click', function() {
             overlay.remove();
         });
@@ -106,7 +103,6 @@
             if (e.target === overlay) overlay.remove();
         });
 
-        // 标签切换
         var favTab = overlay.querySelector('#historyTabFav');
         var histTab = overlay.querySelector('#historyTabHist');
         favTab.addEventListener('click', function() {
@@ -122,11 +118,8 @@
             favTab.style.background = '#888';
         });
 
-        // 默认显示收藏
         renderList('fav');
     }
 
-    // ---------- 暴露全局接口 ----------
     window.openHistoryPanel = openHistoryPanel;
-
 })();
