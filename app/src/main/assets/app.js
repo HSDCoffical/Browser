@@ -405,7 +405,7 @@ function handleMenuAction(action) {
             break;
         case 'history':
             closePanel('menu');
-            loadHistoryModule();  // ← 新增：加载历史模块
+            loadHistoryModule();  // 动态加载历史模块
             break;
         case 'tools':
             closePanel('menu');
@@ -846,4 +846,4 @@ function startApp() {
     if (addWindowBtn) {
         addWindowBtn.addEventListener('click', function() {
             var id = 'win_' + Date.now();
-            windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Da
+            windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Date.
