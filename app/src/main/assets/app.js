@@ -46,6 +46,7 @@ var currentBgIndex = 0;
 var carouselTimer = null;
 var carouselInterval = 3;
 var isCarouselMode = false;
+var favoritesData = [];
 
 // ============================================================
 // 存储
@@ -68,6 +69,8 @@ function loadData() {
         if (interval) carouselInterval = parseInt(interval) || 3;
         var mode = localStorage.getItem('mybrowser_carousel_mode');
         isCarouselMode = (mode === 'true');
+        var fav = localStorage.getItem('mybrowser_favorites');
+        if (fav) favoritesData = JSON.parse(fav);
 
         if (bgImages && bgImages.length > 0) {
             applyBgImage(currentBgIndex);
@@ -123,6 +126,9 @@ function saveIncognito() {
 }
 function saveNightMode() {
     localStorage.setItem('mybrowser_night_mode', String(document.body.classList.contains('night-mode')));
+}
+function saveFavorites() {
+    localStorage.setItem('mybrowser_favorites', JSON.stringify(favoritesData));
 }
 
 // ============================================================
@@ -358,6 +364,59 @@ function renderWindows() {
 }
 
 // ============================================================
+// 收藏管理
+// ============================================================
+function renderFavorites() {
+    var container = document.getElementById('favoritesList');
+    if (!container) return;
+    if (favoritesData.length === 0) {
+        container.innerHTML = '<div class="window-empty">暂无收藏</div>';
+        return;
+    }
+    var html = '';
+    favoritesData.forEach(function(item, idx) {
+        var initial = (item.title || '网')[0].toUpperCase();
+        html += '<div class="window-item" data-url="' + item.url.replace(/'/g, "\\'") + '" style="cursor:pointer;">' +
+                '<div class="w-icon">' + initial + '</div>' +
+                '<div class="w-info">' +
+                '<div class="w-title">' + (item.title || '未命名') + '</div>' +
+                '<div class="w-url">' + (item.url || '') + '</div>' +
+                '</div>' +
+                '<button class="w-del" data-idx="' + idx + '" style="background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;padding:4px 6px;">✕</button>' +
+                '</div>';
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll('.window-item').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+            if (e.target.closest('.w-del')) return;
+            var url = this.dataset.url;
+            if (url) window.location.href = url;
+        });
+    });
+    container.querySelectorAll('.w-del').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var idx = parseInt(this.dataset.idx);
+            favoritesData.splice(idx, 1);
+            saveFavorites();
+            renderFavorites();
+            window.showToast('已删除');
+        });
+    });
+}
+
+function addFavorite(title, url) {
+    if (favoritesData.some(function(item) { return item.url === url; })) {
+        window.showToast('已收藏');
+        return;
+    }
+    favoritesData.unshift({ title: title || url, url: url, time: Date.now() });
+    saveFavorites();
+    renderFavorites();
+    window.showToast('已收藏');
+}
+// ============================================================
 // 面板控制
 // ============================================================
 var activePanel = null;
@@ -368,6 +427,9 @@ function openPanel(name) {
     var sheet = document.getElementById(name + 'Sheet');
     if (overlay) overlay.classList.add('show');
     if (sheet) sheet.classList.add('show');
+    if (name === 'favorites') {
+        renderFavorites();
+    }
 }
 function closePanel(name) {
     var overlay = document.getElementById(name + 'Overlay');
@@ -377,7 +439,7 @@ function closePanel(name) {
     if (activePanel === name) activePanel = null;
 }
 function closeAllPanels() {
-    ['menu', 'window', 'settings', 'download'].forEach(function(name) {
+    ['menu', 'window', 'settings', 'download', 'favorites'].forEach(function(name) {
         var overlay = document.getElementById(name + 'Overlay');
         var sheet = document.getElementById(name + 'Sheet');
         if (overlay) overlay.classList.remove('show');
@@ -402,13 +464,9 @@ function handleMenuAction(action) {
                 window.renderDownloadList();
             }
             break;
-        case 'history':
+        case 'favorites':
             closePanel('menu');
-            if (typeof window.openHistoryPanel === 'function') {
-                window.openHistoryPanel();
-            } else {
-                window.showToast('历史功能加载中，请稍后...');
-            }
+            openPanel('favorites');
             break;
         case 'tools':
             closePanel('menu');
@@ -416,7 +474,7 @@ function handleMenuAction(action) {
             break;
         case 'fav':
             if (window.location.href && window.location.href !== 'about:blank') {
-                window.showToast('已收藏当前页面（演示）');
+                addFavorite(document.title || window.location.href, window.location.href);
             } else {
                 window.showToast('无法收藏空白页');
             }
@@ -697,19 +755,6 @@ function initApp() {
         });
     }
 
-    var translateBtn = document.getElementById('translateBtn');
-    if (translateBtn) {
-        translateBtn.addEventListener('click', function() {
-            var currentUrl = window.location.href;
-            if (currentUrl && currentUrl !== 'about:blank' && !currentUrl.startsWith('file://')) {
-                var transUrl = 'https://translate.google.com/translate?sl=auto&tl=zh-CN&u=' + encodeURIComponent(currentUrl);
-                window.open(transUrl, '_blank');
-            } else {
-                window.showToast('无法翻译当前页面');
-            }
-        });
-    }
-
     var downloadSheet = document.getElementById('downloadSheet');
     if (downloadSheet) {
         var observer = new MutationObserver(function() {
@@ -785,16 +830,7 @@ function startApp() {
 
     if (navMenu) {
         navMenu.addEventListener('click', function() {
-            if (activePanel === 'menu') {
-                closePanel('menu');
-                // 同时关闭历史浮层
-                var historyOverlay = document.getElementById('historyPanelOverlay');
-                if (historyOverlay) historyOverlay.remove();
-                return;
-            }
-            // 关闭历史浮层
-            var historyOverlay = document.getElementById('historyPanelOverlay');
-            if (historyOverlay) historyOverlay.remove();
+            if (activePanel === 'menu') { closePanel('menu'); return; }
             openPanel('menu');
         });
     }
