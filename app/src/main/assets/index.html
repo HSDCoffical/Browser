@@ -132,25 +132,11 @@
         </div>
     </div>
 
-    <!-- 面板：收藏/历史 -->
-    <div class="panel-overlay" id="historyOverlay"></div>
-    <div class="panel-sheet" id="historySheet">
-        <div class="panel-header">
-            <span class="panel-title">收藏 &amp; 历史</span>
-            <button class="panel-close" data-close="history">✕</button>
-        </div>
-        <div class="panel-body">
-            <div style="margin-bottom:10px;display:flex;gap:8px;">
-                <button id="historyTabFav" class="func-action" style="background:#2979ff;">收藏</button>
-                <button id="historyTabHist" class="func-action" style="background:#888;">历史</button>
-            </div>
-            <div class="func-list" id="historyList"></div>
-        </div>
-    </div>
-
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
+    <!-- 先加载独立模块，再加载主应用 -->
+    <script src="history.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
