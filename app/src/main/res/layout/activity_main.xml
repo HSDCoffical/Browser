@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <EditText
-        android:id="@+id/urlEdit"
+    <!-- WebView 容器（底层，承载网页内容） -->
+    <FrameLayout
+        android:id="@+id/webview_container"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:imeOptions="actionGo"
-        android:inputType="textUri"
-        android:hint="输入网址或关键字（必应搜索）"
-        android:visibility="gone" />
+        android:layout_height="match_parent"
+        android:background="#e8ecf1" />
 
-    <WebView
-        android:id="@+id/webView"
+    <!-- UI 主容器（上层，承载所有 UI 界面） -->
+    <FrameLayout
+        android:id="@+id/ui_container"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"/>
-</LinearLayout>
+        android:layout_height="match_parent"
+        android:clickable="false"
+        android:focusable="false" />
+
+</FrameLayout>
