@@ -1,5 +1,5 @@
 // ============================================================
-// 独立历史/收藏模块（自带异常保护，不影响主应用）
+// 独立历史/收藏模块（自带异常保护）
 // ============================================================
 (function() {
     'use strict';
@@ -147,7 +147,6 @@
             }
         };
 
-        // 暴露 addHistory 供搜索调用
         window.addHistory = function(title, url) {
             try {
                 if (window.isIncognito) return;
@@ -178,7 +177,6 @@
 
     } catch(e) {
         console.error('历史/收藏模块加载失败:', e);
-        // 提供空函数防止主应用崩溃
         window.openHistoryPanel = function() {
             window.showToast('历史功能暂时不可用，请重试');
         };
