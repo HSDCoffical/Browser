@@ -388,7 +388,7 @@ function closeAllPanels() {
 }
 
 // ============================================================
-// 菜单功能（包含 history 分支）
+// 菜单功能（已修改 history 分支）
 // ============================================================
 function handleMenuAction(action) {
     switch (action) {
@@ -405,7 +405,7 @@ function handleMenuAction(action) {
             break;
         case 'history':
             closePanel('menu');
-            loadHistoryModule();
+            loadHistoryModule();  // ← 新增：加载历史模块
             break;
         case 'tools':
             closePanel('menu');
@@ -464,7 +464,7 @@ function loadToolsModule() {
 }
 
 // ============================================================
-// 动态加载历史/收藏模块
+// 动态加载历史/收藏模块（新增）
 // ============================================================
 var historyLoaded = false;
 function loadHistoryModule() {
@@ -846,4 +846,4 @@ function startApp() {
     if (addWindowBtn) {
         addWindowBtn.addEventListener('click', function() {
             var id = 'win_' + Date.now();
-            windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Date.now() });
+            windows.unshift({ id: id, title: '新窗口', url: 'about:blank', time: Da
