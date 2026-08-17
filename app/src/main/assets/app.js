@@ -88,7 +88,6 @@ function loadData() {
         var el = document.getElementById('carouselInterval');
         if (el) el.value = carouselInterval;
         
-        // 恢复夜间模式状态
         var nightMode = localStorage.getItem('mybrowser_night_mode');
         if (nightMode === 'true') {
             document.body.classList.add('night-mode');
@@ -362,19 +361,8 @@ function renderWindows() {
 // 面板控制
 // ============================================================
 var activePanel = null;
-
-// 新增：关闭历史面板的专用函数
-function closeHistoryPanel() {
-    var overlay = document.getElementById('historyPanelOverlay');
-    if (overlay) {
-        overlay.remove();
-    }
-}
-
 function openPanel(name) {
     closeAllPanels();
-    // 同时关闭历史面板
-    closeHistoryPanel();
     activePanel = name;
     var overlay = document.getElementById(name + 'Overlay');
     var sheet = document.getElementById(name + 'Sheet');
@@ -399,7 +387,7 @@ function closeAllPanels() {
 }
 
 // ============================================================
-// 菜单功能（修复历史面板重叠）
+// 菜单功能
 // ============================================================
 function handleMenuAction(action) {
     switch (action) {
@@ -415,11 +403,7 @@ function handleMenuAction(action) {
             }
             break;
         case 'history':
-            // 先关闭菜单面板
             closePanel('menu');
-            // 关闭可能存在的历史浮层
-            closeHistoryPanel();
-            // 打开历史
             if (typeof window.openHistoryPanel === 'function') {
                 window.openHistoryPanel();
             } else {
@@ -738,7 +722,6 @@ function initApp() {
         observer.observe(downloadSheet, { attributes: true, attributeFilter: ['class'] });
     }
     
-    // 夜间模式开关（菜单中）
     var nightToggle = document.getElementById('nightModeToggleMenu');
     if (nightToggle) {
         nightToggle.addEventListener('click', function(e) {
@@ -802,13 +785,16 @@ function startApp() {
 
     if (navMenu) {
         navMenu.addEventListener('click', function() {
-            // 先关闭历史面板
-            closeHistoryPanel();
-            // 如果菜单已打开则关闭，否则打开
             if (activePanel === 'menu') {
                 closePanel('menu');
+                // 同时关闭历史浮层
+                var historyOverlay = document.getElementById('historyPanelOverlay');
+                if (historyOverlay) historyOverlay.remove();
                 return;
             }
+            // 关闭历史浮层
+            var historyOverlay = document.getElementById('historyPanelOverlay');
+            if (historyOverlay) historyOverlay.remove();
             openPanel('menu');
         });
     }
@@ -856,4 +842,7 @@ function startApp() {
 }
 
 if (document.readyState === 'loading') {
-    do
+    document.addEventListener('DOMContentLoaded', startApp);
+} else {
+    startApp();
+}
