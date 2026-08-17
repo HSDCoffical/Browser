@@ -68,9 +68,10 @@ public class MainActivity extends AppCompatActivity {
         ));
         webviewContainer.addView(webView);
 
-        // 将 UI 容器的点击事件穿透（让 WebView 可交互）
+        // UI 容器穿透点击
         uiContainer.setClickable(false);
         uiContainer.setFocusable(false);
+        uiContainer.setFocusableInTouchMode(false);
 
         // 请求权限
         requestAllPermissions();
@@ -134,11 +135,7 @@ public class MainActivity extends AppCompatActivity {
                     .show();
         });
 
-        // 加载本地 HTML 到 WebView
         webView.loadUrl("file:///android_asset/index.html");
-
-        // 注意：urlEdit 在 UI 容器中，但已隐藏，保留逻辑
-        // 如果需要真正地址栏，可将其移到 UI 容器并取消隐藏
 
         // 注册 JS 接口
         setupJSInterface();
