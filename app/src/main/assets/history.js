@@ -7,7 +7,7 @@
     // ---------- 数据（从 localStorage 读取） ----------
     var favorites = [];
     var history = [];
-    var currentMode = 'fav'; // 'fav' 或 'hist'
+    var currentMode = 'fav';
 
     function loadData() {
         try {
@@ -25,7 +25,6 @@
         localStorage.setItem('mybrowser_history', JSON.stringify(history));
     }
 
-    // ---------- 渲染列表 ----------
     function renderList(mode) {
         var container = document.getElementById('historyListContainer');
         if (!container) return;
@@ -49,7 +48,6 @@
         });
         container.innerHTML = html;
 
-        // 绑定事件
         container.querySelectorAll('.func-action').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 var url = this.dataset.url;
@@ -73,7 +71,6 @@
         });
     }
 
-    // ---------- 打开主面板（与设置面板风格一致） ----------
     function openHistoryPanel() {
         loadData();
 
