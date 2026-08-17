@@ -1,36 +1,56 @@
 // ============================================================
+// 全局错误捕获（防止任何未捕获异常导致白屏）
+// ============================================================
+window.onerror = function(msg, url, line, col, error) {
+    console.error('捕获到全局错误:', msg, url, line, col, error);
+    // 可以通过 Toast 显示简单提示（调试时可开启）
+    // if (typeof window.showToast === 'function') {
+    //     window.showToast('应用发生错误，请重试');
+    // }
+    return true; // 阻止默认错误处理
+};
+
+// ============================================================
 // 全局 Toast
 // ============================================================
 window.showToast = function(msg) {
-    var el = document.getElementById('toast');
-    if (!el) return;
-    el.textContent = msg;
-    el.classList.add('show');
-    clearTimeout(window.toastTimer);
-    window.toastTimer = setTimeout(function() {
-        el.classList.remove('show');
-    }, 1800);
+    try {
+        var el = document.getElementById('toast');
+        if (!el) return;
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(window.toastTimer);
+        window.toastTimer = setTimeout(function() {
+            el.classList.remove('show');
+        }, 1800);
+    } catch(e) {
+        console.error('Toast 错误:', e);
+    }
 };
 
 // ============================================================
 // 问候语设置
 // ============================================================
 function setGreeting() {
-    var el = document.getElementById('greeting');
-    if (!el) return;
-    var hour = new Date().getHours();
-    var msg = '';
-    if (hour >= 5 && hour < 9) msg = '早上好 ☀️';
-    else if (hour >= 9 && hour < 12) msg = '上午好 🌤️';
-    else if (hour >= 12 && hour < 14) msg = '中午好 ☀️';
-    else if (hour >= 14 && hour < 18) msg = '下午好 🌤️';
-    else if (hour >= 18 && hour < 21) msg = '傍晚好 🌅';
-    else msg = '晚上好 🌙';
-    el.textContent = msg;
+    try {
+        var el = document.getElementById('greeting');
+        if (!el) return;
+        var hour = new Date().getHours();
+        var msg = '';
+        if (hour >= 5 && hour < 9) msg = '早上好 ☀️';
+        else if (hour >= 9 && hour < 12) msg = '上午好 🌤️';
+        else if (hour >= 12 && hour < 14) msg = '中午好 ☀️';
+        else if (hour >= 14 && hour < 18) msg = '下午好 🌤️';
+        else if (hour >= 18 && hour < 21) msg = '傍晚好 🌅';
+        else msg = '晚上好 🌙';
+        el.textContent = msg;
+    } catch(e) {
+        console.error('问候语错误:', e);
+    }
 }
 
 // ============================================================
-// 数据层
+// 数据层（全部用 var，避免 let/const 在 WebView 中的兼容问题）
 // ============================================================
 var DEFAULT_ENGINES = [
     { name: '必应', url: 'https://cn.bing.com/search?q={q}&from=vivosearch2025' },
@@ -48,7 +68,7 @@ var carouselInterval = 3;
 var isCarouselMode = false;
 
 // ============================================================
-// 存储
+// 存储（所有操作都包裹 try-catch）
 // ============================================================
 function loadData() {
     try {
@@ -72,6 +92,7 @@ function loadData() {
         if (bgImages && bgImages.length > 0) {
             applyBgImage(currentBgIndex);
         }
+        // 恢复UI状态
         var toggle = document.getElementById('carouselToggle');
         if (toggle) {
             if (isCarouselMode) toggle.classList.add('active');
@@ -88,116 +109,133 @@ function loadData() {
         var el = document.getElementById('carouselInterval');
         if (el) el.value = carouselInterval;
         
-        // 恢复夜间模式状态
         var nightMode = localStorage.getItem('mybrowser_night_mode');
         if (nightMode === 'true') {
             document.body.classList.add('night-mode');
             var nightToggle = document.getElementById('nightModeToggleMenu');
             if (nightToggle) nightToggle.classList.add('active');
         }
-    } catch (e) { /* ignore */ }
+    } catch(e) {
+        console.error('loadData 错误:', e);
+    }
 }
 
 function saveBgImages() {
-    localStorage.setItem('mybrowser_bg_images', JSON.stringify(bgImages));
+    try { localStorage.setItem('mybrowser_bg_images', JSON.stringify(bgImages)); } catch(e) {}
 }
 function saveBgIndex() {
-    localStorage.setItem('mybrowser_bg_index', String(currentBgIndex));
+    try { localStorage.setItem('mybrowser_bg_index', String(currentBgIndex)); } catch(e) {}
 }
 function saveCarouselInterval() {
-    localStorage.setItem('mybrowser_carousel_interval', String(carouselInterval));
+    try { localStorage.setItem('mybrowser_carousel_interval', String(carouselInterval)); } catch(e) {}
 }
 function saveCarouselMode() {
-    localStorage.setItem('mybrowser_carousel_mode', String(isCarouselMode));
+    try { localStorage.setItem('mybrowser_carousel_mode', String(isCarouselMode)); } catch(e) {}
 }
 function saveCustomEngines() {
-    localStorage.setItem('mybrowser_custom_engines', JSON.stringify(customEngines));
+    try { localStorage.setItem('mybrowser_custom_engines', JSON.stringify(customEngines)); } catch(e) {}
 }
 function saveCurrentEngine() {
-    localStorage.setItem('mybrowser_current_engine', JSON.stringify(currentEngine));
+    try { localStorage.setItem('mybrowser_current_engine', JSON.stringify(currentEngine)); } catch(e) {}
 }
 function saveWindows() {
-    localStorage.setItem('mybrowser_windows', JSON.stringify(windows));
+    try { localStorage.setItem('mybrowser_windows', JSON.stringify(windows)); } catch(e) {}
 }
 function saveIncognito() {
-    localStorage.setItem('mybrowser_incognito', JSON.stringify(isIncognito));
+    try { localStorage.setItem('mybrowser_incognito', JSON.stringify(isIncognito)); } catch(e) {}
 }
 function saveNightMode() {
-    localStorage.setItem('mybrowser_night_mode', String(document.body.classList.contains('night-mode')));
+    try { localStorage.setItem('mybrowser_night_mode', String(document.body.classList.contains('night-mode'))); } catch(e) {}
 }
 
 // ============================================================
 // 背景管理
 // ============================================================
 function applyBgImage(index) {
-    if (!bgImages || bgImages.length === 0) {
-        document.body.style.backgroundImage = '';
-        return;
+    try {
+        if (!bgImages || bgImages.length === 0) {
+            document.body.style.backgroundImage = '';
+            return;
+        }
+        var img = bgImages[index % bgImages.length];
+        document.body.style.backgroundImage = 'url(' + img + ')';
+        currentBgIndex = index;
+        saveBgIndex();
+        updateCarouselPreview();
+    } catch(e) {
+        console.error('applyBgImage 错误:', e);
     }
-    var img = bgImages[index % bgImages.length];
-    document.body.style.backgroundImage = 'url(' + img + ')';
-    currentBgIndex = index;
-    saveBgIndex();
-    updateCarouselPreview();
 }
 
 function startCarousel() {
-    stopCarousel();
-    if (!isCarouselMode || !bgImages || bgImages.length < 2) return;
-    var interval = parseInt(document.getElementById('carouselInterval').value) || 3;
-    carouselInterval = interval;
-    saveCarouselInterval();
-    carouselTimer = setInterval(function() {
-        var next = (currentBgIndex + 1) % bgImages.length;
-        applyBgImage(next);
-    }, carouselInterval * 1000);
+    try {
+        stopCarousel();
+        if (!isCarouselMode || !bgImages || bgImages.length < 2) return;
+        var interval = parseInt(document.getElementById('carouselInterval').value) || 3;
+        carouselInterval = interval;
+        saveCarouselInterval();
+        carouselTimer = setInterval(function() {
+            var next = (currentBgIndex + 1) % bgImages.length;
+            applyBgImage(next);
+        }, carouselInterval * 1000);
+    } catch(e) {
+        console.error('startCarousel 错误:', e);
+    }
 }
 
 function stopCarousel() {
-    if (carouselTimer) {
-        clearInterval(carouselTimer);
-        carouselTimer = null;
+    try {
+        if (carouselTimer) {
+            clearInterval(carouselTimer);
+            carouselTimer = null;
+        }
+    } catch(e) {
+        console.error('stopCarousel 错误:', e);
     }
 }
 
 function updateCarouselPreview() {
-    var container = document.getElementById('carouselPreview');
-    if (!container) return;
-    var html = '';
-    bgImages.forEach(function(img, i) {
-        var active = (i === currentBgIndex) ? 'active' : '';
-        html += '<div class="cs-thumb-wrap">' +
-                '<img src="' + img + '" class="cs-thumb ' + active + '" data-index="' + i + '">' +
-                '<button class="cs-del" data-index="' + i + '">✕</button>' +
-                '</div>';
-    });
-    container.innerHTML = html;
+    try {
+        var container = document.getElementById('carouselPreview');
+        if (!container) return;
+        var html = '';
+        bgImages.forEach(function(img, i) {
+            var active = (i === currentBgIndex) ? 'active' : '';
+            html += '<div class="cs-thumb-wrap">' +
+                    '<img src="' + img + '" class="cs-thumb ' + active + '" data-index="' + i + '">' +
+                    '<button class="cs-del" data-index="' + i + '">✕</button>' +
+                    '</div>';
+        });
+        container.innerHTML = html;
 
-    container.querySelectorAll('.cs-thumb').forEach(function(el) {
-        el.addEventListener('click', function() {
-            var idx = parseInt(this.dataset.index);
-            applyBgImage(idx);
-            if (isCarouselMode && bgImages.length > 1) startCarousel();
-        });
-    });
-    container.querySelectorAll('.cs-del').forEach(function(el) {
-        el.addEventListener('click', function(e) {
-            e.stopPropagation();
-            var idx = parseInt(this.dataset.index);
-            bgImages.splice(idx, 1);
-            saveBgImages();
-            if (bgImages.length === 0) {
-                document.body.style.backgroundImage = '';
-                stopCarousel();
-            } else {
-                if (currentBgIndex >= bgImages.length) currentBgIndex = 0;
-                applyBgImage(currentBgIndex);
+        container.querySelectorAll('.cs-thumb').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var idx = parseInt(this.dataset.index);
+                applyBgImage(idx);
                 if (isCarouselMode && bgImages.length > 1) startCarousel();
-            }
-            updateCarouselPreview();
-            window.showToast('已删除');
+            });
         });
-    });
+        container.querySelectorAll('.cs-del').forEach(function(el) {
+            el.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var idx = parseInt(this.dataset.index);
+                bgImages.splice(idx, 1);
+                saveBgImages();
+                if (bgImages.length === 0) {
+                    document.body.style.backgroundImage = '';
+                    stopCarousel();
+                } else {
+                    if (currentBgIndex >= bgImages.length) currentBgIndex = 0;
+                    applyBgImage(currentBgIndex);
+                    if (isCarouselMode && bgImages.length > 1) startCarousel();
+                }
+                updateCarouselPreview();
+                window.showToast('已删除');
+            });
+        });
+    } catch(e) {
+        console.error('updateCarouselPreview 错误:', e);
+    }
 }
 
 // ============================================================
@@ -207,77 +245,96 @@ function getAllEngines() {
     return DEFAULT_ENGINES.concat(customEngines);
 }
 function renderEngineDropdown() {
-    var container = document.getElementById('engineDropdown');
-    if (!container) return;
-    var all = getAllEngines();
-    var currentName = currentEngine.name;
-    var html = '';
-    all.forEach(function(eng) {
-        var checked = eng.name === currentName ? '✓' : '';
-        html += '<div class="ed-item" data-engine=\'' + JSON.stringify(eng).replace(/'/g, "&#39;") + '\'>' +
-                '<span>' + eng.name + '</span>' +
-                (checked ? '<span class="ed-check">✓</span>' : '') +
-                '</div>';
-    });
-    html += '<div class="ed-custom">' +
-            '<input type="text" id="customEngineName" placeholder="引擎名称">' +
-            '<input type="text" id="customEngineUrl" placeholder="URL（{q}）">' +
-            '<button id="addCustomEngineBtn">添加</button>' +
-            '</div>';
-    container.innerHTML = html;
-
-    container.querySelectorAll('.ed-item[data-engine]').forEach(function(el) {
-        el.addEventListener('click', function() {
-            var eng = JSON.parse(this.dataset.engine);
-            currentEngine = eng;
-            saveCurrentEngine();
-            updateEngineBtn();
-            closeEngineDropdown();
-            window.showToast('已切换到：' + eng.name);
+    try {
+        var container = document.getElementById('engineDropdown');
+        if (!container) return;
+        var all = getAllEngines();
+        var currentName = currentEngine.name;
+        var html = '';
+        all.forEach(function(eng) {
+            var checked = eng.name === currentName ? '✓' : '';
+            html += '<div class="ed-item" data-engine=\'' + JSON.stringify(eng).replace(/'/g, "&#39;") + '\'>' +
+                    '<span>' + eng.name + '</span>' +
+                    (checked ? '<span class="ed-check">✓</span>' : '') +
+                    '</div>';
         });
-    });
+        html += '<div class="ed-custom">' +
+                '<input type="text" id="customEngineName" placeholder="引擎名称">' +
+                '<input type="text" id="customEngineUrl" placeholder="URL（{q}）">' +
+                '<button id="addCustomEngineBtn">添加</button>' +
+                '</div>';
+        container.innerHTML = html;
 
-    document.getElementById('addCustomEngineBtn').addEventListener('click', function(e) {
-        e.stopPropagation();
-        var name = document.getElementById('customEngineName').value.trim();
-        var url = document.getElementById('customEngineUrl').value.trim();
-        if (!name || !url) {
-            window.showToast('请填写名称和URL');
-            return;
+        container.querySelectorAll('.ed-item[data-engine]').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var eng = JSON.parse(this.dataset.engine);
+                currentEngine = eng;
+                saveCurrentEngine();
+                updateEngineBtn();
+                closeEngineDropdown();
+                window.showToast('已切换到：' + eng.name);
+            });
+        });
+
+        var addBtn = document.getElementById('addCustomEngineBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var name = document.getElementById('customEngineName').value.trim();
+                var url = document.getElementById('customEngineUrl').value.trim();
+                if (!name || !url) {
+                    window.showToast('请填写名称和URL');
+                    return;
+                }
+                if (url.indexOf('{q}') === -1) {
+                    window.showToast('URL中请包含 {q} 作为关键词占位');
+                    return;
+                }
+                if (getAllEngines().some(function(e) { return e.name === name; })) {
+                    window.showToast('引擎名称已存在');
+                    return;
+                }
+                customEngines.push({ name: name, url: url });
+                saveCustomEngines();
+                document.getElementById('customEngineName').value = '';
+                document.getElementById('customEngineUrl').value = '';
+                renderEngineDropdown();
+                window.showToast('已添加：' + name);
+            });
         }
-        if (url.indexOf('{q}') === -1) {
-            window.showToast('URL中请包含 {q} 作为关键词占位');
-            return;
-        }
-        if (getAllEngines().some(function(e) { return e.name === name; })) {
-            window.showToast('引擎名称已存在');
-            return;
-        }
-        customEngines.push({ name: name, url: url });
-        saveCustomEngines();
-        document.getElementById('customEngineName').value = '';
-        document.getElementById('customEngineUrl').value = '';
-        renderEngineDropdown();
-        window.showToast('已添加：' + name);
-    });
+    } catch(e) {
+        console.error('renderEngineDropdown 错误:', e);
+    }
 }
 
 function toggleEngineDropdown() {
-    var dd = document.getElementById('engineDropdown');
-    if (!dd) return;
-    dd.classList.toggle('open');
-    if (dd.classList.contains('open')) {
-        renderEngineDropdown();
+    try {
+        var dd = document.getElementById('engineDropdown');
+        if (!dd) return;
+        dd.classList.toggle('open');
+        if (dd.classList.contains('open')) {
+            renderEngineDropdown();
+        }
+    } catch(e) {
+        console.error('toggleEngineDropdown 错误:', e);
     }
 }
 function closeEngineDropdown() {
-    var dd = document.getElementById('engineDropdown');
-    if (dd) dd.classList.remove('open');
+    try {
+        var dd = document.getElementById('engineDropdown');
+        if (dd) dd.classList.remove('open');
+    } catch(e) {
+        console.error('closeEngineDropdown 错误:', e);
+    }
 }
 function updateEngineBtn() {
-    var btn = document.getElementById('engineBtn');
-    if (btn) {
-        btn.textContent = currentEngine.name;
+    try {
+        var btn = document.getElementById('engineBtn');
+        if (btn) {
+            btn.textContent = currentEngine.name;
+        }
+    } catch(e) {
+        console.error('updateEngineBtn 错误:', e);
     }
 }
 
@@ -285,77 +342,94 @@ function updateEngineBtn() {
 // 搜索
 // ============================================================
 function doSearch(query) {
-    if (!query || !query.trim()) return;
-    var q = query.trim();
-    var url = '';
-    if (q.indexOf('http://') === 0 || q.indexOf('https://') === 0) {
-        url = q;
-    } else if (q.indexOf('.') !== -1 && q.indexOf(' ') === -1) {
-        url = 'https://' + q;
-    } else {
-        url = currentEngine.url.replace(/\{q\}/g, encodeURIComponent(q));
+    try {
+        if (!query || !query.trim()) return;
+        var q = query.trim();
+        var url = '';
+        if (q.indexOf('http://') === 0 || q.indexOf('https://') === 0) {
+            url = q;
+        } else if (q.indexOf('.') !== -1 && q.indexOf(' ') === -1) {
+            url = 'https://' + q;
+        } else {
+            url = currentEngine.url.replace(/\{q\}/g, encodeURIComponent(q));
+        }
+        addWindow(q, url);
+        window.location.href = url;
+    } catch(e) {
+        console.error('doSearch 错误:', e);
+        window.showToast('搜索失败，请重试');
     }
-    addWindow(q, url);
-    window.location.href = url;
 }
 
 // ============================================================
 // 窗口管理
 // ============================================================
 function addWindow(title, url) {
-    var id = Date.now() + '_' + Math.random().toString(36).slice(2, 6);
-    windows.unshift({ id: id, title: title || url, url: url || 'about:blank', time: Date.now() });
-    if (windows.length > 50) windows = windows.slice(0, 50);
-    saveWindows();
-    renderWindows();
+    try {
+        var id = Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+        windows.unshift({ id: id, title: title || url, url: url || 'about:blank', time: Date.now() });
+        if (windows.length > 50) windows = windows.slice(0, 50);
+        saveWindows();
+        renderWindows();
+    } catch(e) {
+        console.error('addWindow 错误:', e);
+    }
 }
 function deleteWindow(id) {
-    windows = windows.filter(function(w) { return w.id !== id; });
-    saveWindows();
-    renderWindows();
+    try {
+        windows = windows.filter(function(w) { return w.id !== id; });
+        saveWindows();
+        renderWindows();
+    } catch(e) {
+        console.error('deleteWindow 错误:', e);
+    }
 }
 function renderWindows() {
-    var container = document.getElementById('windowList');
-    if (!container) return;
-    if (windows.length === 0) {
-        container.innerHTML = '<div class="window-empty">暂无窗口</div>';
-        return;
+    try {
+        var container = document.getElementById('windowList');
+        if (!container) return;
+        if (windows.length === 0) {
+            container.innerHTML = '<div class="window-empty">暂无窗口</div>';
+            return;
+        }
+        var html = '';
+        windows.forEach(function(w) {
+            var initial = (w.title || '网')[0].toUpperCase();
+            html += '<div class="window-item" data-id="' + w.id + '">' +
+                    '<div class="w-icon">' + initial + '</div>' +
+                    '<div class="w-info">' +
+                    '<div class="w-title">' + (w.title || '未命名') + '</div>' +
+                    '<div class="w-url">' + (w.url || '') + '</div>' +
+                    '</div>' +
+                    '<button class="w-del" data-id="' + w.id + '">✕</button>' +
+                    '</div>';
+        });
+        container.innerHTML = html;
+
+        container.querySelectorAll('.window-item').forEach(function(el) {
+            el.addEventListener('click', function(e) {
+                if (e.target.closest('.w-del')) return;
+                var id = this.dataset.id;
+                var w = windows.find(function(win) { return win.id === id; });
+                if (w && w.url) {
+                    window.location.href = w.url;
+                } else {
+                    window.showToast('该窗口没有有效地址');
+                }
+            });
+        });
+
+        container.querySelectorAll('.w-del').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var id = this.dataset.id;
+                deleteWindow(id);
+                window.showToast('已删除窗口');
+            });
+        });
+    } catch(e) {
+        console.error('renderWindows 错误:', e);
     }
-    var html = '';
-    windows.forEach(function(w) {
-        var initial = (w.title || '网')[0].toUpperCase();
-        html += '<div class="window-item" data-id="' + w.id + '">' +
-                '<div class="w-icon">' + initial + '</div>' +
-                '<div class="w-info">' +
-                '<div class="w-title">' + (w.title || '未命名') + '</div>' +
-                '<div class="w-url">' + (w.url || '') + '</div>' +
-                '</div>' +
-                '<button class="w-del" data-id="' + w.id + '">✕</button>' +
-                '</div>';
-    });
-    container.innerHTML = html;
-
-    container.querySelectorAll('.window-item').forEach(function(el) {
-        el.addEventListener('click', function(e) {
-            if (e.target.closest('.w-del')) return;
-            var id = this.dataset.id;
-            var w = windows.find(function(win) { return win.id === id; });
-            if (w && w.url) {
-                window.location.href = w.url;
-            } else {
-                window.showToast('该窗口没有有效地址');
-            }
-        });
-    });
-
-    container.querySelectorAll('.w-del').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            var id = this.dataset.id;
-            deleteWindow(id);
-            window.showToast('已删除窗口');
-        });
-    });
 }
 
 // ============================================================
@@ -363,249 +437,285 @@ function renderWindows() {
 // ============================================================
 var activePanel = null;
 function openPanel(name) {
-    closeAllPanels();
-    activePanel = name;
-    var overlay = document.getElementById(name + 'Overlay');
-    var sheet = document.getElementById(name + 'Sheet');
-    if (overlay) overlay.classList.add('show');
-    if (sheet) sheet.classList.add('show');
+    try {
+        closeAllPanels();
+        activePanel = name;
+        var overlay = document.getElementById(name + 'Overlay');
+        var sheet = document.getElementById(name + 'Sheet');
+        if (overlay) overlay.classList.add('show');
+        if (sheet) sheet.classList.add('show');
+    } catch(e) {
+        console.error('openPanel 错误:', e);
+    }
 }
 function closePanel(name) {
-    var overlay = document.getElementById(name + 'Overlay');
-    var sheet = document.getElementById(name + 'Sheet');
-    if (overlay) overlay.classList.remove('show');
-    if (sheet) sheet.classList.remove('show');
-    if (activePanel === name) activePanel = null;
-}
-function closeAllPanels() {
-    ['menu', 'window', 'settings', 'download'].forEach(function(name) {
+    try {
         var overlay = document.getElementById(name + 'Overlay');
         var sheet = document.getElementById(name + 'Sheet');
         if (overlay) overlay.classList.remove('show');
         if (sheet) sheet.classList.remove('show');
-    });
-    activePanel = null;
+        if (activePanel === name) activePanel = null;
+    } catch(e) {
+        console.error('closePanel 错误:', e);
+    }
+}
+function closeAllPanels() {
+    try {
+        ['menu', 'window', 'settings', 'download'].forEach(function(name) {
+            var overlay = document.getElementById(name + 'Overlay');
+            var sheet = document.getElementById(name + 'Sheet');
+            if (overlay) overlay.classList.remove('show');
+            if (sheet) sheet.classList.remove('show');
+        });
+        activePanel = null;
+    } catch(e) {
+        console.error('closeAllPanels 错误:', e);
+    }
 }
 
 // ============================================================
 // 菜单功能
 // ============================================================
 function handleMenuAction(action) {
-    switch (action) {
-        case 'settings':
-            closePanel('menu');
-            openPanel('settings');
-            break;
-        case 'download':
-            closePanel('menu');
-            openPanel('download');
-            if (typeof window.renderDownloadList === 'function') {
-                window.renderDownloadList();
-            }
-            break;
-        case 'history':
-            closePanel('menu');
-            openHistoryPanel();
-            break;
-        case 'tools':
-            closePanel('menu');
-            loadToolsModule();
-            break;
-        case 'fav':
-            if (window.location.href && window.location.href !== 'about:blank') {
-                window.showToast('已收藏当前页面（演示）');
-            } else {
-                window.showToast('无法收藏空白页');
-            }
-            closePanel('menu');
-            break;
-        case 'exit':
-            if (confirm('确定退出应用吗？')) {
-                window.showToast('正在退出...');
-                setTimeout(function() {
-                    window.location.href = 'about:blank';
-                }, 500);
-            }
-            closePanel('menu');
-            break;
-        default:
-            window.showToast('功能开发中');
-            closePanel('menu');
+    try {
+        switch (action) {
+            case 'settings':
+                closePanel('menu');
+                openPanel('settings');
+                break;
+            case 'download':
+                closePanel('menu');
+                openPanel('download');
+                if (typeof window.renderDownloadList === 'function') {
+                    window.renderDownloadList();
+                }
+                break;
+            case 'history':
+                closePanel('menu');
+                openHistoryPanel();
+                break;
+            case 'tools':
+                closePanel('menu');
+                loadToolsModule();
+                break;
+            case 'fav':
+                if (window.location.href && window.location.href !== 'about:blank') {
+                    window.showToast('已收藏当前页面（演示）');
+                } else {
+                    window.showToast('无法收藏空白页');
+                }
+                closePanel('menu');
+                break;
+            case 'exit':
+                if (confirm('确定退出应用吗？')) {
+                    window.showToast('正在退出...');
+                    setTimeout(function() {
+                        window.location.href = 'about:blank';
+                    }, 500);
+                }
+                closePanel('menu');
+                break;
+            default:
+                window.showToast('功能开发中');
+                closePanel('menu');
+        }
+    } catch(e) {
+        console.error('handleMenuAction 错误:', e);
     }
 }
 
 // ============================================================
-// 动态加载工具箱模块
+// 动态加载工具箱模块（保留，但增加错误保护）
 // ============================================================
 var toolsLoaded = false;
 function loadToolsModule() {
-    if (toolsLoaded) {
-        if (typeof window.openToolsPanel === 'function') {
-            window.openToolsPanel();
-        } else {
-            window.showToast('工具箱已加载，但初始化失败，请重试');
+    try {
+        if (toolsLoaded) {
+            if (typeof window.openToolsPanel === 'function') {
+                window.openToolsPanel();
+            } else {
+                window.showToast('工具箱已加载，但初始化失败，请重试');
+            }
+            return;
         }
-        return;
+        var script = document.createElement('script');
+        script.src = 'tools.js';
+        script.onload = function() {
+            toolsLoaded = true;
+            if (typeof window.openToolsPanel === 'function') {
+                window.openToolsPanel();
+            } else {
+                window.showToast('工具箱加载成功，但初始化函数缺失');
+            }
+        };
+        script.onerror = function() {
+            window.showToast('工具箱加载失败，请检查 tools.js 文件是否存在');
+        };
+        document.head.appendChild(script);
+    } catch(e) {
+        console.error('loadToolsModule 错误:', e);
+        window.showToast('加载工具箱失败，请重试');
     }
-    var script = document.createElement('script');
-    script.src = 'tools.js';
-    script.onload = function() {
-        toolsLoaded = true;
-        if (typeof window.openToolsPanel === 'function') {
-            window.openToolsPanel();
-        } else {
-            window.showToast('工具箱加载成功，但初始化函数缺失');
-        }
-    };
-    script.onerror = function() {
-        window.showToast('工具箱加载失败，请检查 tools.js 文件是否存在');
-    };
-    document.head.appendChild(script);
 }
 
 // ============================================================
-// 夜间模式切换（菜单开关调用）
+// 夜间模式切换
 // ============================================================
 function toggleNightMode() {
-    document.body.classList.toggle('night-mode');
-    var toggle = document.getElementById('nightModeToggleMenu');
-    if (toggle) {
-        toggle.classList.toggle('active');
+    try {
+        document.body.classList.toggle('night-mode');
+        var toggle = document.getElementById('nightModeToggleMenu');
+        if (toggle) {
+            toggle.classList.toggle('active');
+        }
+        saveNightMode();
+        window.showToast(document.body.classList.contains('night-mode') ? '夜间模式已开启' : '夜间模式已关闭');
+    } catch(e) {
+        console.error('toggleNightMode 错误:', e);
     }
-    saveNightMode();
-    window.showToast(document.body.classList.contains('night-mode') ? '夜间模式已开启' : '夜间模式已关闭');
 }
 
 // ============================================================
 // 背景设置
 // ============================================================
 function setupBackgroundPicker() {
-    var fileInput = document.getElementById('bgFileInput');
-    var trigger = document.getElementById('bgPickerTrigger');
-    var reset = document.getElementById('resetBg');
-    var toggle = document.getElementById('carouselToggle');
+    try {
+        var fileInput = document.getElementById('bgFileInput');
+        var trigger = document.getElementById('bgPickerTrigger');
+        var reset = document.getElementById('resetBg');
+        var toggle = document.getElementById('carouselToggle');
 
-    if (!toggle) return;
-    toggle.addEventListener('click', function() {
-        isCarouselMode = !isCarouselMode;
-        this.classList.toggle('active');
-        saveCarouselMode();
-        var settings = document.getElementById('carouselSettings');
-        if (isCarouselMode) {
-            settings.style.display = 'block';
-            document.getElementById('pickerLabel').textContent = '选择背景图片（多选）';
-            fileInput.setAttribute('multiple', 'multiple');
-            if (bgImages.length > 1) {
-                startCarousel();
+        if (!toggle) return;
+        toggle.addEventListener('click', function() {
+            isCarouselMode = !isCarouselMode;
+            this.classList.toggle('active');
+            saveCarouselMode();
+            var settings = document.getElementById('carouselSettings');
+            if (isCarouselMode) {
+                settings.style.display = 'block';
+                document.getElementById('pickerLabel').textContent = '选择背景图片（多选）';
+                fileInput.setAttribute('multiple', 'multiple');
+                if (bgImages.length > 1) {
+                    startCarousel();
+                }
+            } else {
+                settings.style.display = 'none';
+                document.getElementById('pickerLabel').textContent = '选择背景图片';
+                fileInput.removeAttribute('multiple');
+                stopCarousel();
+                if (bgImages.length > 1) {
+                    var first = bgImages[0];
+                    bgImages = [first];
+                    saveBgImages();
+                    currentBgIndex = 0;
+                    applyBgImage(0);
+                    updateCarouselPreview();
+                    window.showToast('已切换为单图模式');
+                }
             }
-        } else {
-            settings.style.display = 'none';
-            document.getElementById('pickerLabel').textContent = '选择背景图片';
-            fileInput.removeAttribute('multiple');
-            stopCarousel();
-            if (bgImages.length > 1) {
-                var first = bgImages[0];
-                bgImages = [first];
-                saveBgImages();
-                currentBgIndex = 0;
-                applyBgImage(0);
-                updateCarouselPreview();
-                window.showToast('已切换为单图模式');
-            }
-        }
-    });
+        });
 
-    trigger.addEventListener('click', function(e) {
-        e.stopPropagation();
-        fileInput.click();
-    });
+        trigger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            fileInput.click();
+        });
 
-    fileInput.addEventListener('change', function(e) {
-        var files = e.target.files;
-        if (!files || files.length === 0) return;
+        fileInput.addEventListener('change', function(e) {
+            var files = e.target.files;
+            if (!files || files.length === 0) return;
 
-        if (isCarouselMode) {
-            var total = bgImages.length + files.length;
-            if (total > 9) {
-                window.showToast('最多选择9张图片');
-                this.value = '';
-                return;
-            }
-            var loaded = 0;
-            for (var i = 0; i < files.length; i++) {
-                (function(file) {
-                    var reader = new FileReader();
-                    reader.onload = function(ev) {
-                        bgImages.push(ev.target.result);
-                        loaded++;
-                        if (loaded === files.length) {
-                            saveBgImages();
-                            if (bgImages.length === 1) {
-                                applyBgImage(0);
-                            } else {
-                                startCarousel();
+            if (isCarouselMode) {
+                var total = bgImages.length + files.length;
+                if (total > 9) {
+                    window.showToast('最多选择9张图片');
+                    this.value = '';
+                    return;
+                }
+                var loaded = 0;
+                for (var i = 0; i < files.length; i++) {
+                    (function(file) {
+                        var reader = new FileReader();
+                        reader.onload = function(ev) {
+                            bgImages.push(ev.target.result);
+                            loaded++;
+                            if (loaded === files.length) {
+                                saveBgImages();
+                                if (bgImages.length === 1) {
+                                    applyBgImage(0);
+                                } else {
+                                    startCarousel();
+                                }
+                                updateCarouselPreview();
+                                window.showToast('已添加 ' + files.length + ' 张图片');
+                                closePanel('settings');
                             }
-                            updateCarouselPreview();
-                            window.showToast('已添加 ' + files.length + ' 张图片');
-                            closePanel('settings');
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                })(files[i]);
+                        };
+                        reader.readAsDataURL(file);
+                    })(files[i]);
+                }
+            } else {
+                var file = files[0];
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    var dataUrl = ev.target.result;
+                    bgImages = [dataUrl];
+                    saveBgImages();
+                    currentBgIndex = 0;
+                    applyBgImage(0);
+                    updateCarouselPreview();
+                    window.showToast('背景图片已更新');
+                    closePanel('settings');
+                };
+                reader.readAsDataURL(file);
             }
-        } else {
-            var file = files[0];
-            var reader = new FileReader();
-            reader.onload = function(ev) {
-                var dataUrl = ev.target.result;
-                bgImages = [dataUrl];
-                saveBgImages();
-                currentBgIndex = 0;
-                applyBgImage(0);
-                updateCarouselPreview();
-                window.showToast('背景图片已更新');
-                closePanel('settings');
-            };
-            reader.readAsDataURL(file);
-        }
-        this.value = '';
-    });
+            this.value = '';
+        });
 
-    reset.addEventListener('click', function() {
-        bgImages = [];
-        saveBgImages();
-        stopCarousel();
-        document.body.style.backgroundImage = '';
-        updateCarouselPreview();
-        window.showToast('已恢复默认背景');
-        closePanel('settings');
-    });
+        reset.addEventListener('click', function() {
+            bgImages = [];
+            saveBgImages();
+            stopCarousel();
+            document.body.style.backgroundImage = '';
+            updateCarouselPreview();
+            window.showToast('已恢复默认背景');
+            closePanel('settings');
+        });
 
-    document.getElementById('carouselInterval').addEventListener('change', function() {
-        var val = parseInt(this.value) || 3;
-        carouselInterval = val;
-        saveCarouselInterval();
-        if (isCarouselMode && bgImages.length > 1) {
-            startCarousel();
+        var intervalInput = document.getElementById('carouselInterval');
+        if (intervalInput) {
+            intervalInput.addEventListener('change', function() {
+                var val = parseInt(this.value) || 3;
+                carouselInterval = val;
+                saveCarouselInterval();
+                if (isCarouselMode && bgImages.length > 1) {
+                    startCarousel();
+                }
+            });
         }
-    });
+    } catch(e) {
+        console.error('setupBackgroundPicker 错误:', e);
+    }
 }
 
 // ============================================================
 // 顶部栏控制（由 Java 调用）
 // ============================================================
 window.updateTopBar = function(title, url) {
-    var topBar = document.getElementById('topBar');
-    var titleEl = document.getElementById('topTitle');
-    if (!topBar || !titleEl) return;
+    try {
+        var topBar = document.getElementById('topBar');
+        var titleEl = document.getElementById('topTitle');
+        if (!topBar || !titleEl) return;
 
-    var isLocal = (url && (url.indexOf('file://') === 0 || url === 'about:blank'));
-    if (isLocal || !url || url === '') {
-        topBar.style.display = 'none';
-    } else {
-        topBar.style.display = 'flex';
-        titleEl.textContent = title || url;
-        titleEl.title = url;
+        var isLocal = (url && (url.indexOf('file://') === 0 || url === 'about:blank'));
+        if (isLocal || !url || url === '') {
+            topBar.style.display = 'none';
+        } else {
+            topBar.style.display = 'flex';
+            titleEl.textContent = title || url;
+            titleEl.title = url;
+        }
+    } catch(e) {
+        console.error('updateTopBar 错误:', e);
     }
 };
 
@@ -613,72 +723,80 @@ window.updateTopBar = function(title, url) {
 // 下载管理
 // ============================================================
 window.renderDownloadList = function() {
-    var list = document.getElementById('downloadList');
-    if (!list) {
-        list = document.getElementById('downloadListContainer');
-    }
-    if (!list) return;
-    var downloads = [];
     try {
-        var data = localStorage.getItem('mybrowser_downloads');
-        if (data) downloads = JSON.parse(data);
-    } catch(e) {}
-    if (downloads.length === 0) {
-        list.innerHTML = '<div class="func-item" style="text-align:center;color:#999;">暂无下载记录</div>';
-        return;
-    }
-    var html = '';
-    downloads.forEach(function(item, idx) {
-        html += '<div class="func-item">' +
-                '<div class="func-info">' +
-                '<div class="func-title">' + (item.name || '未知文件') + '</div>' +
-                '<div class="func-desc">' + (item.url || '') + '</div>' +
-                '</div>' +
-                '<div style="display:flex;gap:4px;">' +
-                '<button class="func-action" data-url="' + item.url + '">打开</button>' +
-                '<button class="func-del" data-idx="' + idx + '">✕</button>' +
-                '</div>' +
-                '</div>';
-    });
-    list.innerHTML = html;
+        var list = document.getElementById('downloadList');
+        if (!list) {
+            list = document.getElementById('downloadListContainer');
+        }
+        if (!list) return;
+        var downloads = [];
+        try {
+            var data = localStorage.getItem('mybrowser_downloads');
+            if (data) downloads = JSON.parse(data);
+        } catch(e) {}
+        if (downloads.length === 0) {
+            list.innerHTML = '<div class="func-item" style="text-align:center;color:#999;">暂无下载记录</div>';
+            return;
+        }
+        var html = '';
+        downloads.forEach(function(item, idx) {
+            html += '<div class="func-item">' +
+                    '<div class="func-info">' +
+                    '<div class="func-title">' + (item.name || '未知文件') + '</div>' +
+                    '<div class="func-desc">' + (item.url || '') + '</div>' +
+                    '</div>' +
+                    '<div style="display:flex;gap:4px;">' +
+                    '<button class="func-action" data-url="' + item.url + '">打开</button>' +
+                    '<button class="func-del" data-idx="' + idx + '">✕</button>' +
+                    '</div>' +
+                    '</div>';
+        });
+        list.innerHTML = html;
 
-    list.querySelectorAll('.func-action').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var url = this.dataset.url;
-            if (url) {
-                var a = document.createElement('a');
-                a.href = url;
-                a.target = '_blank';
-                a.download = '';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            }
+        list.querySelectorAll('.func-action').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var url = this.dataset.url;
+                if (url) {
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.target = '_blank';
+                    a.download = '';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+            });
         });
-    });
-    list.querySelectorAll('.func-del').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var idx = parseInt(this.dataset.idx);
-            downloads.splice(idx, 1);
-            localStorage.setItem('mybrowser_downloads', JSON.stringify(downloads));
-            window.renderDownloadList();
-            window.showToast('已删除');
+        list.querySelectorAll('.func-del').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var idx = parseInt(this.dataset.idx);
+                downloads.splice(idx, 1);
+                localStorage.setItem('mybrowser_downloads', JSON.stringify(downloads));
+                window.renderDownloadList();
+                window.showToast('已删除');
+            });
         });
-    });
+    } catch(e) {
+        console.error('renderDownloadList 错误:', e);
+    }
 };
 
 window.addDownloadItem = function(name, url) {
-    var downloads = [];
     try {
-        var data = localStorage.getItem('mybrowser_downloads');
-        if (data) downloads = JSON.parse(data);
-    } catch(e) {}
-    downloads.push({ name: name || '下载文件', url: url, time: Date.now() });
-    localStorage.setItem('mybrowser_downloads', JSON.stringify(downloads));
-    if (typeof window.renderDownloadList === 'function') {
-        window.renderDownloadList();
+        var downloads = [];
+        try {
+            var data = localStorage.getItem('mybrowser_downloads');
+            if (data) downloads = JSON.parse(data);
+        } catch(e) {}
+        downloads.push({ name: name || '下载文件', url: url, time: Date.now() });
+        localStorage.setItem('mybrowser_downloads', JSON.stringify(downloads));
+        if (typeof window.renderDownloadList === 'function') {
+            window.renderDownloadList();
+        }
+        window.showToast('下载已添加到列表');
+    } catch(e) {
+        console.error('addDownloadItem 错误:', e);
     }
-    window.showToast('下载已添加到列表');
 };
 
 // ============================================================
@@ -701,107 +819,4 @@ window.addDownloadItem = function(name, url) {
     }
 
     function saveFavoritesData() {
-        localStorage.setItem('mybrowser_favorites', JSON.stringify(favoritesData));
-    }
-    function saveHistoryData() {
-        localStorage.setItem('mybrowser_history', JSON.stringify(historyData));
-    }
-
-    function renderHistoryList(mode) {
-        var container = document.getElementById('historyListContainer');
-        if (!container) {
-            // 如果容器不存在，尝试创建
-            var panelBody = document.querySelector('#historySheet .panel-body');
-            if (panelBody) {
-                var div = document.createElement('div');
-                div.id = 'historyListContainer';
-                panelBody.appendChild(div);
-                container = div;
-            } else {
-                return;
-            }
-        }
-        var data = mode === 'fav' ? favoritesData : historyData;
-        if (data.length === 0) {
-            container.innerHTML = '<div style="text-align:center;color:#999;padding:20px 0;">暂无记录</div>';
-            return;
-        }
-        var html = '';
-        data.forEach(function(item, idx) {
-            var title = item.title || '未命名';
-            var url = item.url || '';
-            html += '<div class="func-item" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(0,0,0,0.05);">' +
-                    '<div style="flex:1;overflow:hidden;">' +
-                    '<div style="font-size:15px;font-weight:500;color:#1a1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + title.replace(/'/g, "\\'") + '</div>' +
-                    '<div style="font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + url.replace(/'/g, "\\'") + '</div>' +
-                    '</div>' +
-                    '<div style="display:flex;gap:8px;flex-shrink:0;">' +
-                    '<button class="func-action" data-url="' + url.replace(/'/g, "\\'") + '" style="padding:4px 12px;background:#2979ff;color:#fff;border:none;border-radius:16px;font-size:12px;cursor:pointer;">打开</button>' +
-                    '<button class="func-del" data-idx="' + idx + '" data-mode="' + mode + '" style="background:none;border:none;color:#e74c3c;font-size:18px;cursor:pointer;">✕</button>' +
-                    '</div>' +
-                    '</div>';
-        });
-        container.innerHTML = html;
-
-        container.querySelectorAll('.func-action').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var url = this.dataset.url;
-                if (url) window.location.href = url;
-            });
-        });
-        container.querySelectorAll('.func-del').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var idx = parseInt(this.dataset.idx);
-                var mode = this.dataset.mode;
-                if (mode === 'fav') {
-                    favoritesData.splice(idx, 1);
-                    saveFavoritesData();
-                } else {
-                    historyData.splice(idx, 1);
-                    saveHistoryData();
-                }
-                renderHistoryList(mode);
-                window.showToast('已删除');
-            });
-        });
-    }
-
-    // 将 addHistory 暴露给全局，供搜索时调用
-    window.addHistory = function(title, url) {
-        if (isIncognito) return;
-        historyData = historyData.filter(function(item) { return item.url !== url; });
-        historyData.unshift({ title: title || url, url: url, time: Date.now() });
-        if (historyData.length > 100) historyData = historyData.slice(0, 100);
-        saveHistoryData();
-    };
-
-    // 将 addFavorite 暴露给全局
-    window.addFavorite = function(title, url) {
-        if (favoritesData.some(function(item) { return item.url === url; })) {
-            window.showToast('已收藏');
-            return;
-        }
-        favoritesData.unshift({ title: title || url, url: url, time: Date.now() });
-        saveFavoritesData();
-        window.showToast('已收藏');
-    };
-
-    // 打开历史面板
-    window.openHistoryPanel = function() {
-        try {
-            loadHistoryData();
-
-            // 如果已有历史面板打开，先移除
-            var existing = document.getElementById('historyPanelOverlay');
-            if (existing) {
-                existing.remove();
-            }
-
-            var overlay = document.createElement('div');
-            overlay.id = 'historyPanelOverlay';
-            overlay.className = 'panel-overlay';
-            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.25);z-index:100;display:block;animation:fadeIn 0.25s ease;';
-
-            var sheet = document.createElement('div');
-            sheet.className = 'panel-sheet';
-            sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(255,255,255,0.92);border-radius:28px 28px 0 0;z-index:101;display:flex;flex-direction:colu
+        try { localStorage.setItem('m
